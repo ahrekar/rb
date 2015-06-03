@@ -1,6 +1,5 @@
 /*
 program to record excitation function.
-
 RasPi connected to USB 1208LS.
 
 Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
@@ -25,11 +24,11 @@ PMT Counts: data received from CTR in USB1208
 
 int main (int argc, char **argv)
 {
- int counts,i;
- time_t rawtime;
- struct tm * timeinfo;
- char buffer [80];
- float bias, offset, HPcal,energy;
+ int totalcount, counts,i,numit;
+ //time_t rawtime;
+// struct tm * timeinfo;
+ //char buffer [80];
+// float bias, offset, HPcal,energy;
  FILE *fp;
   __s16 sdata[1024];
   __u16 value;
@@ -42,8 +41,16 @@ int main (int argc, char **argv)
   hid_return ret;
   int interface;
 
-// set up USB interface
+if (argc=2){
+	numit = atoi(argv[1]); //number of interations
+	}
+	else
+	}
+	numit = 1;
+	}
 
+
+// set up USB interface
   ret = hid_init();
   if (ret != HID_RET_SUCCESS) {
     fprintf(stderr, "hid_init failed with return code %d\n", ret);
@@ -64,75 +71,18 @@ int main (int argc, char **argv)
   usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
   usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
-
-// get file name.  use format "EX"+$DATE+$TIME+".dat"
-time(&rawtime);
-timeinfo=localtime(&rawtime);
-strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
-
-printf("\n");
-printf(buffer);
-printf("\n");
-
-
-fp=fopen(buffer,"w");
-if (!fp) {
-	printf("unable to open file \n");
-	exit(1);
+totalcount=0
+for (i=0;i<numit;i++){
+			usbInitCounter_USB1208LS(hid);
+			delayMicrosecondsHard(1000000); // wiringPi one second delay
+			counts=usbReadCounter_USB1208LS(hid);
+		totalcount+=counts;
+		printf("%d: Counts %d\n",i,counts);
+		fflush(stdout);
 }
 
-fprintf(fp,buffer);
+printf("Total %d \n",totalcount);
 
-printf("Enter filament bias potential ");
-scanf("%f",&bias);
-fprintf(fp,"\nfilament bias %4.2f\n",bias);
-
-printf("Enter target offset potential ");
-scanf("%f",&offset);
-fprintf(fp,"target offset %4.2f\n",offset);
-
-HPcal=28.1/960.0;
-
-fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
-
-
-printf("Enter, other, single line comments for data run(80 char limit): ");
-scanf("%79s",buffer);
-fprintf(fp,buffer);
-
-fprintf(fp,"\nAout \t Energy \t Counts \n");
-
-
-//      printf("Starting exciation Function scan Ch1 Aout\n");
-//	temp=1;
-//	channel = (__u8) temp;
-
-	for (value=0;value<1023;value+=8){
-        	usbAOut_USB1208LS(hid, 1, value);
-		printf("Aout %d \t",value);
-		fflush(stdout);
-		fprintf(fp,"%d \t",value);
-
-		energy = bias - (offset + HPcal*(float)value);
-		printf("eV %4.2f\t",energy);
-		fprintf(fp,"%4.2f\t",energy);
-
-	// delay to allow transients to settle
-		delay(200);
-
-		counts=0;
-		for (i=0;i<1;i++){
-			usbInitCounter_USB1208LS(hid);
-			delayMicrosecondsHard(1000000); // wiringPi
-			counts+=usbReadCounter_USB1208LS(hid);
-		}
-		printf("Counts %d\n",counts);
-		fflush(stdout);
-		fprintf(fp,"%d \n",counts);
-	}
-
-
-fclose(fp);
 //cleanly close USB
       ret = hid_close(hid);
       if (ret != HID_RET_SUCCESS) {

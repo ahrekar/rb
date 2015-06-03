@@ -1,10 +1,7 @@
 /*
-program to record excitation function.
-
+program to record polarizqtion
 RasPi connected to USB 1208LS.
-
 Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
-
 PMT Counts: data received from CTR in USB1208
 
  */
@@ -22,10 +19,14 @@ PMT Counts: data received from CTR in USB1208
 #include "pmd.h"
 #include "usb-1208LS.h"
 
+#define CLK 0
+#define DIR 1
+
+
 
 int main (int argc, char **argv)
 {
- int counts,i;
+ int counts,i,steps;
  time_t rawtime;
  struct tm * timeinfo;
  char buffer [80];
@@ -64,11 +65,19 @@ int main (int argc, char **argv)
   usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
   usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
+// set up for stepmotor
+
+wiringPiSetup();
+pinMode(CLK,OUTPUT);
+pinMode(DIR,OUTPUT);
+
+digitalWrite(DIR,1);
+
 
 // get file name.  use format "EX"+$DATE+$TIME+".dat"
 time(&rawtime);
 timeinfo=localtime(&rawtime);
-strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
+strftime(buffer,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo);
 
 printf("\n");
 printf(buffer);
@@ -100,22 +109,26 @@ printf("Enter, other, single line comments for data run(80 char limit): ");
 scanf("%79s",buffer);
 fprintf(fp,buffer);
 
-fprintf(fp,"\nAout \t Energy \t Counts \n");
+fprintf(fp,"\nsteps\tCounts\n");
 
+digitalWrite(CLK,LOW);
+delayMicrosecondsHard(2000);
 
-//      printf("Starting exciation Function scan Ch1 Aout\n");
-//	temp=1;
-//	channel = (__u8) temp;
+	for (steps=0;steps<161;steps++){
 
-	for (value=0;value<1023;value+=8){
-        	usbAOut_USB1208LS(hid, 1, value);
-		printf("Aout %d \t",value);
-		fflush(stdout);
-		fprintf(fp,"%d \t",value);
+// increment steppermotor
+	for (i=0;i<10;i++){
+		digitalWrite(CLK,HIGH);
+		delayMicrosecondsHard(2000);
+		digitalWrite(CLK,LOW);
+		delayMicrosecondsHard(2000);
+	}
+	printf("steps %d\t",(steps*10));
+	fprintf(fp,"%d\t",(steps*10));
 
-		energy = bias - (offset + HPcal*(float)value);
-		printf("eV %4.2f\t",energy);
-		fprintf(fp,"%4.2f\t",energy);
+//		energy = bias - (offset + HPcal*(float)value);
+//		printf("eV %4.2f\t",energy);
+//		fprintf(fp,"%4.2f\t",energy);
 
 	// delay to allow transients to settle
 		delay(200);
