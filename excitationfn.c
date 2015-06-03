@@ -7,6 +7,9 @@ Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
 
 PMT Counts: data received from CTR in USB1208
 
+Created: 03 June 2015
+Last Updated: 03 June 2015
+
  */
 
 #include <stdlib.h>
