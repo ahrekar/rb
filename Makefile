@@ -30,5 +30,5 @@ PIFLAGS= -lmcchid -L. -lm -L/usr/local/lib -lhid -lusb
 # putting using $(VARIABLE)
 #
 # Additionally, the "$@" characters refer to the target.
-excitationfn: excitationfn.c libmcchid.a
+excitationfn: excitationfn.c 
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
