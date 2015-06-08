@@ -1,8 +1,8 @@
 /*
-program to record polarizqtion
-RasPi connected to USB 1208LS.
-Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
-PMT Counts: data received from CTR in USB1208
+   Program to record polarizqtion.
+   RasPi connected to USB 1208LS.
+   Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
+   PMT Counts: data received from CTR in USB1208
 
  */
 
@@ -90,15 +90,18 @@ if (!fp) {
 	exit(1);
 }
 
-fprintf(fp,buffer);
+	// config mask 0x01 means all inputs
+	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
+	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
+	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
-printf("Enter filament bias potential ");
-scanf("%f",&bias);
-fprintf(fp,"\nfilament bias %4.2f\n",bias);
+	// Set up for stepmotor
+	wiringPiSetup();
+	pinMode(CLK,OUTPUT);
+	pinMode(DIR,OUTPUT);
+	digitalWrite(DIR,1);
 
-printf("Enter target offset potential ");
-scanf("%f",&offset);
-fprintf(fp,"target offset %4.2f\n",offset);
 
 printf("Enter total number of steps (200/revolution) ");
 scanf("%d",&nsteps);
@@ -113,17 +116,29 @@ if (dwell<1) dwell=1;
 
 HPcal=28.1/960.0;
 
-fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+	// Get input from user regarding physical setup
+	printf("Enter filament bias potential ");
+	scanf("%f",&bias);
 
+	printf("Enter target offset potential ");
+	scanf("%f",&offset);
+	
+	HPcal=28.1/960.0;
 
-printf("Enter, other, single line comments for data run(80 char limit): ");
-scanf("%79s",buffer);
-fprintf(fp,buffer);
+	printf("Enter, other, single line comments for data run(80 char limit): ");
+	scanf("%79s",buffer);
 
-fprintf(fp,"\nsteps\tCounts\n");
+	// Print user input to data file.
+	fprintf(fp,"filament bias %4.2f\n",bias);
+	fprintf(fp,"target offset %4.2f\n",offset);
+	fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+	fprintf(fp,buffer);
 
-digitalWrite(CLK,LOW);
-delayMicrosecondsHard(2000);
+	// Write the header for the data to the file.
+	fprintf(fp,"\nsteps\tCounts\n");
+
+	digitalWrite(CLK,LOW);
+	delayMicrosecondsHard(2000);
 
 	for (steps=0;steps<nsteps;steps+=ninc){
 
@@ -138,12 +153,12 @@ delayMicrosecondsHard(2000);
 	printf("steps %d\t",(steps));
 	fprintf(fp,"%d\t",(steps));
 
-//		energy = bias - (offset + HPcal*(float)value);
-//		printf("eV %4.2f\t",energy);
-//		fprintf(fp,"%4.2f\t",energy);
+		//		energy = bias - (offset + HPcal*(float)value);
+		//		printf("eV %4.2f\t",energy);
+		//		fprintf(fp,"%4.2f\t",energy);
 
-	// delay to allow transients to settle
-	//	delay(200);
+		// delay to allow transients to settle
+		delay(200);
 
 		counts=0;
 		for (i=0;i<dwell;i++){
@@ -157,25 +172,23 @@ delayMicrosecondsHard(2000);
 	}
 
 
-fclose(fp);
-//cleanly close USB
-      ret = hid_close(hid);
-      if (ret != HID_RET_SUCCESS) {
-	fprintf(stderr, "hid_close failed with return code %d\n", ret);
-	return 1;
-      }
+	fclose(fp);
+	//cleanly close USB
+	ret = hid_close(hid);
+	if (ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_close failed with return code %d\n", ret);
+		return 1;
+	}
 
-      hid_delete_HIDInterface(&hid);
-      ret = hid_cleanup();
-      if (ret != HID_RET_SUCCESS) {
-	fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
-	return 1;
-      }
-      return 0;
-
-
+	hid_delete_HIDInterface(&hid);
+	ret = hid_cleanup();
+	if (ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
+		return 1;
+	}
+	return 0;
 }
-  
+
 
 
 

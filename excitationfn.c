@@ -1,11 +1,13 @@
 /*
-program to record excitation function.
+   Program to record excitation function. This is accomplished by 
+   stepping up the voltage at the target in increments and recording
+   the number of counts at each of those voltages.
 
-RasPi connected to USB 1208LS.
+   RasPi connected to USB 1208LS.
 
-Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
+   Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
 
-PMT Counts: data received from CTR in USB1208
+   PMT Counts: data received from CTR in USB1208
 
  */
 
@@ -25,90 +27,93 @@ PMT Counts: data received from CTR in USB1208
 
 int main (int argc, char **argv)
 {
- int counts,i;
- time_t rawtime;
- struct tm * timeinfo;
- char buffer [80];
- float bias, offset, HPcal,energy;
- FILE *fp;
-  __s16 sdata[1024];
-  __u16 value;
-  __u16 count;
-  __u8 gains[8];
-  __u8 options;
-  __u8 input, pin = 0, channel, gain;
+	int counts,i;
+	time_t rawtime;
+	struct tm * timeinfo;
+	char buffer [80];
+	float bias, offset, HPcal,energy;
+	FILE *fp;
+	__s16 sdata[1024];
+	__u16 value;
+	__u16 count;
+	__u8 gains[8];
+	__u8 options;
+	__u8 input, pin = 0, channel, gain;
 
-  HIDInterface*  hid = 0x0;
-  hid_return ret;
-  int interface;
+	HIDInterface*  hid = 0x0;
+	hid_return ret;
+	int interface;
 
-// set up USB interface
+	// set up USB interface
 
-  ret = hid_init();
-  if (ret != HID_RET_SUCCESS) {
-    fprintf(stderr, "hid_init failed with return code %d\n", ret);
-    return -1;
-  }
+	ret = hid_init();
+	if (ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_init failed with return code %d\n", ret);
+		return -1;
+	}
 
-  if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
-    fprintf(stderr, "USB 1208LS not found.\n");
-    exit(1);
-  } else {
-    printf("USB 208LS Device is found! interface = %d\n", interface);
-  }
-
-
-  // config mask 0x01 means all inputs
-  usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
-  usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
-  usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-  usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+	if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
+		fprintf(stderr, "USB 1208LS not found.\n");
+		exit(1);
+	} else {
+		printf("USB 208LS Device is found! interface = %d\n", interface);
+	}
 
 
-// get file name.  use format "EX"+$DATE+$TIME+".dat"
-time(&rawtime);
-timeinfo=localtime(&rawtime);
-strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
-
-printf("\n");
-printf(buffer);
-printf("\n");
+	// config mask 0x01 means all inputs
+	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
+	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
+	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 
-fp=fopen(buffer,"w");
-if (!fp) {
-	printf("unable to open file \n");
-	exit(1);
-}
+	// get file name.  use format "EX"+$DATE+$TIME+".dat"
+	time(&rawtime);
+	timeinfo=localtime(&rawtime);
+	strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
 
-fprintf(fp,buffer);
-
-printf("Enter filament bias potential ");
-scanf("%f",&bias);
-fprintf(fp,"\nfilament bias %4.2f\n",bias);
-
-printf("Enter target offset potential ");
-scanf("%f",&offset);
-fprintf(fp,"target offset %4.2f\n",offset);
-
-HPcal=28.1/960.0;
-
-fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+	printf("\n");
+	printf(buffer);
+	printf("\n");
 
 
-printf("Enter, other, single line comments for data run(80 char limit): ");
-scanf("%79s",buffer);
-fprintf(fp,buffer);
+	fp=fopen(buffer,"w");
+	if (!fp) {
+		printf("unable to open file \n");
+		exit(1);
+	}
 
-fprintf(fp,"\nAout \t Energy \t Counts \n");
+	fprintf(fp,buffer);
+
+	printf("Enter filament bias potential ");
+	scanf("%f",&bias);
+	fprintf(fp,"\nfilament bias %4.2f\n",bias);
+
+	printf("Enter target offset potential ");
+	scanf("%f",&offset);
+	fprintf(fp,"target offset %4.2f\n",offset);
+
+	HPcal=28.1/960.0;
+
+	fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+
+	printf("Enter, other, single line comments for data run(80 char limit): ");
+	scanf("%79s",buffer);
+	fprintf(fp,buffer);
+
+	fprintf(fp,"\nAout \t Energy \t Counts \n");
 
 
-//      printf("Starting exciation Function scan Ch1 Aout\n");
-//	temp=1;
-//	channel = (__u8) temp;
+	//printf("Starting exciation Function scan Ch1 Aout\n");
+	//temp=1;
+	//channel = (__u8) temp;
 
+	/**	TODO Make the Aout step range and sizes
+		be user customizeable, probably input
+		as an argument to the program. 
+		**/
 	for (value=0;value<1023;value+=8){
-        	usbAOut_USB1208LS(hid, 1, value);
+		usbAOut_USB1208LS(hid, 1, value);
 		printf("Aout %d \t",value);
 		fflush(stdout);
 		fprintf(fp,"%d \t",value);
@@ -117,7 +122,7 @@ fprintf(fp,"\nAout \t Energy \t Counts \n");
 		printf("eV %4.2f\t",energy);
 		fprintf(fp,"%4.2f\t",energy);
 
-	// delay to allow transients to settle
+		// delay to allow transients to settle
 		delay(200);
 
 		counts=0;
@@ -132,25 +137,25 @@ fprintf(fp,"\nAout \t Energy \t Counts \n");
 	}
 
 
-fclose(fp);
-//cleanly close USB
-      ret = hid_close(hid);
-      if (ret != HID_RET_SUCCESS) {
-	fprintf(stderr, "hid_close failed with return code %d\n", ret);
-	return 1;
-      }
+	fclose(fp);
 
-      hid_delete_HIDInterface(&hid);
-      ret = hid_cleanup();
-      if (ret != HID_RET_SUCCESS) {
-	fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
-	return 1;
-      }
-      return 0;
+	//cleanly close USB
+	ret = hid_close(hid);
+	if (ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_close failed with return code %d\n", ret);
+		return 1;
+	}
 
+	hid_delete_HIDInterface(&hid);
+	ret = hid_cleanup();
+	if (ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
+		return 1;
+	}
 
+	return 0;
 }
-  
+
 
 
 
