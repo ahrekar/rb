@@ -1,17 +1,10 @@
+
 /*
-program to record excitation function.
+program to set analog output
+
 RasPi connected to USB 1208LS.
 
-
-PMT Counts: data received from CTR in USB1208
-
-usage
-$ sudo ./getcounts xx
-
-where xx is number of 1 second itterations.  A final sum is also displayed.
-
-compile
-$ gcc -o getcounts getcounts.c -l wiringPi -l mcchid -L. -l m -L/usr/local/lib -l hid -l usb
+Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
 
 
  */
@@ -19,7 +12,6 @@ $ gcc -o getcounts getcounts.c -l wiringPi -l mcchid -L. -l m -L/usr/local/lib -
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <math.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -33,13 +25,9 @@ $ gcc -o getcounts getcounts.c -l wiringPi -l mcchid -L. -l m -L/usr/local/lib -
 
 int main (int argc, char *argv[])
 {
- int counts,i,numit;
- long totalcount;
- float counterror;
- //time_t rawtime;
-// struct tm * timeinfo;
- //char buffer [80];
-// float bias, offset, HPcal,energy;
+ int counts,i;
+ char buffer [80];
+ float bias, offset, HPcal,energy;
  FILE *fp;
   __s16 sdata[1024];
   __u16 value;
@@ -52,14 +40,8 @@ int main (int argc, char *argv[])
   hid_return ret;
   int interface;
 
-if (argc=2){
-	numit = atoi(argv[1]); //number of interations
-	}else{
-	numit = 1;
-	}
-
-
 // set up USB interface
+
   ret = hid_init();
   if (ret != HID_RET_SUCCESS) {
     fprintf(stderr, "hid_init failed with return code %d\n", ret);
@@ -80,20 +62,36 @@ if (argc=2){
   usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
   usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
-totalcount=0;
-for (i=0;i<numit;i++){
-			usbInitCounter_USB1208LS(hid);
-			delayMicrosecondsHard(1000000); // wiringPi one second delay
-			counts=usbReadCounter_USB1208LS(hid);
-		totalcount+=counts;
-		printf("%d: Counts %d\n",i,counts);
+
+// get file name.  use format "EX"+$DATE+$TIME+".dat"
+
+if (argc=2) {
+	bias =atof(argv[1]);
+	}else{
+	bias=0.0;
+	}
+
+HPcal=28.1/960.0;
+
+
+value =  (int)(bias/HPcal);
+
+if (value<0) value=0;
+
+if (value>1023) value=1023;
+
+
+//      printf("Starting exciation Function scan Ch1 Aout\n");
+//	temp=1;
+//	channel = (__u8) temp;
+
+        	usbAOut_USB1208LS(hid, 1, value);
+		printf("Aout %d \t",value);
 		fflush(stdout);
-}
+		bias = (float)value * HPcal;
+		printf("HP3617 %4.2f\n",bias);
 
-printf("Total %d \n",totalcount);
-
-counterror = sqrt((float)totalcount);
-printf("SQRT(total) %f \n",counterror);
+// delay to allow transients to settle
 
 //cleanly close USB
       ret = hid_close(hid);

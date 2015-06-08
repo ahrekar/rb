@@ -3,8 +3,6 @@
 uses the RasPi GPIO ports to bit-band a stepper motor driver.  
 
 uses two ports (defined below) to set the direction and number of stepts.
-
-
 usage:
 ~$ sudo ./stepmotor 100 1
 steps the motor 100 steps in direction 1.
@@ -38,7 +36,6 @@ int main (int argc, char *argv[]){
 	}
 
 	wiringPiSetup();
-
 	pinMode(CLK,OUTPUT); //define port CLK to be an output
 	pinMode(DIR,OUTPUT); //define port DIR to be an output
 

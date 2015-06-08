@@ -26,7 +26,7 @@ PMT Counts: data received from CTR in USB1208
 
 int main (int argc, char **argv)
 {
- int counts,i,steps;
+ int counts,i,steps,nsteps,ninc,dwell;
  time_t rawtime;
  struct tm * timeinfo;
  char buffer [80];
@@ -100,6 +100,17 @@ printf("Enter target offset potential ");
 scanf("%f",&offset);
 fprintf(fp,"target offset %4.2f\n",offset);
 
+printf("Enter total number of steps (200/revolution) ");
+scanf("%d",&nsteps);
+printf("Enter number of steps per data point");
+scanf("%d",&ninc);
+printf("Enter number of seconds of data to aquire per data point");
+scanf("%d",&dwell);
+
+if (ninc<1) ninc=1;
+if (ninc>nsteps) ninc=nsteps/2;
+if (dwell<1) dwell=1;
+
 HPcal=28.1/960.0;
 
 fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
@@ -114,27 +125,28 @@ fprintf(fp,"\nsteps\tCounts\n");
 digitalWrite(CLK,LOW);
 delayMicrosecondsHard(2000);
 
-	for (steps=0;steps<161;steps++){
+	for (steps=0;steps<nsteps;steps+=ninc){
+
+//200 steps per revoluion
 
 // increment steppermotor
-	for (i=0;i<10;i++){
 		digitalWrite(CLK,HIGH);
 		delayMicrosecondsHard(2000);
 		digitalWrite(CLK,LOW);
 		delayMicrosecondsHard(2000);
-	}
-	printf("steps %d\t",(steps*10));
-	fprintf(fp,"%d\t",(steps*10));
+
+	printf("steps %d\t",(steps));
+	fprintf(fp,"%d\t",(steps));
 
 //		energy = bias - (offset + HPcal*(float)value);
 //		printf("eV %4.2f\t",energy);
 //		fprintf(fp,"%4.2f\t",energy);
 
 	// delay to allow transients to settle
-		delay(200);
+	//	delay(200);
 
 		counts=0;
-		for (i=0;i<1;i++){
+		for (i=0;i<dwell;i++){
 			usbInitCounter_USB1208LS(hid);
 			delayMicrosecondsHard(1000000); // wiringPi
 			counts+=usbReadCounter_USB1208LS(hid);
