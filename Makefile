@@ -18,7 +18,7 @@ CFLAGS= -g -Wall -I.
 
 # PIFLAGS are flags that are needed for the raspberryPi
 # code.
-PIFLAGS= -lmcchid -L. -lm -L/usr/local/lib -lhid -lusb
+PIFLAGS= -l wiringPi -l mcchid -L. -lm -L/usr/local/lib -lhid -lusb
 
 # What follows is the code to actually compile the code.
 # it is always of the form
