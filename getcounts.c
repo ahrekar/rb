@@ -35,11 +35,20 @@ int main (int argc, char *argv[])
 {
 	int counts,i,numit;
 	long totalcount;
-	float counterror;
+	int frequency;		// The number of counts we expected to get
+	                    // this is supplied by the user at runtime.
+                        // If this is not supplied, the expected
+                        // count will be set to the totalcount.
+	long expectedCount;	// This is calculated from the frequency and
+						// the number of iterations.
+	float counterror;	// The square root of the total number of counts
+	int extraCounts; 	// This is just (totalCount - expected count); all 
+						// the counts we didn't expect to get
+	float percentError; // The extraCounts divided by the expectedCount
 	//time_t rawtime;
-	// struct tm * timeinfo;
+	//struct tm * timeinfo;
 	//char buffer [80];
-	// float bias, offset, HPcal,energy;
+	//float bias, offset, HPcal,energy;
 	FILE *fp;
 	__s16 sdata[1024];
 	__u16 value;
@@ -52,17 +61,24 @@ int main (int argc, char *argv[])
 	hid_return ret;
 	int interface;
 
-	printf("The number of arguments is %d\n", argc);
-
 	if (argc==2){
 		numit = atoi(argv[1]); //number of interations
+		frequency = -1; 	// If the expected count is not specified, 
+								// it will later be set to the total count.
+								// The value of -1 allows us to identify
+								// that it was not set.
+	}
+	else if (argc==3){
+		numit = atoi(argv[1]); //number of interations
+		frequency = atoi(argv[2]); //Expected Count number per second
 	}
 	else{
-		printf("The number of arguments is not 2\n", argc);
-		numit = 2;
+		numit = 1;
+		expectedCount = -1;
 	}
 
 	printf("The number of iterations is %d\n", numit);
+	printf("The frequency is %d\n", frequency);
 
 	// set up USB interface
 	ret = hid_init();
@@ -95,10 +111,25 @@ int main (int argc, char *argv[])
 		fflush(stdout);
 	}
 
-	printf("Total %d \n",totalcount);
+
+//	printf("Total %d \n",totalcount);
+//	counterror = sqrt((float)totalcount);
+//	printf("SQRT(total) %f \n",counterror);
+
+	if (expectedCount< 0){
+		expectedCount = totalcount;
+	}else{
+		expectedCount = frequency*numit;
+		printf("Expected Count: %ld\n",expectedCount);
+	}
 
 	counterror = sqrt((float)totalcount);
-	printf("SQRT(total) %f \n",counterror);
+	extraCounts = totalcount - expectedCount;
+	percentError = (float)extraCounts/ (float)expectedCount;
+
+
+	printf("Results:\tFreq.\tIter.\tExpect\tTotal\tSQRT(total)\t%%error\n");
+	printf("        \t%d\t%5d\t%ld\t%ld\t%f\t%f\n",frequency,numit,expectedCount,totalcount,counterror,percentError);
 
 	//cleanly close USB
 	ret = hid_close(hid);
