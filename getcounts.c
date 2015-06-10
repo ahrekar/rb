@@ -34,6 +34,8 @@
 int main (int argc, char *argv[])
 {
 	int counts,i,numit;
+	int usbReadCountsDelayMs = 654;	// The number of miliseconds it takes to
+								// get the counts on the DAQ 
 	long totalcount;
 	int frequency;		// The number of counts we expected to get
 	                    // this is supplied by the user at runtime.
@@ -104,7 +106,10 @@ int main (int argc, char *argv[])
 	totalcount=0;
 	for (i=0;i<numit;i++){
 		usbInitCounter_USB1208LS(hid);
-		delayMicrosecondsHard(1000000); // wiringPi one second delay
+		delayMicrosecondsHard(1000000 - usbReadCountsDelayMs); // wiringPi one second delay, taking
+															   // into account the time between when
+															   // the function is called and when
+															   // the counts are actually read. 
 		counts=usbReadCounter_USB1208LS(hid);
 		totalcount+=counts;
 		printf("%d: Counts %d\n",i,counts);
