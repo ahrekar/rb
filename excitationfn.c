@@ -30,6 +30,7 @@ int main (int argc, char **argv)
 	int counts,i;
 	time_t rawtime;
 	struct tm * timeinfo;
+	signed short svalue;
 	char buffer [80];
 	float bias, offset, HPcal,energy;
 	FILE *fp;
@@ -102,9 +103,13 @@ int main (int argc, char **argv)
 	fprintf(fp,buffer);
 
 	fprintf(fp,"\nAout \t Energy \t Counts \n");
+	channel = 0; //analog input  for Keithly K617
+	gain = BP_5_00V;
 
 
 	//printf("Starting exciation Function scan Ch1 Aout\n");
+	//	temp=1;
+	//	channel = (__u8) temp;
 	//temp=1;
 	//channel = (__u8) temp;
 
@@ -112,7 +117,7 @@ int main (int argc, char **argv)
 		be user customizeable, probably input
 		as an argument to the program. 
 		**/
-	for (value=0;value<1023;value+=8){
+	for (value=0;value<1023;value+=4){
 		usbAOut_USB1208LS(hid, 1, value);
 		printf("Aout %d \t",value);
 		fflush(stdout);
@@ -131,11 +136,17 @@ int main (int argc, char **argv)
 			delayMicrosecondsHard(1000000); // wiringPi
 			counts+=usbReadCounter_USB1208LS(hid);
 		}
-		printf("Counts %d\n",counts);
+		printf("Counts %d\t",counts);
+		svalue = usbAIn_USB1208LS(hid,channel,gain);
+		printf("Current %f\n",volts_LS(gain,svalue));
+
+		fprintf(fp,"%d \t",counts);
+		fprintf(fp,"%f \n",volts_LS(gain,svalue));
+
 		fflush(stdout);
-		fprintf(fp,"%d \n",counts);
 	}
 
+usbAOut_USB1208LS(hid,1,0);
 
 	fclose(fp);
 

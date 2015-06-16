@@ -37,12 +37,12 @@ int main (int argc, char *argv[])
 	int usbReadCountsDelayMs = 654;	// The number of miliseconds it takes to
 								// get the counts on the DAQ 
 	long totalcount;
-	int frequency;		// The number of counts we expected to get
+	int frequency;		// The expected frequency
 	                    // this is supplied by the user at runtime.
-                        // If this is not supplied, the expected
-                        // count will be set to the totalcount.
 	long expectedCount;	// This is calculated from the frequency and
 						// the number of iterations.
+                        // If this is not supplied, the expected
+                        // count will be set to the totalcount.
 	float counterror;	// The square root of the total number of counts
 	int extraCounts; 	// This is just (totalCount - expected count); all 
 						// the counts we didn't expect to get
