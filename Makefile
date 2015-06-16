@@ -8,10 +8,10 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c analogout.c getadc.c getcounts.c polarization.c setHP3617.c stepmotor.c
+SOURCES=excitationfn.c analogout.c getadc.c getcounts.c polarization.c setHP3617.c stepmotor.c diagnoseCounts.c
 
 # BINARIES are the names of the executable files that we are compiling
-BINARIES=excitationfn analogout getadc getcounts polarization setHP3617 stepmotor
+BINARIES=excitationfn analogout getadc getcounts polarization setHP3617 stepmotor diagnoseCounts
 
 # CFLAGS are options, or flags, we will pass to the compiler
 # -g produces debugging information 
@@ -37,6 +37,9 @@ PIFLAGS= -l wiringPi -l mcchid -L. -lm -L/usr/local/lib -lhid -lusb
 all: $(BINARIES)
 
 excitationfn: excitationfn.c 
+	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+
+diagnoseCounts: diagnoseCounts.c 
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
 
 analogout: analogout.c 

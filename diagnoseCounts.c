@@ -2,16 +2,17 @@
    program to record excitation function.
    RasPi connected to USB 1208LS.
 
-
    PMT Counts: data received from CTR in USB1208
 
    usage
-   $ sudo ./getcounts xx
+   $ sudo ./getcounts xx yy 
 
-   where xx is number of 1 second itterations.  A final sum is also displayed.
+   Where: 
+     xx is number of 1 second itterations.  A final sum is also displayed.
+     yy is the frequency that the counts are to arrive.
 
    compile
-   $ gcc -o getcounts getcounts.c -l wiringPi -l mcchid -L. -l m -L/usr/local/lib -l hid -l usb
+   $ gcc -o diagnoseCounts diagnoseCounts.c -l wiringPi -l mcchid -L. -l m -L/usr/local/lib -l hid -l usb
 
 
  */
