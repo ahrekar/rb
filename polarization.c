@@ -94,7 +94,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"filament bias %4.2f\n",bias);
 	fprintf(fp,"target offset %4.2f\n",offset);
 	// Set up for stepmotor
-	printf("Enter total number of steps (200/revolution) ");
+	printf("Enter total number of steps (1200/revolution) ");
 	scanf("%d",&nsteps);
 	printf("Enter number of steps per data point");
 	scanf("%d",&ninc);
@@ -123,21 +123,16 @@ int main (int argc, char **argv)
 
 		//200 steps per revoluion
 
-		// increment steppermotor
+		for (i=0;i<ninc;i++){
+		// increment steppermotor by ninc steps
 		digitalWrite(CLK,HIGH);
-		delayMicrosecondsHard(2000);
+		delayMicrosecondsHard(2300);
 		digitalWrite(CLK,LOW);
-		delayMicrosecondsHard(2000);
+		delayMicrosecondsHard(2300);
+		}
 
 		printf("steps %d\t",(steps));
 		fprintf(fp,"%d\t",(steps));
-
-		//		energy = bias - (offset + HPcal*(float)value);
-		//		printf("eV %4.2f\t",energy);
-		//		fprintf(fp,"%4.2f\t",energy);
-
-		// delay to allow transients to settle
-		// delay(200);
 
 		counts=0;
 		for (i=0;i<dwell;i++){

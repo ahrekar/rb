@@ -44,10 +44,10 @@ int main (int argc, char *argv[]){
 	for (i=0;i<steps;i++){
 		digitalWrite(CLK,HIGH);
 		//delay(del);
-		delayMicrosecondsHard(2000); // this delay will(should?) not allow other OS processes
+		delayMicrosecondsHard(2500); // this delay will(should?) not allow other OS processes
 		digitalWrite (CLK,LOW);
 		//delay(del);
-		delayMicrosecondsHard(2000);
+		delayMicrosecondsHard(2500);
 	}
 
 return 0;

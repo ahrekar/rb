@@ -102,7 +102,7 @@ int main (int argc, char **argv)
 	scanf("%79s",buffer);
 	fprintf(fp,buffer);
 
-	fprintf(fp,"\nAout \t Energy \t Counts \n");
+	fprintf(fp,"\nAout\tEnergy\tCounts\tCurrent\n");
 	channel = 0; //analog input  for Keithly K617
 	gain = BP_5_00V;
 
@@ -128,7 +128,7 @@ int main (int argc, char **argv)
 		fprintf(fp,"%4.2f\t",energy);
 
 		// delay to allow transients to settle
-		delay(200);
+		delay(500);
 
 		counts=0;
 		for (i=0;i<1;i++){
@@ -138,6 +138,7 @@ int main (int argc, char **argv)
 		}
 		printf("Counts %d\t",counts);
 		svalue = usbAIn_USB1208LS(hid,channel,gain);
+
 		printf("Current %f\n",volts_LS(gain,svalue));
 
 		fprintf(fp,"%d \t",counts);
