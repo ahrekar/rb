@@ -7,5 +7,12 @@ README
 setHP3617
 stepmotor
 diagnoseCounts
+RbAbsorbScan
+faradayrotation
+faradayscan
+homemotor
+setProbeLaser
+test-usb1208LS
+tmp.txt
 
 *.data
