@@ -26,7 +26,7 @@ int main (int argc, char *argv[])
 {
  int counts,i;
  char buffer [80];
- float outvolts;
+ float outvolts,bias,calibration;
  FILE *fp;
   __s16 sdata[1024];
   __u16 value;
