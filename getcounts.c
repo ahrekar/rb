@@ -31,7 +31,7 @@ $ gcc -o getcounts getcounts.c -l wiringPi -l mcchid -L. -l m -L/usr/local/lib -
 
 int main (int argc, char *argv[])
 {
- int counts,i,numit;
+ int counts,i,numit,dwell;
  long totalcount;
  float counterror;
  //time_t rawtime;
@@ -51,8 +51,9 @@ int main (int argc, char *argv[])
   int interface;
 numit = 0;
 
-if (argc==2){
+if (argc==3){
 	numit = atoi(argv[1]); //number of interations
+	dwell=atoi(argv[2]);
 	}else{
 	printf("Usage:\n\n ~$ sudo ./getcounts xx \n\nwhere xx is the number of one-second iterations to aquire before exiting\n\n");
 	return(1);
@@ -83,7 +84,7 @@ if (argc==2){
 totalcount=0;
 for (i=0;i<numit;i++){
 	usbInitCounter_USB1208LS(hid);
-	delayMicrosecondsHard(1000000); // wiringPi one second delay
+	delayMicrosecondsHard(dwell*1000000); // wiringPi one second delay
 	counts=usbReadCounter_USB1208LS(hid);
 	totalcount+=counts;
 	printf("%d: Counts %d\n",i,counts);

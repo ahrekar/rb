@@ -4,7 +4,13 @@ program to set analog output
 
 RasPi connected to USB 1208LS.
 
-Sets analog voltage for probe laser.   -1.5 v in series so 0 to 5 here means -1.5 to 3.5 at probe  laser.
+Sets analog voltage for probe laser. Uses Analog out port 0. Final output to probe laser is through 
+op-amp circuit. see page 98.  Page 99 shows calibration data.
+
+Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024
+
+
+
 
  */
 
@@ -26,7 +32,6 @@ int main (int argc, char *argv[])
 {
  int counts,i;
  char buffer [80];
- float outvolts;
  FILE *fp;
   __s16 sdata[1024];
   __u16 value;
@@ -62,35 +67,21 @@ int main (int argc, char *argv[])
   usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 
-// get file name.  use format "EX"+$DATE+$TIME+".dat"
-
 if (argc=2) {
-	bias =atof(argv[1]);
+	value =atoi(argv[1]);
 	}else{
-	bias=0.0;
+	printf("Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024\n");
+	value=0;
 	}
-
-calibration=5.0/1024.0;
-
-
-value =  (int)(outvolts/calibration);
 
 if (value<0) value=0;
 
 if (value>1023) value=1023;
 
+usbAOut_USB1208LS(hid, 0, value);
+printf("Aout %d \n",value);
+fflush(stdout);
 
-//      printf("Starting exciation Function scan Ch1 Aout\n");
-//	temp=1;
-//	channel = (__u8) temp;
-
-        	usbAOut_USB1208LS(hid, 0, value);
-		printf("Aout %d \t",value);
-		fflush(stdout);
-		outvolts = (float)value * calibration;
-		printf("HP3617 %4.2f\n",outvolts);
-
-// delay to allow transients to settle
 
 //cleanly close USB
       ret = hid_close(hid);

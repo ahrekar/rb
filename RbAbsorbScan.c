@@ -5,9 +5,6 @@
 
    RasPi connected to USB 1208LS.
 
-   Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
-
-   PMT Counts: data received from CTR in USB1208
 
  */
 
@@ -27,12 +24,12 @@
 
 int main (int argc, char **argv)
 {
-	int counts,i,stepsize,steprange;
+	int i,startvalue,endvalue,stepsize,steprange;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer [80];
-	float bias, offset, HPcal,energy,scanrange;
+	char buffer [80],comments[80];
+	float involts;
 	FILE *fp;
 	__s16 sdata[1024];
 	__u16 value;
@@ -61,6 +58,26 @@ int main (int argc, char **argv)
 	}
 
 
+
+	if (argc==5) {
+		startvalue=atoi(argv[1]);
+		endvalue=atoi(argv[2]);
+		stepsize=atoi(argv[3]);
+		strcpy(comments,argv[4]);
+	} else {
+		printf("Usage:\n$ sudo ./RbAbsorbScan <begin> <end> <step> <comments>\n");
+		return 0;
+	}
+	if (endvalue>1024) endvalue=1024;
+	if (startvalue>1024) endvalue=1024;
+	if (startvalue<1) startvalue=0;
+	if (endvalue<1) endvalue=0;
+	if (startvalue>endvalue) {
+		printf("error: startvalue > endvalue.\nYeah, i could just swap them in code.. or you could just enter them in correctly. :-)\n");
+		return 1;
+		}
+
+
 	// config mask 0x01 means all inputs
 	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
 	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
@@ -68,10 +85,10 @@ int main (int argc, char **argv)
 	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 
-	// get file name.  use format "EX"+$DATE+$TIME+".dat"
+	// get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
+	strftime(buffer,80,"/home/pi/RbData/RbAbs%F_%H%M%S.dat",timeinfo);
 
 	printf("\n");
 	printf(buffer);
@@ -85,81 +102,42 @@ int main (int argc, char **argv)
 	}
 
 	fprintf(fp,buffer);
+	fprintf(fp,"\n");
 
-	printf("Enter filament bias potential ");
-	scanf("%f",&bias);
-	fprintf(fp,"\nfilament bias %4.2f\n",bias);
-
-	printf("Enter target offset potential ");
-	scanf("%f",&offset);
-	fprintf(fp,"target offset %4.2f\n",offset);
-
-	HPcal=28.1/960.0;
-
-	fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
-	printf("Enter HP scan range volts (0-30) ");
-	scanf("%f",&scanrange);
-	steprange = 1+(int)(scanrange/HPcal);
-	if (steprange>1023) steprange = 1023;
-	if (steprange < 8 ) steprange = 8;
-	printf("\n");	
-	for (i=1;i<12;i++){
-	printf("%d: %1.3fV, ",i,i*HPcal);
-	
-	}
-	printf("\nEnter integer step size :");
-	scanf("%d",&stepsize);
-	if (stepsize<1) stepsize=1;
-
-	printf("Enter, other, single line comments for data run(80 char limit): ");
-	scanf("%79s",buffer);
-	fprintf(fp,buffer);
-
-	fprintf(fp,"\nAout\tEnergy\tCounts\tCurrent\n");
-	channel = 0; //analog input  for Keithly K617
-	gain = BP_10_00V;
+//TODO Scanf terminates read after hitting a space?!?!?!?!?
+	fprintf(fp,comments);
+	fprintf(fp,"\nAout\tPhotoCurrent\n");
+	channel = 2; //analog input... for photodiode
+	gain = BP_5_00V;
 
 
-	//printf("Starting exciation Function scan Ch1 Aout\n");
-	//	temp=1;
-	//	channel = (__u8) temp;
-	//temp=1;
-	//channel = (__u8) temp;
-
-	/**	TODO Make the largest Aout step range and sizes
-		be user customizeable. 
-		**/
-	for (value=0;value<steprange;value+=stepsize){
-		usbAOut_USB1208LS(hid, 1, value);
+	for (value=startvalue;value<endvalue;value+=stepsize){
+		usbAOut_USB1208LS(hid, 0, value);
 		printf("Aout %d \t",value);
 		fflush(stdout);
 		fprintf(fp,"%d \t",value);
 
-		energy = bias - (offset + HPcal*(float)value);
-		printf("eV %4.2f\t",energy);
-		fprintf(fp,"%4.2f\t",energy);
-
 		// delay to allow transients to settle
-		delay(500);
-
-		counts=0;
-		for (i=0;i<1;i++){
-			usbInitCounter_USB1208LS(hid);
-			delayMicrosecondsHard(1000000); // wiringPi
-			counts+=usbReadCounter_USB1208LS(hid);
-		}
-		printf("Counts %d\t",counts);
+		delay(300);
+		involts = 0.0;
+// grab eight readings and average
+		for (i=0;i<8;i++){
 		svalue = usbAIn_USB1208LS(hid,channel,gain);
+		involts=involts+volts_LS(gain,svalue);
+		}
+		involts=involts/8.0;
 
-		printf("Current %f\n",volts_LS(gain,svalue));
-
-		fprintf(fp,"%d \t",counts);
-		fprintf(fp,"%f \n",volts_LS(gain,svalue));
+		printf("Current %f\n",involts);
+		fprintf(fp,"%f \n",involts);
 
 		fflush(stdout);
 	}
 
-usbAOut_USB1208LS(hid,1,0);
+
+
+value=(int)(1.325*617.0);
+
+usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
 
 	fclose(fp);
 

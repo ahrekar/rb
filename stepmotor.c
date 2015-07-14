@@ -26,8 +26,8 @@ int main (int argc, char *argv[]){
 	int i, steps, dir;
 	int del;
 
-	del = 2;
-	if (argc=3){
+	del = 3;
+	if (argc==3){
 		steps = atoi(argv[1]); // get steps from command line
 		dir = atoi(argv[2]);  // get dir from command line
 	} else {
@@ -40,14 +40,17 @@ int main (int argc, char *argv[]){
 	pinMode(DIR,OUTPUT); //define port DIR to be an output
 
 	digitalWrite (DIR, dir);  // sets direction
+	digitalWrite (CLK,LOW);
+
+
 
 	for (i=0;i<steps;i++){
 		digitalWrite(CLK,HIGH);
 		//delay(del);
-		delayMicrosecondsHard(2500); // this delay will(should?) not allow other OS processes
+		delayMicrosecondsHard(1500); // this delay will(should?) not allow other OS processes
 		digitalWrite (CLK,LOW);
 		//delay(del);
-		delayMicrosecondsHard(2500);
+		delayMicrosecondsHard(1500);
 	}
 
 return 0;
