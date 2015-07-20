@@ -11,7 +11,8 @@ CC=gcc
 SOURCES=excitationfn.c analogout.c getadc.c getcounts.c polarization.c setHP3617.c stepmotor.c diagnoseCounts.c faradayrotation.c homemotor.c setProbeLaser.c faradayscan.c
 
 # BINARIES are the names of the executable files that we are compiling
-#BINARIES=excitationfn analogout getadc getcounts polarization setHP3617 stepmotor diagnoseCounts
+# This particular command substitutes a blank string for ".c" in the
+# list of source files above. 
 BINARIES=${subst .c,,${SOURCES}}
 
 # CFLAGS are options, or flags, we will pass to the compiler
@@ -35,31 +36,15 @@ PIFLAGS= -l wiringPi -l mcchid -L. -lm -L/usr/local/lib -lhid -lusb
 # putting using $(VARIABLE)
 #
 # Additionally, the "$@" characters refer to the target.
+
+# Everything depends on the binaries. If any of the 
+# binaries are edited, we should do stuff. I don't really
+# get why this is necessary.
 all: ${BINARIES}
 
+# Each binary needs to be compiled. In this command, each
+# file in the BINARIES list is selected by the % symbol.
+# The percent symbol from that point forward then 
+# represents the binary file's name. 
 ${BINARIES}: % : %.c
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
-
-#excitationfn: excitationfn.c 
-#	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
-#
-#diagnoseCounts: diagnoseCounts.c 
-#	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
-#
-#analogout: analogout.c 
-#	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
-#
-#getadc: getadc.c 
-#	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
-#
-#getcounts: getcounts.c 
-#	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
-#
-#polarization: polarization.c 
-#	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
-#
-#setHP3617: setHP3617.c 
-#	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
-#	
-#stepmotor: stepmotor.c 
-#	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
