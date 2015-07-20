@@ -1,1 +1,0 @@
-echo "data" | sudo mutt -s "data" -a /home/pi/RbData/POL2015-06-08_154202.dat -- tranthamkw@unk.edu
