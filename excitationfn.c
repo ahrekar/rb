@@ -71,11 +71,10 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
+	strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat\n",timeinfo);
 
 	printf("\n");
 	printf(buffer);
-	printf("\n");
 
 
 	fp=fopen(buffer,"w");
@@ -112,7 +111,8 @@ int main (int argc, char **argv)
 	if (stepsize<1) stepsize=1;
 
 	printf("Enter, other, single line comments for data run(80 char limit): ");
-	scanf("%79s",buffer);
+	gets(buffer);	// For receiving input strings, gets is a
+					//more convenient function to use. 
 	fprintf(fp,buffer);
 
 	fprintf(fp,"\nAout\tEnergy\tCounts\tCurrent\n");
