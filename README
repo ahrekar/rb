@@ -1,1 +1,10 @@
-My Project
+
+Author: Ken Trantham
+Maintainer Karl Ahrendsen (karl@huskers.unl.edu OR karl.ahrendsen@gmail.com)
+
+This code is used to assist in controlling and data aquisition
+for the rubidium spin filter experiment at University of
+Nebraska-Lincoln. A RaspberryPi is connected to a Measurement
+computing DAQ device, the MCC 1208LS. Using the RaspberryPi
+and the 1208LS, we can control the stepper motor, the
+photomultiplier counter, and an analog controlled voltage supply. 
