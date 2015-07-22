@@ -9,7 +9,11 @@
 
    PMT Counts: data received from CTR in USB1208
 
- */
+Usage: 
+
+./excitationfn.c <filament bias> <target offset> <scan range (0-30)> <step size> <comment less than 80 char>
+
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,6 +48,21 @@ int main (int argc, char **argv)
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
 	int interface;
+
+	// Make sure the correct number of arguments were supplied. If not,
+	// prompt the user with the proper form for input. 
+	if (argc == 6){
+		bias = *argv[1];
+		offset = *argv[2];
+		scanRange = *argv[3];
+		stepSize = *argv[4];
+		buffer = argv[5];
+	} else{
+		printf("It seems you made an error in your input, please examine\n");
+		printf("the following usage to fix your error.\n");
+		printf("    Usage: ./excitationfn.c <filament bias> <target offset> <scan range (0-30)> <step size> <comment less than 80 char>\n");
+	}
+
 
 	// set up USB interface
 
@@ -103,8 +122,7 @@ int main (int argc, char **argv)
 	if (steprange < 8 ) steprange = 8;
 	printf("\n");	
 	for (i=1;i<12;i++){
-	printf("%d: %1.3fV, ",i,i*HPcal);
-	
+		printf("%d: %1.3fV, ",i,i*HPcal);
 	}
 	printf("\nEnter integer step size :");
 	scanf("%d",&stepsize);
@@ -112,7 +130,7 @@ int main (int argc, char **argv)
 
 	printf("Enter, other, single line comments for data run(80 char limit): ");
 	gets(buffer);	// For receiving input strings, gets is a
-					//more convenient function to use. 
+	//more convenient function to use. 
 	fprintf(fp,buffer);
 
 	fprintf(fp,"\nAout\tEnergy\tCounts\tCurrent\n");
@@ -127,8 +145,8 @@ int main (int argc, char **argv)
 	//channel = (__u8) temp;
 
 	/**	TODO Make the largest Aout step range and sizes
-		be user customizeable. 
-		**/
+	  be user customizeable. 
+	 **/
 	for (value=0;value<steprange;value+=stepsize){
 		usbAOut_USB1208LS(hid, 1, value);
 		printf("Aout %d \t",value);
@@ -159,7 +177,7 @@ int main (int argc, char **argv)
 		fflush(stdout);
 	}
 
-usbAOut_USB1208LS(hid,1,0);
+	usbAOut_USB1208LS(hid,1,0);
 
 	fclose(fp);
 
