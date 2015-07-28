@@ -28,7 +28,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer [80],comments[80];
+	char buffer [80],comments[1024];
 	float involts;
 	FILE *fp;
 	__s16 sdata[1024];
