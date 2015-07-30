@@ -8,3 +8,5 @@ Nebraska-Lincoln. A RaspberryPi is connected to a Measurement
 computing DAQ device, the MCC 1208LS. Using the RaspberryPi
 and the 1208LS, we can control the stepper motor, the
 photomultiplier counter, and an analog controlled voltage supply. 
+
+gnuplot is used for data visualization
