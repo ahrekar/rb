@@ -157,7 +157,3 @@ usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
 
 	return 0;
 }
-
-
-
-
