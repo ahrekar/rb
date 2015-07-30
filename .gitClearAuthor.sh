@@ -1,0 +1,4 @@
+export GIT_AUTHOR_NAME=""
+export GIT_AUTHOR_EMAIL=""
+export GIT_COMMITER_NAME=""
+export GIT_COMMITER_EMAIL=""
