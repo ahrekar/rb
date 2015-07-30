@@ -14,5 +14,6 @@ homemotor
 setProbeLaser
 test-usb1208LS
 tmp.txt
+gnutest
 
 *.data
