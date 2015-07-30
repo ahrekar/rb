@@ -11,3 +11,5 @@ photomultiplier counter, and an analog controlled voltage supply.
 
 gnuplot is used for data visualization
 
+Note that for the shell scripts to actually change the authors, they need to
+be sourced, rather than just run as a shell script.
