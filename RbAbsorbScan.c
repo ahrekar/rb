@@ -3,7 +3,7 @@
    stepping up the voltage at the target in increments and recording
    the number of counts at each of those voltages.
 
-   RasPi connected to USB 1208LS.
+   RasPi connected to USB 1204LS.
 
 
  */
@@ -28,9 +28,9 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer [80],comments[1024];
+	char buffer[80],fileString[80],comments[1024];
 	float involts;
-	FILE *fp;
+	FILE *fp, *gnuplot;
 	__s16 sdata[1024];
 	__u16 value;
 	__u16 count;
@@ -88,25 +88,27 @@ int main (int argc, char **argv)
 	// get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(buffer,80,"/home/pi/RbData/RbAbs%F_%H%M%S.dat",timeinfo);
+	strftime(fileString,80,"/home/pi/RbData/RbAbs%F_%H%M%S.dat",timeinfo);
 
 	printf("\n");
-	printf(buffer);
+	printf(fileString);
 	printf("\n");
 
 
-	fp=fopen(buffer,"w");
+	fp=fopen(fileString,"w");
 	if (!fp) {
 		printf("unable to open file \n");
 		exit(1);
 	}
 
-	fprintf(fp,buffer);
+	fprintf(fp,"#");			//gnuplot needs non-data lines commented out.
+	fprintf(fp,fileString);
 	fprintf(fp,"\n");
 
 //TODO Scanf terminates read after hitting a space?!?!?!?!?
+	fprintf(fp,"#");			//gnuplot needs non-data lines commented out.
 	fprintf(fp,comments);
-	fprintf(fp,"\nAout\tPhotoCurrent\n");
+	fprintf(fp,"\n#Aout\tPhotoCurrent\n");
 	channel = 2; //analog input... for photodiode
 	gain = BP_5_00V;
 
@@ -120,12 +122,12 @@ int main (int argc, char **argv)
 		// delay to allow transients to settle
 		delay(300);
 		involts = 0.0;
-// grab eight readings and average
-		for (i=0;i<8;i++){
+// grab several readings and average
+		for (i=0;i<16;i++){
 		svalue = usbAIn_USB1208LS(hid,channel,gain);
 		involts=involts+volts_LS(gain,svalue);
 		}
-		involts=involts/8.0;
+		involts=involts/16.0;
 
 		printf("Current %f\n",involts);
 		fprintf(fp,"%f \n",involts);
@@ -154,6 +156,26 @@ usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
 		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
 		return 1;
 	}
+
+	// Create graphs for data
+	gnuplot = popen("gnuplot","w");
+
+
+	if (gnuplot != NULL){
+		fprintf(gnuplot, "set terminal dumb\n");
+		fprintf(gnuplot, "set output\n");			
+		sprintf(buffer, "plot '%s'\n", fileString);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset output\n"); 
+		/**
+		fprintf(gnuplot, "set terminal png\n");
+		sprintf(buffer, "set output '%s'.png\n", fileString);
+		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s'\n", fileString);
+		fprintf(gnuplot, buffer);
+		**/
+	}
+	pclose(gnuplot);
 
 	return 0;
 }
