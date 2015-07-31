@@ -54,9 +54,9 @@ int main (int argc, char **argv)
 	if (argc == 6){
 		bias = *argv[1];
 		offset = *argv[2];
-		scanRange = *argv[3];
-		stepSize = *argv[4];
-		buffer = argv[5];
+		scanrange = *argv[3];
+		stepsize = *argv[4];
+		strcpy(buffer,argv[5]);
 	} else{
 		printf("It seems you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
