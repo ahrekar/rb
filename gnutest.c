@@ -31,7 +31,7 @@ int main(){
 		// First, make a plot that can be output on a
 		// terminal display so we can quickly see what the 
 		// plot will look like.
-		fprintf(gnuplot, "set terminal dumb\n");	// gnuplot displays information in 'terminals'
+		fprintf(gnuplot, "set terminal dumb size 79,24\n");	// gnuplot displays information in 'terminals'
 													// which are basically ways of writing
 													// information. The "dumb" terminal writes
 													// information in plain text.
