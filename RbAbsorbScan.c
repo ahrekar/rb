@@ -162,7 +162,6 @@ usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
-		// 
 		fprintf(gnuplot, "set terminal dumb\n");
 		fprintf(gnuplot, "set output\n");			
 		sprintf(buffer, "plot '%s'\n", fileString);
