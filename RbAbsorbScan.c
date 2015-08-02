@@ -157,23 +157,22 @@ usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
 		return 1;
 	}
 
-	// Create graphs for data
-	gnuplot = popen("gnuplot","w");
-
+	// Create graphs for data see gnutest.c for an explanation of 
+	// how this process works.
+	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
+		// 
 		fprintf(gnuplot, "set terminal dumb\n");
 		fprintf(gnuplot, "set output\n");			
 		sprintf(buffer, "plot '%s'\n", fileString);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
-		/**
 		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s'.png\n", fileString);
+		sprintf(buffer, "set output '%s.png'\n", fileString);
 		fprintf(gnuplot, buffer);
 		sprintf(buffer, "plot '%s'\n", fileString);
 		fprintf(gnuplot, buffer);
-		**/
 	}
 	pclose(gnuplot);
 

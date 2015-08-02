@@ -28,6 +28,9 @@ int main(){
 	// If gnuplot is not NULL, it was successfully opened, and 
 	// we can continue to do what we set out to do.
 	if (gnuplot != NULL){
+		// First, make a plot that can be output on a
+		// terminal display so we can quickly see what the 
+		// plot will look like.
 		fprintf(gnuplot, "set terminal dumb\n");	// gnuplot displays information in 'terminals'
 													// which are basically ways of writing
 													// information. The "dumb" terminal writes
@@ -38,13 +41,34 @@ int main(){
 													// anything after "output", we are telling
 													// the program to write the information 
 													// to STDOUT, in this case, the screen.
-		fprintf(gnuplot, "plot '/home/pi/RbData/FDayRot2015-07-06_134351.dat'\n");
-		fprintf(gnuplot, "unset output\n"); 
-		fprintf(gnuplot, "set terminal png\n");
+													
+		fprintf(gnuplot, "plot '/home/pi/RbData/FDayRot2015-07-06_134351.dat'\n"); 
+													// Plot the data, which is stored in the
+													// filename specified as '/home/pi/...'
+		
+		// Next, make a plot that has a little better resolution.
+		fprintf(gnuplot, "unset output\n"); 		// We must unset the ouput because otherwise
+													// gnuplot would want to keep on writing the
+													// output to the terminal screen, which 
+													// doesn't go well when the terminal isn't
+													// "dumb"
+													
+		fprintf(gnuplot, "set terminal png\n");		// Set the terminal to .png, an image format
+													// that will have a higher resolution than 
+													// the "dumb" terminal. A variety of other 
+													// terminals are available and the complete
+													// list can be viewed in the gnuplot manpage.
+													
 		fprintf(gnuplot, "set output '/home/pi/RbData/gnutest.png'\n");
+													// Set the output to a file so that it will
+													// be saved as a readable file rather than
+													// printed to the screen as gobble-de-gook.
+													
 		fprintf(gnuplot, "plot '/home/pi/RbData/FDayRot2015-07-06_134351.dat'\n");
+													// Actually plot the data.
 	}
 
-	pclose(gnuplot);
+	pclose(gnuplot);								// Close the file. If this isn't done, issues
+													// may arise with the readability of the file.
 	return 0;
 }
