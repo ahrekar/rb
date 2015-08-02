@@ -3,18 +3,20 @@
    RasPi connected to USB 1208LS.
 
 
-FARADAY ROTATION
+   FARADAY ROTATION
 
 
-steppermotor 1500 steps per revolution. 
+   steppermotor 1500 steps per revolution. 
 
-use Aout 0 to set laser wavelength. see page 98-100
+   use Aout 0 to set laser wavelength. see page 98-100
 
-currently, use same stepper motor driver/port as polarimeter. just swap motor connection. perhaps in future install second driver/port.
+   currently, use same stepper motor driver/port as polarimeter. just swap motor connection. perhaps in future install second driver/port.
 
-ussage
+   ussage
 
-/$ sudo ./faradayrotation <aout> <totalsteps> <deltastep> <comments_no_spaces>
+   /$ sudo ./faradayrotation <aout> <totalsteps> <deltastep> <comments>
+
+Note: Comments must be enclosed in quotes.
 
 */
 
@@ -32,52 +34,57 @@ ussage
 #include "pmd.h"
 #include "usb-1208LS.h"
 
-#define CLK 0
-#define DIR 1
-#define DEL 2000
-#define PI 3.14159265358979
+#define CLK 0		// We will control the clock with pin 0 on the RPi
+#define DIR 1 		// We will control the direction with pin 1 on the RPi
+#define DEL 2000	// Whenever a delay is needed, use this value
+#define CWISE 0 	// Clockwise =0
+#define CCWISE 1	// CounterClockwise =1
+#define STEPSPERREV 1500; // Define the number of steps in a revolution
+#define PI 3.14159265358979 
+
+void incrementStepperMotor();
+void incrementStepperMotor(int dir);
+void incrementStepperMotor(int dir, int steps);
+int closeUSB(HIDInterface* hid);
 
 int main (int argc, char **argv)
 {
-	int Aout,i,nsteps,ninc,steps,stepsPerRev;
+	int Aout,i,nsteps,ninc,steps,numMeasurements, returnValue;
 	time_t rawtime;
 	signed short svalue;
 	float sumsin2b,sumcos2b,angle,count;
 	struct tm * timeinfo;
 	char buffer[80],comments[80];
 	float involts;
-FILE *fp;
+	FILE *fp;
 	__s16 sdata[1024];
 	__u16 value;
-//	__u16 count;
+	//	__u16 count;
 	__u8 gains[8];
 	__u8 options;
 	__u8 input, pin = 0, channel, gain;
 
+	// set up USB interface
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
 	int interface;
 
-	// set up USB interface
-
-	if (argc==5){
+	if (argc==5){ // Note that first argument (argv[0]) is the name of the command.
 		Aout= atoi(argv[1]);
 		nsteps=atoi(argv[2]);
 		ninc=atoi(argv[3]);
 		strcpy(comments,argv[4]);
 	} else { 
 		printf("usage '~$ sudo ./faradayrotation <aout> <numsteps> <stepsize> <comments_no_spaces>'\n");
-	return 1;
+		return 1;
 	}
 
 	sumsin2b=0.0;
 	sumcos2b=0.0;
 	angle=0.0;
 	count=0.0;
-	stepsPerRev=1500;
 
-
-
+	// Check to make sure USB DAQ is properly connected
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_init failed with return code %d\n", ret);
@@ -99,24 +106,21 @@ FILE *fp;
 	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 	// set up for stepmotor
-
 	wiringPiSetup();
 	pinMode(CLK,OUTPUT);
 	pinMode(DIR,OUTPUT);
-	digitalWrite(DIR,1);
-
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	strftime(buffer,80,"/home/pi/RbData/FDayRot%F_%H%M%S.dat",timeinfo);
-
+	
+	// Print filename to screen
 	printf("\n");
 	printf(buffer);
 	printf("\n");
-	printf(comments);
 
-
+	// Open the file for data writing.
 	fp=fopen(buffer,"w");
 	if (!fp) {
 		printf("unable to open file \n");
@@ -125,35 +129,47 @@ FILE *fp;
 
 	usbAOut_USB1208LS(hid,0,Aout);
 
-	fprintf(fp,"Aout %d\n",Aout);
+	// Record the starting value of Aout in the file.
+	fprintf(fp,"#Aout %d\n",Aout);
 	if (ninc<1) ninc=1;
 	if (ninc>nsteps) ninc=nsteps/2;
+
+	// Print the filename inside the file
+	fprintf(fp,"#");
 	fprintf(fp,buffer);
 	fprintf(fp,"\n");
+
+	// Print the comments in the file.
+	fprintf(fp,"#");
 	fprintf(fp,comments);
 	fprintf(fp,"\n");
 
 	// Write the header for the data to the file.
-	fprintf(fp,"\nsteps\tPhotoDiode\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"#");
+	fprintf(fp,"Steps\tPhotoDiode\n");
 
 	digitalWrite(CLK,LOW);
 	delayMicrosecondsHard(2000);
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;
 
-				//6000    30
+	//6000    30
 	for (steps=0;steps < nsteps;steps+=ninc){
 
 		delay(300);
 
 		//1500?? steps per revoluion
 		involts=0.0;
-		for (i=0;i<8;i++){
+		numMeasurements=8;
+
+		for (i=0;i<numMeasurements;i++){
 			svalue=usbAIn_USB1208LS(hid,channel,gain);
 			involts=involts+volts_LS(gain,svalue);
 		}
-		involts=involts/8.0;
-		angle=2.0*PI*(float)(steps)/(float)stepsPerRev;
+
+		involts=involts/(float)numMeasurements;
+		angle=2.0*PI*(float)(steps)/(float)STEPSPERREV;
 		count=count+1.0;
 		sumsin2b=sumsin2b+involts*sin(2*angle);
 		sumcos2b=sumcos2b+involts*cos(2*angle);
@@ -166,32 +182,14 @@ FILE *fp;
 		fflush(stdout);
 		fprintf(fp,"%f \n",involts);
 
-		for (i=0;i<ninc;i++){
 		// increment steppermotor by ninc steps
-		digitalWrite(CLK,HIGH);
-		delayMicrosecondsHard(DEL);
-		digitalWrite(CLK,LOW);
-		delayMicrosecondsHard(DEL);
-		}
-
+		incrementStepperMotor(CCWISE,ninc);
 	}
-// reverse motor to bring back to same starting point.  This would not be needed
-// but there is a small mis-match with the belt-pulley size. 
 
-	digitalWrite(DIR,0);
-
+	// reverse motor to bring back to same starting point.  This would not be needed
+	// but there is a small mis-match with the belt-pulley size. 
 	printf("moving stepper back\n");
-	for (steps=0;steps<nsteps;steps++){
-		// increment steppermotor by ninc steps
-		digitalWrite(CLK,HIGH);
-		delayMicrosecondsHard(DEL);
-		digitalWrite(CLK,LOW);
-		delayMicrosecondsHard(DEL);
-
-	}
-
-
-	digitalWrite(DIR,1);
+	incrementStepperMotor(CWISE,nsteps);
 
 	sumsin2b=sumsin2b/count;
 	sumcos2b=sumcos2b/count;
@@ -202,8 +200,39 @@ FILE *fp;
 	printf("angle = %f\n",angle);
 
 
+	// Close the data file
 	fclose(fp);
+
 	//cleanly close USB
+	returnValue = closeUSB(hid);
+
+	return returnValue;
+}
+
+
+void incrementStepperMotor(){
+	digitalWrite(CLK,HIGH);
+	delayMicrosecondsHard(DEL);
+	digitalWrite(CLK,LOW);
+	delayMicrosecondsHard(DEL);
+}
+
+void incrementStepperMotor(int dir){
+	digitalWrite(DIR,dir);
+
+	incrementStepperMotor();
+}
+
+void incrementStepperMotor(int dir, int steps){
+	digitalWrite(DIR,dir);
+	
+	int i;
+	for (i=0;i<steps;i++){
+		incrementStepperMotor();
+	}
+}
+
+int closeUSB(HIDInterface* hid){
 	ret = hid_close(hid);
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_close failed with return code %d\n", ret);
@@ -211,6 +240,7 @@ FILE *fp;
 	}
 
 	hid_delete_HIDInterface(&hid);
+
 	ret = hid_cleanup();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
@@ -218,7 +248,3 @@ FILE *fp;
 	}
 	return 0;
 }
-
-
-
-
