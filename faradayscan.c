@@ -3,17 +3,17 @@
    RasPi connected to USB 1208LS.
 
 
-FARADAY ROTATION
+   FARADAY ROTATION
 
-steppermotor 1500 steps per revolution. 
+   steppermotor 1500 steps per revolution. 
 
-use Aout 0 to set laser wavelength. see page 98-100
+   use Aout 0 to set laser wavelength. see page 98-100
 
-currently, use same stepper motor driver/port as polarimeter. just swap motor connection. perhaps in future install second driver/port.
+   currently, use same stepper motor driver/port as polarimeter. just swap motor connection. perhaps in future install second driver/port.
 
-ussage
+   ussage
 
-$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>
+   $ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>
 
 */
 
@@ -49,12 +49,12 @@ int main (int argc, char **argv)
 	struct tm * timeinfo;
 	char buffer[80],comments[80];
 	float involts;
-FILE *fp;
+	FILE *fp;
 	__s16 sdata[1024];
 	__u16 value;
-//	__u16 count;
-//	__u8 gains[8];
-//	__u8 options;
+	//	__u16 count;
+	//	__u8 gains[8];
+	//	__u8 options;
 	__u8 input, pin = 0, channel, gain;
 
 	HIDInterface*  hid = 0x0;
@@ -70,7 +70,7 @@ FILE *fp;
 		strcpy(comments,argv[4]);
 	} else { 
 		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>'\n");
-	return 1;
+		return 1;
 	}
 
 
@@ -135,19 +135,19 @@ FILE *fp;
 	fprintf(fp,"\nAout\tf0\tf3\tf4\tangle\n");
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
-	printf("Aout %d\n",Aout);
+		printf("Aout %d\n",Aout);
 		sumsin2b=0.0;
 		sumcos2b=0.0;
 		angle=0.0;
 		count=0.0;
 		sumI=0.0;
 
-	usbAOut_USB1208LS(hid,0,Aout);
+		usbAOut_USB1208LS(hid,0,Aout);
 
-	for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){
+		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){
 
-		delay(300);
-		//get 8 samples and average
+			delay(300);
+			//get 8 samples and average
 			involts=0.0;
 			for (i=0;i<8;i++){
 				svalue=usbAIn_USB1208LS(hid,channel,gain);
@@ -155,18 +155,32 @@ FILE *fp;
 			}
 			involts=involts/8.0;
 
-		angle=2.0*PI*(float)(steps)/STEPSPERREV;
-		count=count+1.0;
-		sumsin2b=sumsin2b+involts*sin(2*angle);
-		sumcos2b=sumcos2b+involts*cos(2*angle);
-		sumI+=involts;
+			angle=2.0*PI*(float)(steps)/STEPSPERREV;
+			count=count+1.0;
+			sumsin2b=sumsin2b+involts*sin(2*angle);
+			sumcos2b=sumcos2b+involts*cos(2*angle);
+			sumI+=involts;
 
 
-		printf("steps %d\t",(steps));
-		printf("PhotoI %f\t",involts);
-		fflush(stdout);
+			printf("steps %d\t",(steps));
+			printf("PhotoI %f\t",involts);
+			fflush(stdout);
 
-		for (i=0;i<STEPSIZE;i++){
+			for (i=0;i<STEPSIZE;i++){
+				// increment steppermotor by ninc steps
+				digitalWrite(CLK,HIGH);
+				delayMicrosecondsHard(DEL);
+				digitalWrite(CLK,LOW);
+				delayMicrosecondsHard(DEL);
+			}
+
+		}
+		// reverse motor to bring back to same starting point.  This would not be needed
+		// but there is a small mis-match with the belt-pulley size. 
+		digitalWrite(DIR,0);
+
+		printf("Reset steppermotor\n");
+		for (steps=0;steps<NUMSTEPS;steps++){
 			// increment steppermotor by ninc steps
 			digitalWrite(CLK,HIGH);
 			delayMicrosecondsHard(DEL);
@@ -174,35 +188,21 @@ FILE *fp;
 			delayMicrosecondsHard(DEL);
 		}
 
-	}
-// reverse motor to bring back to same starting point.  This would not be needed
-// but there is a small mis-match with the belt-pulley size. 
-	digitalWrite(DIR,0);
 
-	printf("Reset steppermotor\n");
-	for (steps=0;steps<NUMSTEPS;steps++){
-		// increment steppermotor by ninc steps
-		digitalWrite(CLK,HIGH);
-		delayMicrosecondsHard(DEL);
-		digitalWrite(CLK,LOW);
-		delayMicrosecondsHard(DEL);
-	}
+		digitalWrite(DIR,1);
 
+		sumI=sumI/count;
+		sumsin2b=sumsin2b/count;
+		sumcos2b=sumcos2b/count;
+		angle = 0.5*atan(sumsin2b/sumcos2b);
+		angle = angle*180.0/PI;
+		printf("f0 = %f\t",sumI);
+		printf("f3 = %f\t",sumsin2b);
+		printf("f4 = %f\t",sumcos2b);
+		printf("angle = %f\n",angle);
+		fprintf(fp,"%d\t%f\t%f\t%f\t%f\n",Aout,sumI,sumsin2b,sumcos2b,angle);
 
-	digitalWrite(DIR,1);
-
-	sumI=sumI/count;
-	sumsin2b=sumsin2b/count;
-	sumcos2b=sumcos2b/count;
-	angle = 0.5*atan(sumsin2b/sumcos2b);
-	angle = angle*180.0/PI;
-	printf("f0 = %f\t",sumI);
-	printf("f3 = %f\t",sumsin2b);
-	printf("f4 = %f\t",sumcos2b);
-	printf("angle = %f\n",angle);
-	fprintf(fp,"%d\t%f\t%f\t%f\t%f\n",Aout,sumI,sumsin2b,sumcos2b,angle);
-
-}//end for Aout
+	}//end for Aout
 
 	fclose(fp);
 	//cleanly close USB
