@@ -42,7 +42,7 @@
 
 int main (int argc, char **argv)
 {
-	int AoutStart,AoutStop,deltaAout,i,steps,Aout;
+	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
 	time_t rawtime;
 	signed short svalue;
 	float sumI,sumsin2b,sumcos2b,angle,count;
@@ -72,10 +72,6 @@ int main (int argc, char **argv)
 		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>'\n");
 		return 1;
 	}
-
-
-
-
 
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
@@ -147,13 +143,14 @@ int main (int argc, char **argv)
 		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){
 
 			delay(300);
-			//get 8 samples and average
+			//get samples and average
+			nsamples=8;
 			involts=0.0;
-			for (i=0;i<8;i++){
+			for (i=0;i<nsamples;i++){
 				svalue=usbAIn_USB1208LS(hid,channel,gain);
 				involts=involts+volts_LS(gain,svalue);
 			}
-			involts=involts/8.0;
+			involts=involts/(float)nsamples;
 
 			angle=2.0*PI*(float)(steps)/STEPSPERREV;
 			count=count+1.0;
