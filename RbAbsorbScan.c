@@ -9,6 +9,7 @@
 */
 
 #include <stdlib.h>
+#include <math.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -116,7 +117,7 @@ int main (int argc, char **argv)
 	// Allocate some memory to store measurements for calculating
 	// error bars.
 	nSamples = 16;
-	float* measurement = malloc(nSamples*sizeOf(float));
+	float* measurement = malloc(nSamples*sizeof(float));
 
 	for (value=startvalue;value<endvalue;value+=stepsize){
 		usbAOut_USB1208LS(hid, 0, value);
@@ -131,13 +132,13 @@ int main (int argc, char **argv)
 		for (i=0;i<nSamples;i++){
 			svalue = usbAIn_USB1208LS(hid,channel,gain);
 			measurement[i] = volts_LS(gain,svalue);
-			involts=involts+meausrement[i];
+			involts=involts+measurement[i];
 		}
 
 		involts=involts/(float)nSamples;
 
 		printf("Current %f\n",involts);
-		fprintf(fp,"%f\t%f\n",involts,stdDeviation(values,measurement);
+		fprintf(fp,"%f\t%f\n",involts,stdDeviation(measurement,nSamples));
 
 		fflush(stdout);
 	}
@@ -170,15 +171,17 @@ int main (int argc, char **argv)
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 160,64\n");
+		fprintf(gnuplot, "set terminal dumb size 160,32\n");
 		fprintf(gnuplot, "set output\n");			
-		sprintf(buffer, "plot '%s'\n", fileString);
+		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
+		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
+		sprintf(buffer, "plot '%s' with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileString);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s'\n", fileString);
+		sprintf(buffer, "plot '%s' with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
@@ -191,14 +194,15 @@ float stdDeviation(float* value, int numValues){
 
 	// First Calculate the Average value
 	sum = 0.0;
-	for(int i=0; i < numValues;i++){ 
+	int i;
+	for(i=0; i < numValues;i++){ 
 		sum += value[i];
 	}
 	avg = sum / (float) numValues;
 
 	// Then calculate the Standard Deviation
 	sum = 0.0;
-	for(int i=0; i < numValues;i++){
+	for(i=0; i < numValues;i++){
 		sum += pow(avg-value[i],2);
 	}
 	stdDev = sqrt(sum/(numValues-1));

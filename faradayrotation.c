@@ -35,16 +35,16 @@ Note: Comments must be enclosed in quotes.
 #include "usb-1208LS.h"
 
 #define CLK 0		// We will control the clock with pin 0 on the RPi
-#define DIR 1 		// We will control the direction with pin 1 on the RPi
+#define DIR 1		// We will control the direction with pin 1 on the RPi
 #define DEL 2000	// Whenever a delay is needed, use this value
-#define CWISE 0 	// Clockwise =0
+#define CWISE 0		// Clockwise =0
 #define CCWISE 1	// CounterClockwise =1
 #define STEPSPERREV 1500; // Define the number of steps in a revolution
 #define PI 3.14159265358979 
 
-void incrementStepperMotor();
-void incrementStepperMotor(int dir);
-void incrementStepperMotor(int dir, int steps);
+void moveStepperMotorSingleStep();
+void moveStepperMotorSingleStepWithDirection(int dir);
+void moveStepperMotor(int dir, int steps);
 int closeUSB(HIDInterface* hid);
 
 int main (int argc, char **argv)
@@ -183,13 +183,13 @@ int main (int argc, char **argv)
 		fprintf(fp,"%f \n",involts);
 
 		// increment steppermotor by ninc steps
-		incrementStepperMotor(CCWISE,ninc);
+		moveStepperMotor(CCWISE,ninc);
 	}
 
 	// reverse motor to bring back to same starting point.  This would not be needed
 	// but there is a small mis-match with the belt-pulley size. 
 	printf("moving stepper back\n");
-	incrementStepperMotor(CWISE,nsteps);
+	moveStepperMotor(CWISE,nsteps);
 
 	sumsin2b=sumsin2b/count;
 	sumcos2b=sumcos2b/count;
@@ -210,29 +210,30 @@ int main (int argc, char **argv)
 }
 
 
-void incrementStepperMotor(){
+void moveStepperMotorSingleStep(){
 	digitalWrite(CLK,HIGH);
 	delayMicrosecondsHard(DEL);
 	digitalWrite(CLK,LOW);
 	delayMicrosecondsHard(DEL);
 }
 
-void incrementStepperMotor(int dir){
+void moveStepperMotorSingleStepWithDirection(int dir){
 	digitalWrite(DIR,dir);
 
-	incrementStepperMotor();
+	moveStepperMotorSingleStep();
 }
 
-void incrementStepperMotor(int dir, int steps){
+void moveStepperMotor(int dir, int steps){
 	digitalWrite(DIR,dir);
 	
 	int i;
 	for (i=0;i<steps;i++){
-		incrementStepperMotor();
+		moveStepperMotorSingleStep();
 	}
 }
 
 int closeUSB(HIDInterface* hid){
+	hid_return ret;
 	ret = hid_close(hid);
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_close failed with return code %d\n", ret);
