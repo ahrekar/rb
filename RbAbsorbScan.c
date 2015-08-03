@@ -6,7 +6,7 @@
    RasPi connected to USB 1204LS.
 
 
- */
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,10 +21,11 @@
 #include "pmd.h"
 #include "usb-1208LS.h"
 
+float stdDeviation(float* values, int numValues);
 
 int main (int argc, char **argv)
 {
-	int i,startvalue,endvalue,stepsize,steprange;
+	int i,startvalue,endvalue,stepsize,steprange,nSamples;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
@@ -75,7 +76,7 @@ int main (int argc, char **argv)
 	if (startvalue>endvalue) {
 		printf("error: startvalue > endvalue.\nYeah, i could just swap them in code.. or you could just enter them in correctly. :-)\n");
 		return 1;
-		}
+	}
 
 
 	// config mask 0x01 means all inputs
@@ -105,13 +106,17 @@ int main (int argc, char **argv)
 	fprintf(fp,fileString);
 	fprintf(fp,"\n");
 
-//TODO Scanf terminates read after hitting a space?!?!?!?!?
+	//TODO Scanf terminates read after hitting a space?!?!?!?!?
 	fprintf(fp,"#");			//gnuplot needs non-data lines commented out.
 	fprintf(fp,comments);
-	fprintf(fp,"\n#Aout\tPhotoCurrent\n");
+	fprintf(fp,"\n#Aout\tPhotoCurrent\tStd.Dev.\n");
 	channel = 2; //analog input... for photodiode
 	gain = BP_5_00V;
 
+	// Allocate some memory to store measurements for calculating
+	// error bars.
+	nSamples = 16;
+	float* measurement = malloc(nSamples*sizeOf(float));
 
 	for (value=startvalue;value<endvalue;value+=stepsize){
 		usbAOut_USB1208LS(hid, 0, value);
@@ -122,24 +127,27 @@ int main (int argc, char **argv)
 		// delay to allow transients to settle
 		delay(300);
 		involts = 0.0;
-// grab several readings and average
-		for (i=0;i<16;i++){
-		svalue = usbAIn_USB1208LS(hid,channel,gain);
-		involts=involts+volts_LS(gain,svalue);
+		// grab several readings and average
+		for (i=0;i<nSamples;i++){
+			svalue = usbAIn_USB1208LS(hid,channel,gain);
+			measurement[i] = volts_LS(gain,svalue);
+			involts=involts+meausrement[i];
 		}
-		involts=involts/16.0;
+
+		involts=involts/(float)nSamples;
 
 		printf("Current %f\n",involts);
-		fprintf(fp,"%f \n",involts);
+		fprintf(fp,"%f\t%f\n",involts,stdDeviation(values,measurement);
 
 		fflush(stdout);
 	}
 
+	free(measurement);
 
 
-value=(int)(1.325*617.0);
+	value=(int)(1.325*617.0);
 
-usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
+	usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
 
 	fclose(fp);
 
@@ -162,7 +170,7 @@ usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb\n");
+		fprintf(gnuplot, "set terminal dumb size 160,64\n");
 		fprintf(gnuplot, "set output\n");			
 		sprintf(buffer, "plot '%s'\n", fileString);
 		fprintf(gnuplot, buffer);
@@ -176,4 +184,24 @@ usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
 	pclose(gnuplot);
 
 	return 0;
+}
+
+float stdDeviation(float* value, int numValues){
+	float stdDev, sum, avg;
+
+	// First Calculate the Average value
+	sum = 0.0;
+	for(int i=0; i < numValues;i++){ 
+		sum += value[i];
+	}
+	avg = sum / (float) numValues;
+
+	// Then calculate the Standard Deviation
+	sum = 0.0;
+	for(int i=0; i < numValues;i++){
+		sum += pow(avg-value[i],2);
+	}
+	stdDev = sqrt(sum/(numValues-1));
+
+	return stdDev;
 }
