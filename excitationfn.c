@@ -51,6 +51,7 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
+/*
 	if (argc == 6){
 		bias = *argv[1];
 		offset = *argv[2];
@@ -63,7 +64,7 @@ int main (int argc, char **argv)
 		printf("    Usage: ./excitationfn.c <filament bias> <target offset> <scan range (0-30)> <step size> <comment less than 80 char>\n");
 	}
 
-
+*/
 	// set up USB interface
 
 	ret = hid_init();
@@ -90,7 +91,7 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat\n",timeinfo);
+	strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
 
 	printf("\n");
 	printf(buffer);
@@ -129,7 +130,8 @@ int main (int argc, char **argv)
 	if (stepsize<1) stepsize=1;
 
 	printf("Enter, other, single line comments for data run(80 char limit): ");
-	gets(buffer);	// For receiving input strings, gets is a
+
+	scanf("%s",buffer);	// For receiving input strings, gets is a
 	//more convenient function to use. 
 	fprintf(fp,buffer);
 
