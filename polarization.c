@@ -109,7 +109,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
 
 	printf("Enter, other, single line comments for data run(80 char limit): ");
-	gets(buffer);
+	scanf("%79s",buffer);
 	fprintf(fp,buffer);
 
 	// Write the header for the data to the file.
