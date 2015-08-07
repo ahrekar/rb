@@ -122,6 +122,7 @@ int main (int argc, char **argv)
 	if (stepsize<1){
 		printf("Step size too small, using 1 (0.029V) instead.\n");
 		stepsize=1;
+	}
 	else if (stepsize > 11){
 		printf("Step size too large, using 11 (0.322V) instead.\n");
 		stepsize=11;
