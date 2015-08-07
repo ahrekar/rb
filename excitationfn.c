@@ -70,6 +70,7 @@ int main (int argc, char **argv)
 		printf("               2: 0.059V   6: 0.176V  10: 0.293V                                               \n");
 		printf("               3: 0.088V   7: 0.205V  11: 0.322V                                               \n");
 		printf("               4: 0.117V   8: 0.234V                                                           \n");
+		return 1;
 	}
 
 	// set up USB interface
