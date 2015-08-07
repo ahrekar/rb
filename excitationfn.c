@@ -9,6 +9,9 @@
 
    PMT Counts: data received from CTR in USB1208
 
+   The step size will be adjusted to the next available value if the specific Voltage 
+   chosen is not available.
+
 Usage: 
 
 ./excitationfn.c <filament bias> <target offset> <scan range (0-30)> <step size> <comment less than 80 char>
@@ -35,7 +38,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer [80];
+	char buffer [1024];
 	float bias, offset, HPcal,energy,scanrange;
 	FILE *fp;
 	__s16 sdata[1024];
@@ -51,7 +54,7 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
-/*
+	//
 	if (argc == 6){
 		bias = *argv[1];
 		offset = *argv[2];
@@ -61,10 +64,14 @@ int main (int argc, char **argv)
 	} else{
 		printf("It seems you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
-		printf("    Usage: ./excitationfn.c <filament bias> <target offset> <scan range (0-30)> <step size> <comment less than 80 char>\n");
+		printf("    Usage: ./excitationfn.c <filament bias> <target offset> <scan range> <step size> <comments>\n");
+		printf("                                                            (   0-30   ) (  1-11   )           \n");
+		printf("   Step sizes: 1: 0.029V   5: 0.146V   9: 0.263V                                               \n");
+		printf("               2: 0.059V   6: 0.176V  10: 0.293V                                               \n");
+		printf("               3: 0.088V   7: 0.205V  11: 0.322V                                               \n");
+		printf("               4: 0.117V   8: 0.234V                                                           \n");
 	}
 
-*/
 	// set up USB interface
 
 	ret = hid_init();
@@ -105,34 +112,21 @@ int main (int argc, char **argv)
 
 	fprintf(fp,buffer);
 
-	printf("Enter filament bias potential ");
-	scanf("%f",&bias);
-	fprintf(fp,"\nfilament bias %4.2f\n",bias);
-
-	printf("Enter target offset potential ");
-	scanf("%f",&offset);
-	fprintf(fp,"target offset %4.2f\n",offset);
-
 	HPcal=28.1/960.0;
-
 	fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
-	printf("Enter HP scan range volts (0-30) ");
-	scanf("%f",&scanrange);
+
 	steprange = 1+(int)(scanrange/HPcal);
 	if (steprange>1023) steprange = 1023;
 	if (steprange < 8 ) steprange = 8;
-	printf("\n");	
-	for (i=1;i<12;i++){
-		printf("%d: %1.3fV, ",i,i*HPcal);
+
+	if (stepsize<1){
+		printf("Step size too small, using 1 (0.029V) instead.\n");
+		stepsize=1;
+	else if (stepsize > 11){
+		printf("Step size too large, using 11 (0.322V) instead.\n");
+		stepsize=11;
 	}
-	printf("\nEnter integer step size :");
-	scanf("%d",&stepsize);
-	if (stepsize<1) stepsize=1;
 
-	printf("Enter, other, single line comments for data run(80 char limit): ");
-
-	scanf("%s",buffer);	// For receiving input strings, gets is a
-	//more convenient function to use. 
 	fprintf(fp,buffer);
 
 	fprintf(fp,"\nAout\tEnergy\tCounts\tCurrent\n");
@@ -146,9 +140,6 @@ int main (int argc, char **argv)
 	//temp=1;
 	//channel = (__u8) temp;
 
-	/**	TODO Make the largest Aout step range and sizes
-	  be user customizeable. 
-	 **/
 	for (value=0;value<steprange;value+=stepsize){
 		usbAOut_USB1208LS(hid, 1, value);
 		printf("Aout %d \t",value);
@@ -199,7 +190,3 @@ int main (int argc, char **argv)
 
 	return 0;
 }
-
-
-
-
