@@ -26,8 +26,9 @@ int main (int argc, char **argv)
 	int counts,i,steps,nsteps,ninc,dwell;
 	time_t rawtime;
 	struct tm * timeinfo;
+	signed short svalue;
 	char buffer [80];
-	float bias, offset, HPcal,energy;
+	float bias, offset, HPcal,energy, current;
 	FILE *fp;
 	__s16 sdata[1024];
 	__u16 value;
@@ -85,6 +86,8 @@ int main (int argc, char **argv)
 		printf("unable to open file \n");
 		exit(1);
 	}
+	fprintf(fp,buffer);
+	fprintf(fp,"\n");
 	printf("Enter filament bias potential ");
 	scanf("%f",&bias);
 
@@ -109,11 +112,13 @@ int main (int argc, char **argv)
 	fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
 
 	printf("Enter, other, single line comments for data run(80 char limit): ");
-	scanf("%79s",buffer);
+	scanf("%s",buffer);
 	fprintf(fp,buffer);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"\nsteps\tCounts\n");
+	fprintf(fp,"\nsteps\tCounts\tCurrent\n");
+	gain=BP_5_00V;
+	channel = 0; // analog input for k617 ammeter
 
 	digitalWrite(CLK,LOW);
 	delayMicrosecondsHard(2000);
@@ -139,9 +144,23 @@ int main (int argc, char **argv)
 			delayMicrosecondsHard(1000000); // wiringPi
 			counts+=usbReadCounter_USB1208LS(hid);
 		}
-		printf("Counts %d\n",counts);
+
+		current=0.0;
+		for (i=0;i<8;i++){
+
+		svalue = usbAIn_USB1208LS(hid,channel,gain);
+		current = current+volts_LS(gain,svalue);
+		}
+		current = current/8.0;
+
+		printf("Counts %d\t",counts);
 		fflush(stdout);
-		fprintf(fp,"%d \n",counts);
+		fprintf(fp,"%d \t",counts);
+
+		printf("current %f\n",current);
+		fflush(stdout);
+		fprintf(fp,"%f \n",current);
+
 	}
 
 
