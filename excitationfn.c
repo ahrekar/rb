@@ -56,10 +56,10 @@ int main (int argc, char **argv)
 	// prompt the user with the proper form for input. 
 	//
 	if (argc == 6){
-		bias = *argv[1];
-		offset = *argv[2];
-		scanrange = *argv[3];
-		stepsize = *argv[4];
+		bias = atof(argv[1]);
+		offset = atof(argv[2]);
+		scanrange =atof(argv[3]);
+		stepsize = atoi(argv[4]);
 		strcpy(comments,argv[5]);
 	} else{
 		printf("It seems you made an error in your input, please examine\n");
@@ -77,11 +77,11 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	printf("bias %f",bias);
-	printf("offset %f",offset);
-	printf("scan range %f",scanrange);
-	printf("step size %d",stepsize);
-	printf("comments %s",comments);
+	printf("bias %f\n",bias);
+	printf("offset %f\n",offset);
+	printf("scan range %f\n",scanrange);
+	printf("step size %d\n",stepsize);
+	printf("comments %s\n",comments);
 
 	// set up USB interface
 
