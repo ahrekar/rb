@@ -38,7 +38,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer [1024];
+	char buffer[80],comments[1024];
 	float bias, offset, HPcal,energy,scanrange;
 	FILE *fp;
 	__s16 sdata[1024];
@@ -60,7 +60,7 @@ int main (int argc, char **argv)
 		offset = *argv[2];
 		scanrange = *argv[3];
 		stepsize = *argv[4];
-		strcpy(buffer,argv[5]);
+		strcpy(comments,argv[5]);
 	} else{
 		printf("It seems you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
@@ -72,6 +72,12 @@ int main (int argc, char **argv)
 		printf("               4: 0.117V   8: 0.234V                                                           \n");
 		return 1;
 	}
+
+	printf("bias %f",bias);
+	printf("offset %f",offset);
+	printf("scan range %f",scanrange);
+	printf("step size %d",stepsize);
+	printf("comments %s",comments);
 
 	// set up USB interface
 
@@ -101,9 +107,7 @@ int main (int argc, char **argv)
 	timeinfo=localtime(&rawtime);
 	strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
 
-	printf("\n");
-	printf(buffer);
-
+	printf("\n%s\n",buffer);
 
 	fp=fopen(buffer,"w");
 	if (!fp) {
@@ -111,10 +115,11 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	fprintf(fp,buffer);
+	fprintf(fp,"#");
+	fprintf(fp,"%s\n",buffer);
 
 	HPcal=28.1/960.0;
-	fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+	fprintf(fp,"#Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
 
 	steprange = 1+(int)(scanrange/HPcal);
 	if (steprange>1023) steprange = 1023;
@@ -128,9 +133,11 @@ int main (int argc, char **argv)
 		stepsize=11;
 	}
 
-	fprintf(fp,buffer);
+	fprintf(fp,"#");
+	fprintf(fp,comments);
+	fprintf(fp,"\n");
 
-	fprintf(fp,"\nAout\tEnergy\tCounts\tCurrent\n");
+	fprintf(fp,"#Aout\tEnergy\tCounts\tCurrent\n");
 	channel = 0; //analog input  for Keithly K617
 	gain = BP_10_00V;
 
