@@ -64,9 +64,13 @@ int main (int argc, char **argv)
 	} else{
 		printf("It seems you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
-		printf("    Usage: ./excitationfn.c <filament bias> <target offset> <scan range> <step size> <comments>\n");
-		printf("                                                            (   0-30   ) (  1-11   )           \n");
-		printf("   Step sizes: 1: 0.029V   5: 0.146V   9: 0.263V                                               \n");
+		printf("                                                                                               \n");
+		printf("    Usage:                                                                                     \n");
+		printf("           sudo ./excitationfn <filament bias> <target offset> <scan range> <step size> <comments>\n");
+		printf("                                                               (   0-30   ) (  1-11   )           \n");
+		printf("                                                                                               \n");
+		printf("   Step sizes:                                                                                 \n");
+		printf("               1: 0.029V   5: 0.146V   9: 0.263V                                               \n");
 		printf("               2: 0.059V   6: 0.176V  10: 0.293V                                               \n");
 		printf("               3: 0.088V   7: 0.205V  11: 0.322V                                               \n");
 		printf("               4: 0.117V   8: 0.234V                                                           \n");
