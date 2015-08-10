@@ -35,6 +35,7 @@ Usage:
 int main (int argc, char **argv)
 {
 	int counts,i,stepsize,steprange;
+	int minstepsize,maxstepsize;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
@@ -67,13 +68,18 @@ int main (int argc, char **argv)
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
 		printf("           sudo ./excitationfn <filament bias> <target offset> <scan range> <step size> <comments>\n");
-		printf("                                                               (   0-30   ) (  1-11   )           \n");
+		printf("                                                               (   0-30   ) (  1-24   )           \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
-		printf("               1: 0.029V   5: 0.146V   9: 0.263V                                               \n");
-		printf("               2: 0.059V   6: 0.176V  10: 0.293V                                               \n");
-		printf("               3: 0.088V   7: 0.205V  11: 0.322V                                               \n");
-		printf("               4: 0.117V   8: 0.234V                                                           \n");
+		printf("               1: 0.029V    9: 0.263V   17: 0.497V                                              \n");
+		printf("               2: 0.059V   10: 0.293V   18: 0.527V                                              \n");
+		printf("               3: 0.088V   11: 0.322V   19: 0.556V                                              \n");
+		printf("               4: 0.117V   12: 0.351V   20: 0.585V                                              \n");
+		printf("               5: 0.146V   13: 0.381V   21: 0.615V                                              \n");
+		printf("               6: 0.176V   14: 0.410V   22: 0.644V                                              \n");
+		printf("               7: 0.205V   15: 0.439V   23: 0.673V                                              \n");
+		printf("               8: 0.234V   16: 0.468V   24: 0.703V                                              \n");
+		printf("                                                                                               \n");
 		return 1;
 	}
 
@@ -129,13 +135,15 @@ int main (int argc, char **argv)
 	if (steprange>1023) steprange = 1023;
 	if (steprange < 8 ) steprange = 8;
 
-	if (stepsize<1){
-		printf("Step size too small, using 1 (0.029V) instead.\n");
-		stepsize=1;
+	minstepsize=1;
+	maxstepsize=24;
+	if (stepsize<minstepsize){
+		printf("Step size too small, using %d (%0.3fV) instead.\n",minstepsize,minstepsize*HPcal);
+		stepsize=minstepsize;
 	}
-	else if (stepsize > 11){
-		printf("Step size too large, using 11 (0.322V) instead.\n");
-		stepsize=11;
+	else if (stepsize > maxstepsize){
+		printf("Step size too large, using %d (%0.3fV) instead.\n",maxstepsize,maxstepsize*HPcal);
+		stepsize=maxstepsize;
 	}
 
 	fprintf(fp,"#");
