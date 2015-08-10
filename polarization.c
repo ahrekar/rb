@@ -23,11 +23,11 @@
 
 int main (int argc, char **argv)
 {
-	int counts,i,steps,nsteps,ninc,dwell;
+	int counts,i,steps,nsteps,ninc,dwell,aout;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer [80];
+	char buffer[80],comments[80];
 	float bias, offset, HPcal,energy, current;
 	FILE *fp;
 	__s16 sdata[1024];
@@ -41,8 +41,21 @@ int main (int argc, char **argv)
 	hid_return ret;
 	int interface;
 
-	// set up USB interface
+	// get parameters
 
+	if (argc==6){
+		nsteps=1200*atoi(argv[1]);
+		ninc=atoi(argv[2]);
+		dwell=atoi(argv[3]);
+		aout=atoi(argv[4]);
+		strcpy(comments,argv[5]);
+		} else {
+	printf("usage '~$ sudo ./polarization <num_rotations> <step_size> <pmt_dwell> <aout_for_target> <comments_in_double_quotes>'\n");
+	return 1;
+	}
+
+
+	// set up USB interface
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_init failed with return code %d\n", ret);
@@ -88,32 +101,49 @@ int main (int argc, char **argv)
 	}
 	fprintf(fp,buffer);
 	fprintf(fp,"\n");
+	/*
+	DO AWAY WITH THIS. THIS INFORMATION IS NOT SPECIFICALLY USED IN THE PROGRAM. USER SHOULD JUST SPECIFY THE NOMINAL ELECTRON ENERGY
 	printf("Enter filament bias potential ");
 	scanf("%f",&bias);
-
 	printf("Enter target offset potential ");
 	scanf("%f",&offset);
-
 	fprintf(fp,"filament bias %4.2f\n",bias);
 	fprintf(fp,"target offset %4.2f\n",offset);
+	*/
+
 	// Set up for stepmotor
+	/*  REPLACED WITH COMMAND LINE ARGS
 	printf("Enter total number of steps (1200/revolution) ");
 	scanf("%d",&nsteps);
 	printf("Enter number of steps per data point");
 	scanf("%d",&ninc);
 	printf("Enter number of seconds of data to aquire per data point");
 	scanf("%d",&dwell);
-
-	if (ninc<1) ninc=1;
-	if (ninc>nsteps) ninc=nsteps/2;
-	if (dwell<1) dwell=1;
-
-	HPcal=28.1/960.0;
-	fprintf(fp,"Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
-
 	printf("Enter, other, single line comments for data run(80 char limit): ");
 	scanf("%s",buffer);
 	fprintf(fp,buffer);
+	*/
+
+	// RUDAMENTARIY ERROR CHECKING
+	if (nsteps<1200) nsteps=1200;
+	if (ninc<1) ninc=1;
+	if (ninc>nsteps) ninc=nsteps/2;
+	if (dwell<1) dwell=1;
+	if (aout<0) aout=0;
+	if (aout>1023) aout=1023;
+
+	HPcal=28.1/960.0;
+	fprintf(fp,"nsteps %d\n",nsteps);
+	fprintf(fp,"Aout %d\n",aout);
+	fprintf(fp,comments);
+	fprintf(fp,"\nAssumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+
+
+	//write aout for he target here
+	usbAOut_USB1208LS(hid,1,aout);
+
+	//NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
+	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
 
 	// Write the header for the data to the file.
 	fprintf(fp,"\nsteps\tCounts\tCurrent\n");
