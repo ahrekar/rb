@@ -19,6 +19,7 @@ Usage:
 */
 
 #include <stdlib.h>
+#include <math.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -40,15 +41,18 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer[80],comments[1024];
+	char buffer[80],fileString[80],comments[1024];
 	float bias, offset, HPcal,energy,scanrange, involts;
 	FILE *fp;
+	/** These are not used in this program, but might
+		be useful in the future.
 	__s16 sdata[1024];
+	_u16 count;
+	_u8 gains[8];
+	_u8 options,input,pin = 0;
+	**/
 	__u16 value;
-	__u16 count;
-	__u8 gains[8];
-	__u8 options;
-	__u8 input, pin = 0, channel, gain;
+	__u8 channel,gain;
 
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
@@ -108,8 +112,9 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(buffer,80,"/home/pi/RbData/EX%F_%H%M%S.dat",timeinfo);
+	strftime(fileString,80,"/home/pi/RbData/EX%F_%H%M%S",timeinfo);
 
+	sprintf(buffer,"%s.dat",fileString);
 	printf("\n%s\n",buffer);
 
 	fp=fopen(buffer,"w");
@@ -223,6 +228,7 @@ int main (int argc, char **argv)
 
 	// Create graphs for data see gnutest.c for an explanation of 
 	// how this process works.
+	FILE *gnuplot;
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
@@ -237,14 +243,14 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s' using 2:3:4 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 
 		// Set up the axis for the second plot x axis stays the same
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s' using 2:5:6 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 		// End printing to screen
 
@@ -256,20 +262,22 @@ int main (int argc, char **argv)
 		
 		// Set up the output.
 		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s.png'\n", fileString);
+		sprintf(buffer, "set output '%s_counts.png'\n", fileString);
 		fprintf(gnuplot, buffer);
 
 		// Set up the axis labels
 		fprintf(gnuplot, "set xlabel 'Energy'\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		// Print the plot
-		sprintf(buffer, "plot '%s' using 2:3:4 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 
+		fprintf(gnuplot, "unset output\n"); 
+		sprintf(buffer, "set output '%s_current.png'\n", fileString);
 		// Set up the axis labels, x stays the same
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
-		sprintf(buffer, "plot '%s' using 2:5:6 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
