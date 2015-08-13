@@ -273,7 +273,9 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "unset output\n"); 
+
 		sprintf(buffer, "set output '%s_current.png'\n", fileString);
+		fprintf(gnuplot, buffer);
 		// Set up the axis labels, x stays the same
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
