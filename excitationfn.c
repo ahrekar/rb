@@ -241,6 +241,7 @@ int main (int argc, char **argv)
 		// Set up the axis for the first plot
 		fprintf(gnuplot, "set xlabel 'Energy'\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		fprintf(gnuplot, "set yrange [*:1]\n");			
 
 		// Print the plot to the screen
 		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileString);
@@ -266,8 +267,6 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, buffer);
 
 		// Set up the axis labels
-		fprintf(gnuplot, "set xlabel 'Energy'\n");			
-		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		// Print the plot
 		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
