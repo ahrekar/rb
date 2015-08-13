@@ -110,7 +110,7 @@ int main (int argc, char **argv)
 	//TODO Scanf terminates read after hitting a space?!?!?!?!?
 	fprintf(fp,"#");			//gnuplot needs non-data lines commented out.
 	fprintf(fp,comments);
-	fprintf(fp,"\n#Aout\tPhotoCurrent\tStd.Dev.\n");
+	fprintf(fp,"\nAout\tPhotoCurrent\tStd.Dev.\n");
 	channel = 2; //analog input... for photodiode
 	gain = BP_5_00V;
 
@@ -173,15 +173,21 @@ int main (int argc, char **argv)
 	if (gnuplot != NULL){
 		fprintf(gnuplot, "set terminal dumb size 160,32\n");
 		fprintf(gnuplot, "set output\n");			
+		
+		sprintf(buffer, "set title '%s'\n", fileString);
+		fprintf(gnuplot, buffer);
+
+		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
+		fprintf(gnuplot, "set yrange [*:.1]\n");			
 		sprintf(buffer, "plot '%s' with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileString);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s' 1:2:3 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
