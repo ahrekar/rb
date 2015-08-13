@@ -149,7 +149,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"\n");
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"#Aout\tEnergy\tCounts\tCount Std. Dev.\tCurrent\tCurrent Std. Dev.\n");
+	fprintf(fp,"Aout\tEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\n");
 	channel = 0; //analog input  for Keithly K617
 	gain = BP_10_00V;
 
@@ -235,10 +235,13 @@ int main (int argc, char **argv)
 		// First print to the terminal screen.
 
 		// Set up the output for printing to terminal
-		fprintf(gnuplot, "set terminal dumb size 160,32\n");
+		fprintf(gnuplot, "set terminal dumb size 160,30\n");
 		fprintf(gnuplot, "set output\n");			
+		fprintf(gnuplot, "set key autotitle columnheader\n");			
 
 		// Set up the axis for the first plot
+		sprintf(buffer, "set title '%s'\n", fileString);
+		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "set xlabel 'Energy'\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		fprintf(gnuplot, "set yrange [0:*]\n");			
@@ -248,6 +251,8 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, buffer);
 
 		// Set up the axis for the second plot x axis stays the same
+		sprintf(buffer, "set title '%s'\n", fileString);
+		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		fprintf(gnuplot, "set yrange [*:1]\n");			
 
@@ -267,9 +272,12 @@ int main (int argc, char **argv)
 		sprintf(buffer, "set output '%s_counts.png'\n", fileString);
 		fprintf(gnuplot, buffer);
 
+		fprintf(gnuplot, "set key autotitle columnhead\n");			
 		// Set up the axis labels
+		sprintf(buffer, "set title '%s'\n", fileString);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
-		fprintf(gnuplot, "set yrange [*:1]\n");			
 		// Print the plot
 		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
@@ -279,8 +287,10 @@ int main (int argc, char **argv)
 		sprintf(buffer, "set output '%s_current.png'\n", fileString);
 		fprintf(gnuplot, buffer);
 		// Set up the axis labels, x stays the same
+		sprintf(buffer, "set title '%s'\n", fileString);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "set yrange [*:.1]\n");			
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
-		fprintf(gnuplot, "set yrange [*:1]\n");			
 		// Print the plot
 		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
