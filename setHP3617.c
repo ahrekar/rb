@@ -84,7 +84,7 @@ if (value>1023) value=1023;
 //	temp=1;
 //	channel = (__u8) temp;
 
-        	usbAOut_USB1208LS(hid, 0, value);
+        	usbAOut_USB1208LS(hid, 1, value);
 		printf("Aout %d \t",value);
 		fflush(stdout);
 		outvolts = (float)value * calibration;
