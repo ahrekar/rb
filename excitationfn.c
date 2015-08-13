@@ -31,16 +31,17 @@ Usage:
 #include "pmd.h"
 #include "usb-1208LS.h"
 
+float stdDeviation(float* values, int numValues);
 
 int main (int argc, char **argv)
 {
 	int counts,i,stepsize,steprange;
-	int minstepsize,maxstepsize;
+	int minstepsize,maxstepsize, nSamples;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
 	char buffer[80],comments[1024];
-	float bias, offset, HPcal,energy,scanrange;
+	float bias, offset, HPcal,energy,scanrange, involts;
 	FILE *fp;
 	__s16 sdata[1024];
 	__u16 value;
@@ -142,7 +143,8 @@ int main (int argc, char **argv)
 	fprintf(fp,comments);
 	fprintf(fp,"\n");
 
-	fprintf(fp,"#Aout\tEnergy\tCounts\tCurrent\n");
+	// Print the header for the information in the datafile
+	fprintf(fp,"#Aout\tEnergy\tCounts\tCount Std. Dev.\tCurrent\tCurrent Std. Dev.\n");
 	channel = 0; //analog input  for Keithly K617
 	gain = BP_10_00V;
 
@@ -153,6 +155,12 @@ int main (int argc, char **argv)
 	//temp=1;
 	//channel = (__u8) temp;
 
+
+	// Allocate some memory to store measurements for calculating
+	// error bars.
+	nSamples = 16;
+	float* measurement = malloc(nSamples*sizeof(float));
+
 	for (value=0;value<steprange;value+=stepsize){
 		usbAOut_USB1208LS(hid, 1, value);
 		printf("Aout %d \t",value);
@@ -161,7 +169,7 @@ int main (int argc, char **argv)
 
 		energy = bias - (offset + HPcal*(float)value);
 		printf("eV %4.2f\t",energy);
-		fprintf(fp,"%4.2f\t",energy);
+		fprintf(fp,"%4.4f\t",energy);
 
 		// delay to allow transients to settle
 		delay(500);
@@ -173,15 +181,27 @@ int main (int argc, char **argv)
 			counts+=usbReadCounter_USB1208LS(hid);
 		}
 		printf("Counts %d\t",counts);
-		svalue = usbAIn_USB1208LS(hid,channel,gain);
+
+		involts = 0.0;
+
+		// grab several readings and average
+		for (i=0;i<nSamples;i++){
+			svalue = usbAIn_USB1208LS(hid,channel,gain);
+			measurement[i] = volts_LS(gain,svalue);
+			involts=involts+measurement[i];
+		}
+
+		involts=involts/(float)nSamples;
 
 		printf("Current %f\n",volts_LS(gain,svalue));
 
-		fprintf(fp,"%d \t",counts);
-		fprintf(fp,"%f \n",volts_LS(gain,svalue));
+		fprintf(fp,"%d\t%f\t",counts,sqrt(counts));
+		fprintf(fp,"%f\t%f\n",involts,stdDeviation(measurement,nSamples));
 
 		fflush(stdout);
 	}
+
+	free(measurement);
 
 	usbAOut_USB1208LS(hid,1,0);
 
@@ -201,5 +221,79 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
+	// Create graphs for data see gnutest.c for an explanation of 
+	// how this process works.
+	gnuplot = popen("gnuplot","w"); 
+
+	if (gnuplot != NULL){
+		// First print to the terminal screen.
+
+		// Set up the output for printing to terminal
+		fprintf(gnuplot, "set terminal dumb size 160,32\n");
+		fprintf(gnuplot, "set output\n");			
+
+		// Set up the axis for the first plot
+		fprintf(gnuplot, "set xlabel 'Energy'\n");			
+		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+
+		// Print the plot to the screen
+		sprintf(buffer, "plot '%s' using 2:3:4 with errorbars\n", fileString);
+		fprintf(gnuplot, buffer);
+
+		// Set up the axis for the second plot x axis stays the same
+		fprintf(gnuplot, "set ylabel 'Current'\n");			
+
+		// Print the plot to the screen
+		sprintf(buffer, "plot '%s' using 2:5:6 with errorbars\n", fileString);
+		fprintf(gnuplot, buffer);
+		// End printing to screen
+
+		// Clear the previous output settings, we no longer want to 
+		// output to the terminal.
+		fprintf(gnuplot, "unset output\n"); 
+
+		// Then print to an image file.
+		
+		// Set up the output.
+		fprintf(gnuplot, "set terminal png\n");
+		sprintf(buffer, "set output '%s.png'\n", fileString);
+		fprintf(gnuplot, buffer);
+
+		// Set up the axis labels
+		fprintf(gnuplot, "set xlabel 'Energy'\n");			
+		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		// Print the plot
+		sprintf(buffer, "plot '%s' using 2:3:4 with errorbars\n", fileString);
+		fprintf(gnuplot, buffer);
+
+		// Set up the axis labels, x stays the same
+		fprintf(gnuplot, "set ylabel 'Current'\n");			
+		// Print the plot
+		sprintf(buffer, "plot '%s' using 2:5:6 with errorbars\n", fileString);
+		fprintf(gnuplot, buffer);
+	}
+	pclose(gnuplot);
+
 	return 0;
+}
+
+float stdDeviation(float* value, int numValues){
+	float stdDev, sum, avg;
+
+	// First Calculate the Average value
+	sum = 0.0;
+	int i;
+	for(i=0; i < numValues;i++){ 
+		sum += value[i];
+	}
+	avg = sum / (float) numValues;
+
+	// Then calculate the Standard Deviation
+	sum = 0.0;
+	for(i=0; i < numValues;i++){
+		sum += pow(avg-value[i],2);
+	}
+	stdDev = sqrt(sum/(numValues-1));
+
+	return stdDev;
 }
