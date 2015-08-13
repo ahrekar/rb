@@ -26,19 +26,22 @@ float stdDeviation(float* values, int numValues);
 
 int main (int argc, char **argv)
 {
-	int i,startvalue,endvalue,stepsize,steprange,nSamples;
+	int i,startvalue,endvalue,stepsize,nSamples;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
 	char buffer[80],fileString[80],comments[1024];
 	float involts;
 	FILE *fp, *gnuplot;
+	/** Unused RasbPi things.
 	__s16 sdata[1024];
-	__u16 value;
 	__u16 count;
 	__u8 gains[8];
 	__u8 options;
-	__u8 input, pin = 0, channel, gain;
+	__u8 input, pin = 0;
+	**/
+	__u16 value;
+	__u8 channel, gain;
 
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
