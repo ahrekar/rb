@@ -21,6 +21,9 @@
 #define CLK 0
 #define DIR 1
 
+int setUpUSB(HIDInterface* hid);
+int closeUSB(HIDInterface* hid);
+
 int main (int argc, char **argv)
 {
 	int counts,i,steps,nsteps,ninc,dwell,aout;
@@ -57,9 +60,10 @@ int main (int argc, char **argv)
 
 
 	// set up USB interface
-	if(!setUpUSB(hid)){ // if setUpUSB was not completed successfully, end the program.
+	if(setUpUSB(hid)){ // if setUpUSB was not completed successfully, end the program.
 		return 1; 
 	}
+	printf("I'm doing what I'm supposed to do\n");
 
 
 	// config mask 0x01 means all inputs
@@ -168,10 +172,11 @@ int main (int argc, char **argv)
 
 int setUpUSB(HIDInterface* hid){
 	hid_return ret;
+	int interface;
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_init failed with return code %d\n", ret);
-		return 0;
+		return 1;
 	}
 
 	if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
@@ -179,7 +184,7 @@ int setUpUSB(HIDInterface* hid){
 		exit(1);
 	} else {
 		printf("USB 1208LS Device is found! interface = %d\n", interface);
-		return 1;
+		return 0;
 	}
 }
 
@@ -198,4 +203,5 @@ int closeUSB(HIDInterface* hid){
 		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
 		return 1;
 	}
+	return 0;
 }
