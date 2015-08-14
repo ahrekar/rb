@@ -71,6 +71,7 @@ int main (int argc, char **argv)
 		strcpy(comments,argv[4]);
 	} else {
 		printf("Usage:\n$ sudo ./RbAbsorbScan <begin> <end> <step> <comments>\n");
+		printf("                              (  0 - 1023 )                  \n");
 		return 0;
 	}
 	if (endvalue>1024) endvalue=1024;
@@ -190,7 +191,7 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileString);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' 1:2:3 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
