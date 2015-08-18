@@ -21,8 +21,8 @@
 #define CLK 0
 #define DIR 1
 
-int setUpUSB(HIDInterface* hid);
-int closeUSB(HIDInterface* hid);
+int setUpUSB(HIDInterface* hid, hid_return* ret);
+int closeUSB(HIDInterface* hid, hid_return* ret);
 
 int main (int argc, char **argv)
 {
@@ -41,7 +41,7 @@ int main (int argc, char **argv)
 	__u8 input, pin = 0, channel, gain;
 
 	HIDInterface*  hid = 0x0;
-	hid_return ret;
+	hid_return* ret;
 	int interface;
 
 	// get parameters
@@ -53,17 +53,17 @@ int main (int argc, char **argv)
 		strcpy(comments,argv[5]);
 	} else {
 		printf("usage '~$ sudo ./polarization <num_rotations> <step_size> <pmt_dwell> <aout_for_target> <comments_in_double_quotes>'\n");
-		printf("                                                                                        (Specify nominal electron) '\n");
+		printf("                                                          (in seconds)                  (Specify nominal electron) '\n");
 		printf("                                                                                        (energy.                 ) '\n");
 		return 1;
 	}
 
 
 	// set up USB interface
-	if(setUpUSB(hid)){ // if setUpUSB was not completed successfully, end the program.
-		return 1; 
+	if(!setUpUSB(hid,ret)){ // if setUpUSB was not completed successfully, end the program.
+		return 1;
 	}
-	printf("I'm doing what I'm supposed to do\n");
+	printf("usb found!\n");
 
 
 	// config mask 0x01 means all inputs
@@ -71,6 +71,7 @@ int main (int argc, char **argv)
 	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
 	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+	printf("usb config complete!\n");
 
 	// set up for stepmotor
 	wiringPiSetup();
@@ -83,6 +84,7 @@ int main (int argc, char **argv)
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	strftime(buffer,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo);
+	printf("Generated filename\n");
 
 	printf("\n");
 	printf("%s\n",buffer);
@@ -167,40 +169,43 @@ int main (int argc, char **argv)
 	fclose(fp);
 
 	//cleanly close USB if it fails, indicate the error.
-	return closeUSB(hid);
+	return closeUSB(hid,ret);
 }
 
-int setUpUSB(HIDInterface* hid){
-	hid_return ret;
+int setUpUSB(HIDInterface* hid, hid_return* ret){
+	printf("SetUpUSB Successfully called!\n");
 	int interface;
-	ret = hid_init();
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_init failed with return code %d\n", ret);
-		return 1;
+	*ret = hid_init();
+	if (*ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_init failed with return code %d\n", *ret);
+		printf("hid_init failed with return code %d\n", *ret);
+		fflush(stdout);
+		return 0;
 	}
+	printf("First if statement passed!\n");
 
 	if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
 		fprintf(stderr, "USB 1208LS not found.\n");
+		printf("USB 1208LS not found.\n");
 		exit(1);
 	} else {
 		printf("USB 1208LS Device is found! interface = %d\n", interface);
-		return 0;
+		return 1;
 	}
 }
 
-int closeUSB(HIDInterface* hid){
-	hid_return ret;
-	ret = hid_close(hid);
+int closeUSB(HIDInterface* hid, hid_return* ret){
+	*ret = hid_close(hid);
 
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_close failed with return code %d\n", ret);
+	if (*ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_close failed with return code %d\n", *ret);
 		return 1;
 	}
 
 	hid_delete_HIDInterface(&hid);
-	ret = hid_cleanup();
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
+	*ret = hid_cleanup();
+	if (*ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_cleanup failed with return code %d\n", *ret);
 		return 1;
 	}
 	return 0;
