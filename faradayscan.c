@@ -45,7 +45,9 @@ int main (int argc, char **argv)
 	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
 	time_t rawtime;
 	signed short svalue;
-	float sumI,sumsin2b,sumcos2b,angle,count;
+	float sumI,sumsin2b,sumcos2b,angle,count,sumf0,sumf3,sumf4,df0sq,df3sq,df4sq;
+    float sumf[5],dfsq[5];
+    float dangle, f3overf4;
 	struct tm * timeinfo;
 	char buffer[80],comments[80];
 	float involts;
@@ -128,7 +130,7 @@ int main (int argc, char **argv)
 	fprintf(fp,comments);
 	fprintf(fp,"\n");
 	// Write the header for the data to the file.
-	fprintf(fp,"\nAout\tf0\tf3\tf4\tangle\n");
+	fprintf(fp,"\nAout\tf0\tf3\tdf3\tf4\tdf4\tangle\tdangle\n");
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
 		printf("Aout %d\n",Aout);
@@ -193,12 +195,25 @@ int main (int argc, char **argv)
 		sumcos2b=sumcos2b/count;
 		angle = 0.5*atan(sumsin2b/sumcos2b);
 		angle = angle*180.0/PI;
+        int j;
+        for(j=0;j<5;j++){
+
+            if (j==0){
+                dfsq[j] = sumsin2b/count;
+            }else{
+                dfsq[j] = sumsin2b/(count*count);
+            }
+        }
+        f3overf4=sumsin2b/sumcos2b;
+
+        dangle = 180 * (1/PI) * sqrt(  pow((1/(1+f3overf4)),2) *
+                        pow((1/sumcos2b),2) *
+                        (dfsq[3]+f3overf4*dfsq[4]));
 		printf("f0 = %f\t",sumI);
 		printf("f3 = %f\t",sumsin2b);
 		printf("f4 = %f\t",sumcos2b);
 		printf("angle = %f\n",angle);
-		fprintf(fp,"%d\t%f\t%f\t%f\t%f\n",Aout,sumI,sumsin2b,sumcos2b,angle);
-
+		fprintf(fp,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",Aout,sumI,sumsin2b,sqrt(dfsq[3]),sumcos2b,sqrt(dfsq[4]),angle,dangle);
 	}//end for Aout
 
 	fclose(fp);
@@ -217,7 +232,3 @@ int main (int argc, char **argv)
 	}
 	return 0;
 }
-
-
-
-
