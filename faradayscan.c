@@ -46,7 +46,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	signed short svalue;
 	float sumI,sumsin2b,sumcos2b,angle,count,sumf0,sumf3,sumf4,df0sq,df3sq,df4sq;
-    float sumf[5],dfsq[5];
+    float dfsq[5];
     float dangle, f3overf4;
 	struct tm * timeinfo;
 	char buffer[80],comments[80];
@@ -130,7 +130,7 @@ int main (int argc, char **argv)
 	fprintf(fp,comments);
 	fprintf(fp,"\n");
 	// Write the header for the data to the file.
-	fprintf(fp,"\nAout\tf0\tf3\tdf3\tf4\tdf4\tangle\tdangle\n");
+	fprintf(fp,"\nAout\tf0\tf3\tdf3\tf4\tdf4\tangle\tëdangle\n");
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
 		printf("Aout %d\n",Aout);
@@ -142,9 +142,13 @@ int main (int argc, char **argv)
 
 		usbAOut_USB1208LS(hid,0,Aout);
 
+        int j;
+        for(j=0;j<5;j++)
+			dfsq[j]=0;
+
 		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){
 
-			delay(300);
+			delay(100);
 			//get samples and average
 			nsamples=8;
 			involts=0.0;
@@ -159,7 +163,8 @@ int main (int argc, char **argv)
 			sumsin2b=sumsin2b+involts*sin(2*angle);
 			sumcos2b=sumcos2b+involts*cos(2*angle);
 			sumI+=involts;
-
+			dfsq[3]+=count*pow(sumsin2b,2);
+			dfsq[4]+=count*pow(sumcos2b,2);
 
 			printf("steps %d\t",(steps));
 			printf("PhotoI %f\t",involts);
@@ -175,7 +180,7 @@ int main (int argc, char **argv)
 
 		}
 		// reverse motor to bring back to same starting point.  This would not be needed
-		// but there is a small mis-match with the belt-pulley size. 
+		// but there is a small mis-match with the belt-pulley sizes. 
 		digitalWrite(DIR,0);
 
 		printf("Reset steppermotor\n");
@@ -195,15 +200,15 @@ int main (int argc, char **argv)
 		sumcos2b=sumcos2b/count;
 		angle = 0.5*atan(sumsin2b/sumcos2b);
 		angle = angle*180.0/PI;
-        int j;
-        for(j=0;j<5;j++){
 
+        for(j=0;j<5;j++){
             if (j==0){
-                dfsq[j] = sumsin2b/count;
+                dfsq[j] = dfsq[j]/(count*count);
             }else{
-                dfsq[j] = sumsin2b/(count*count);
+                dfsq[j] = dfsq[j]/(count*count);
             }
         }
+
         f3overf4=sumsin2b/sumcos2b;
 
         dangle = 180 * (1/PI) * sqrt(  pow((1/(1+f3overf4)),2) *
