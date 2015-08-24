@@ -45,9 +45,7 @@ int main (int argc, char **argv)
 	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
 	time_t rawtime;
 	signed short svalue;
-	float sumI,sumsin2b,sumcos2b,angle,count,sumf0,sumf3,sumf4,df0sq,df3sq,df4sq;
-    float dfsq[5];
-    float dangle, f3overf4;
+	float sumI,sumsin2b,sumcos2b,angle,count;
 	struct tm * timeinfo;
 	char buffer[80],comments[80];
 	float involts;
@@ -130,7 +128,7 @@ int main (int argc, char **argv)
 	fprintf(fp,comments);
 	fprintf(fp,"\n");
 	// Write the header for the data to the file.
-	fprintf(fp,"\nAout\tf0\tf3\tdf3\tf4\tdf4\tangle\tëdangle\n");
+	fprintf(fp,"\nAout\tf0\tf3\tf4\tangle\n");
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
 		printf("Aout %d\n",Aout);
@@ -142,13 +140,9 @@ int main (int argc, char **argv)
 
 		usbAOut_USB1208LS(hid,0,Aout);
 
-        int j;
-        for(j=0;j<5;j++)
-			dfsq[j]=0;
-
 		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){
 
-			delay(100);
+			delay(300);
 			//get samples and average
 			nsamples=8;
 			involts=0.0;
@@ -163,8 +157,7 @@ int main (int argc, char **argv)
 			sumsin2b=sumsin2b+involts*sin(2*angle);
 			sumcos2b=sumcos2b+involts*cos(2*angle);
 			sumI+=involts;
-			dfsq[3]+=count*pow(sumsin2b,2);
-			dfsq[4]+=count*pow(sumcos2b,2);
+
 
 			printf("steps %d\t",(steps));
 			printf("PhotoI %f\t",involts);
@@ -180,7 +173,7 @@ int main (int argc, char **argv)
 
 		}
 		// reverse motor to bring back to same starting point.  This would not be needed
-		// but there is a small mis-match with the belt-pulley sizes. 
+		// but there is a small mis-match with the belt-pulley size. 
 		digitalWrite(DIR,0);
 
 		printf("Reset steppermotor\n");
@@ -200,25 +193,12 @@ int main (int argc, char **argv)
 		sumcos2b=sumcos2b/count;
 		angle = 0.5*atan(sumsin2b/sumcos2b);
 		angle = angle*180.0/PI;
-
-        for(j=0;j<5;j++){
-            if (j==0){
-                dfsq[j] = dfsq[j]/(count*count);
-            }else{
-                dfsq[j] = dfsq[j]/(count*count);
-            }
-        }
-
-        f3overf4=sumsin2b/sumcos2b;
-
-        dangle = 180 * (1/PI) * sqrt(  pow((1/(1+f3overf4)),2) *
-                        pow((1/sumcos2b),2) *
-                        (dfsq[3]+f3overf4*dfsq[4]));
 		printf("f0 = %f\t",sumI);
 		printf("f3 = %f\t",sumsin2b);
 		printf("f4 = %f\t",sumcos2b);
 		printf("angle = %f\n",angle);
-		fprintf(fp,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",Aout,sumI,sumsin2b,sqrt(dfsq[3]),sumcos2b,sqrt(dfsq[4]),angle,dangle);
+		fprintf(fp,"%d\t%f\t%f\t%f\t%f\n",Aout,sumI,sumsin2b,sumcos2b,angle);
+
 	}//end for Aout
 
 	fclose(fp);
@@ -237,3 +217,7 @@ int main (int argc, char **argv)
 	}
 	return 0;
 }
+
+
+
+
