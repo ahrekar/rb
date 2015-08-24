@@ -31,7 +31,7 @@ int main (int argc, char **argv)
 	struct tm * timeinfo;
 	signed short svalue;
 	char buffer[80],fileString[80],comments[1024];
-	float involts;
+	float involts2,involts3;
 	FILE *fp, *gnuplot;
 	/** Unused RasbPi things.
 	__s16 sdata[1024];
@@ -41,7 +41,7 @@ int main (int argc, char **argv)
 	__u8 input, pin = 0;
 	**/
 	__u16 value;
-	__u8 channel, gain;
+	__u8  gain;
 
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
@@ -59,7 +59,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "USB 1208LS not found.\n");
 		exit(1);
 	} else {
-		printf("USB 208LS Device is found! interface = %d\n", interface);
+		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
 
 
@@ -114,14 +114,15 @@ int main (int argc, char **argv)
 	//TODO Scanf terminates read after hitting a space?!?!?!?!?
 	fprintf(fp,"#");			//gnuplot needs non-data lines commented out.
 	fprintf(fp,comments);
-	fprintf(fp,"\nAout\tPhotoCurrent\tStd.Dev.\n");
-	channel = 2; //analog input... for photodiode
+	fprintf(fp,"\nAout\tPROBE\tStdDev\tREF\tStdDev\n");
+
 	gain = BP_5_00V;
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
+	float* reference = malloc(nSamples*sizeof(float));
 
 	for (value=startvalue;value<endvalue;value+=stepsize){
 		usbAOut_USB1208LS(hid, 0, value);
@@ -130,29 +131,40 @@ int main (int argc, char **argv)
 		fprintf(fp,"%d \t",value);
 
 		// delay to allow transients to settle
-		delay(300);
-		involts = 0.0;
+		delay(100);
+		involts2 = 0.0;  // channel 2 receives analog signal from main probe
+		involts3 = 0.0; // channel 3 receives analog signal from reference cell
+
 		// grab several readings and average
 		for (i=0;i<nSamples;i++){
-			svalue = usbAIn_USB1208LS(hid,channel,gain);
+			svalue = usbAIn_USB1208LS(hid,2,gain);  //channel 2 for probe
 			measurement[i] = volts_LS(gain,svalue);
-			involts=involts+measurement[i];
+			involts2=involts2+measurement[i];
+
+			svalue = usbAIn_USB1208LS(hid,3,gain);
+			reference[i]=volts_LS(gain,svalue);
+			involts3=involts3+reference[i];
+
 		}
 
-		involts=involts/(float)nSamples;
+		involts2=involts2/(float)nSamples;
+		involts3=involts3/(float)nSamples;
 
-		printf("Current %f\n",involts);
-		fprintf(fp,"%f\t%f\n",involts,stdDeviation(measurement,nSamples));
+		printf("Probe %f\tRef %f\n",involts2,involts3);
+		fprintf(fp,"%f\t%f\t",involts2,stdDeviation(measurement,nSamples));
+		fprintf(fp,"%f\t%f\n",involts3,stdDeviation(reference,nSamples));
 
 		fflush(stdout);
 	}
 
 	free(measurement);
+	free(reference);
 
 
+// we might rethink where we end the Aout and return.  this just sets an arbitrary voltage. is there a better choice.
 	value=(int)(1.325*617.0);
-
 	usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
+
 
 	fclose(fp);
 
@@ -185,7 +197,7 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
 		fprintf(gnuplot, "set yrange [*:.1]\n");			
-		sprintf(buffer, "plot '%s' with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileString);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");

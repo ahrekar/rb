@@ -191,8 +191,14 @@ int main (int argc, char **argv)
 		sumI=sumI/count;
 		sumsin2b=sumsin2b/count;
 		sumcos2b=sumcos2b/count;
+
+		// NEEDED there needs to be a check?? for atan.  what if sumcos2b is zero?
 		angle = 0.5*atan(sumsin2b/sumcos2b);
 		angle = angle*180.0/PI;
+
+		// WOULD BE NICE.  atan always returns a number between -45 and 45.  
+		// once this is done, then return angle in mRad.
+
 		printf("f0 = %f\t",sumI);
 		printf("f3 = %f\t",sumsin2b);
 		printf("f4 = %f\t",sumcos2b);
