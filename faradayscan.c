@@ -33,7 +33,7 @@
 
 #define CLK 0
 #define DIR 1
-#define DEL 2000
+#define DEL 1200
 #define PI 3.14159265358979
 #define NUMSTEPS 1500
 #define STEPSIZE 60
@@ -69,7 +69,7 @@ int main (int argc, char **argv)
 		deltaAout=atoi(argv[3]);
 		strcpy(comments,argv[4]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>'\n");
+		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> < comments in quotes>'\n");
 		return 1;
 	}
 
@@ -142,13 +142,14 @@ int main (int argc, char **argv)
 
 		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){
 
-			delay(300);
+			delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
 			//get samples and average
-			nsamples=8;
+			nsamples=32;
 			involts=0.0;
 			for (i=0;i<nsamples;i++){
 				svalue=usbAIn_USB1208LS(hid,channel,gain);
 				involts=involts+volts_LS(gain,svalue);
+				delay(1);
 			}
 			involts=involts/(float)nsamples;
 

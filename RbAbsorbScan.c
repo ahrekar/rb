@@ -120,7 +120,7 @@ int main (int argc, char **argv)
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
-	nSamples = 16;
+	nSamples = 32;
 	float* measurement = malloc(nSamples*sizeof(float));
 	float* reference = malloc(nSamples*sizeof(float));
 
@@ -140,7 +140,7 @@ int main (int argc, char **argv)
 			svalue = usbAIn_USB1208LS(hid,2,gain);  //channel 2 for probe
 			measurement[i] = volts_LS(gain,svalue);
 			involts2=involts2+measurement[i];
-
+		delay(1);
 			svalue = usbAIn_USB1208LS(hid,3,gain);
 			reference[i]=volts_LS(gain,svalue);
 			involts3=involts3+reference[i];
