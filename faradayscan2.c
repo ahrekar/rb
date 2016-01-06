@@ -1,5 +1,5 @@
 /*
-   Program to record polarizqtion.
+   Program to record polarization.
    RasPi connected to USB 1208LS.
 
    FARADAY ROTATION
@@ -7,13 +7,12 @@
    steppermotor 1500 steps per revolution. 
 
    use Aout 0 to set laser wavelength. see page 98-100
-   ussage
+   usage
    $ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>
 
 
    2015-12-31
    added error calculations. see page 5 and 6 of "FALL15" lab book
-
  */
 
 #include <stdlib.h>
@@ -29,6 +28,7 @@
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#include "mathTools.h" //includes stdDeviation
 
 #define CLK 4
 #define DIR 2
@@ -38,30 +38,13 @@
 #define STEPSIZE 60
 #define STEPSPERREV 1500.0
 
-float stdDeviation(float* value, int numValues){
-	float stdv, sum, avg;
-	sum = 0.0;
-	int i;
-	for (i=0; i<numValues;i++){
-		sum+=value[i];
-	}
-	avg = sum/(float)numValues;
-	sum = 0.0;
-	for (i=0;i<numValues;i++){
-		sum+=pow(avg-value[i],2);
-	}
-	stdv = sqrt(sum/(numValues-1));
-	return stdv;
-}
-
 int main (int argc, char **argv)
 {
 	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples,j;
 	time_t rawtime;
 	signed short svalue;
-	float sumI,f4,f3,df4,df3,angle,stderrangle,count;
-	//f3 = sumcos2b
-	//f4 = sumsin2b
+	float sumI, sumSin, sumCos;
+	float f4,f3,df4,df3,angle,stderrangle,count;
 	struct tm * timeinfo;
 	char buffer[80],comments[80];
 	float involts; 	// The amount of light that is entering into the sensor. 
@@ -155,8 +138,8 @@ int main (int argc, char **argv)
 			usbDOut_USB1208LS(hid, DIO_PORTA, (j*2));  // this sets the  beam flag
 
 			printf("Aout %d\n",Aout);
-			f4=0.0;
-			f3=0.0;
+			sumSin=0.0;
+			sumCos=0.0;
 			df4=0.0;
 			df3=0.0;
 			angle=0.0;
@@ -183,11 +166,11 @@ int main (int argc, char **argv)
 
 				angle=2.0*PI*(float)(steps)/STEPSPERREV; // Calculate the angle in radians of the axis of the LP
 				count=count+1.0;
-				f4+=involts*sin(2*angle);
-				f3+=involts*cos(2*angle);
+				sumSin+=involts*sin(2*angle);
+				sumCos+=involts*cos(2*angle);
 				sumI+=involts;
-				df4+=pow(stderrinvolts,2)*pow(cos(2*angle),2);
 				df3+=pow(stderrinvolts,2)*pow(sin(2*angle),2);
+				df4+=pow(stderrinvolts,2)*pow(cos(2*angle),2);
 
 				printf("steps %d\t",(steps));
 				printf("PhotoI %f\t",involts);
@@ -219,10 +202,10 @@ int main (int argc, char **argv)
 			digitalWrite(DIR,1);
 
 			sumI=sumI/count;
-			f4=f4/count;
-			f3=f3/count;
-			df4=sqrt(df4)/count;
+			f3=sumSin/count;
+			f4=sumCos/count;
 			df3=sqrt(df3)/count;
+			df4=sqrt(df4)/count;
 
 			// NEEDED there needs to be a check?? for atan.  what if sumcos2b is zero?
 			// TO DO look into using function atan2(x,y)
@@ -238,10 +221,11 @@ int main (int argc, char **argv)
 			// once this is done, then return angle in mRad.
 
 			printf("f0 = %f\t",sumI);
-			printf("f3 = %f\t",f4);
-			printf("f4 = %f\t",f3);
+			printf("f3 = %f\t",f3);
+			printf("f4 = %f\t",f4);
 			printf("angle = %f (%f)\n",angle,stderrangle);
-			fprintf(fp,"%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",j,Aout,sumI,f4,df4,f3,df3,angle,stderrangle);
+			// As a reminder, these are the headers: fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\n");
+			fprintf(fp,"%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",j,Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
 		}//end j
 	}//end for Aout
 
