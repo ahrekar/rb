@@ -20,10 +20,10 @@ usage:
 #include <wiringPi.h>
 
 //define the GPIO ports for the clock and direction TTL signals
-#define CLK 0
+#define CLK 0   // for stepper motor #1
 #define DIR 1
-#define HOMECTR 2
-#define HOMEIN 5
+#define HOMECTR 7  //output pin
+#define HOMEIN 5 // input pin
 
 int main (int argc, char *argv[]){
 	int i, steps, dir;

@@ -67,8 +67,9 @@ int main (int argc, char **argv)
 		stepsize = atoi(argv[4]);
 		strcpy(comments,argv[5]);
 	} else{
-		printf("It seems you made an error in your input, please examine\n");
+		printf("Hey, DUMBASS. you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
+		printf("...dumbass\n");
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
 		printf("           sudo ./excitationfn <filament bias> <target offset> <scan range> <step size> <comments>\n");
@@ -105,8 +106,8 @@ int main (int argc, char **argv)
 	// config mask 0x01 means all inputs
 	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
 	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
-	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
@@ -149,7 +150,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"\n");
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Aout\tEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\n");
+	fprintf(fp,"Aout\tEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
 	channel = 0; //analog input  for Keithly K617
 	gain = BP_10_00V;
 
@@ -188,20 +189,30 @@ int main (int argc, char **argv)
 		printf("Counts %d\t",counts);
 
 		involts = 0.0;
-
 		// grab several readings and average
 		for (i=0;i<nSamples;i++){
-			svalue = usbAIn_USB1208LS(hid,channel,gain);
+			svalue = usbAIn_USB1208LS(hid,0,gain);  //channel = 0 for k617
 			measurement[i] = volts_LS(gain,svalue);
 			involts=involts+measurement[i];
 		}
 
 		involts=involts/(float)nSamples;
 
-		printf("Current %f\n",volts_LS(gain,svalue));
+		printf("Current %f\t",volts_LS(gain,svalue));
 
 		fprintf(fp,"%d\t%f\t",counts,sqrt(counts));
-		fprintf(fp,"%f\t%f\n",involts,stdDeviation(measurement,nSamples));
+		fprintf(fp,"%f\t%f\t",involts,stdDeviation(measurement,nSamples));
+
+		involts = 0.0;
+		// grab several readings and average
+		for (i=0;i<8;i++){
+			svalue = usbAIn_USB1208LS(hid,1,gain);  //channel = 0 for Iongauge
+			involts = involts + volts_LS(gain,svalue);
+		}
+		involts=involts/8.0;
+		involts = pow(10,involts-9.97);
+		printf("IG= %2.2E \n",involts);
+		fprintf(fp,"%2.4E\n",involts);
 
 		fflush(stdout);
 	}

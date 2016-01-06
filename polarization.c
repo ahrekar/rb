@@ -23,7 +23,7 @@
 
 int main (int argc, char **argv)
 {
-	int counts,i,steps,nsteps,ninc,dwell,aout;
+	int counts,i,steps,nsteps,ninc,dwell,aout,flag;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
@@ -43,14 +43,15 @@ int main (int argc, char **argv)
 
 	// get parameters
 
-	if (argc==6){
+	if (argc==7){
 		nsteps=1200*atoi(argv[1]);
 		ninc=atoi(argv[2]);
 		dwell=atoi(argv[3]);
 		aout=atoi(argv[4]);
-		strcpy(comments,argv[5]);
+		flag=atoi(argv[5]);
+		strcpy(comments,argv[6]);
 		} else {
-	printf("usage '~$ sudo ./polarization <num_rotations> <step_size> <pmt_dwell> <aout_for_target> <comments_in_double_quotes>'\n");
+	printf("usage '~$ sudo ./polarization <num_rotations> <step_size> <pmt_dwell> <aout_for_target> <Pump Laser Flag> <comments_in_double_quotes>'\n");
 	return 1;
 	}
 
@@ -73,8 +74,9 @@ int main (int argc, char **argv)
 	// config mask 0x01 means all inputs
 	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
 	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
-	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+
+
+//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 	// set up for stepmotor
 
@@ -147,9 +149,9 @@ int main (int argc, char **argv)
 
 	// Write the header for the data to the file.
 	fprintf(fp,"\nsteps\tCounts\tCurrent\n");
-	gain=BP_5_00V;
+	gain=BP_10_00V;
 	channel = 0; // analog input for k617 ammeter
-
+	usbDOut_USB1208LS(hid, DIO_PORTA, flag);
 	digitalWrite(CLK,LOW);
 	delayMicrosecondsHard(2000);
 

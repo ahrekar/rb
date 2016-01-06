@@ -18,40 +18,61 @@ compile
 #include <wiringPi.h>
 
 //define the GPIO ports for the clock and direction TTL signals
-#define CLK 0
-#define DIR 1
+#define CLK1 0
+#define DIR1 1
+
+#define CLK2 4
+#define DIR2 2
 
 
 int main (int argc, char *argv[]){
 	int i, steps, dir;
-	int del;
+	int motor;
 
-	del = 3;
-	if (argc==3){
-		steps = atoi(argv[1]); // get steps from command line
-		dir = atoi(argv[2]);  // get dir from command line
+	if (argc==4){
+		motor = atoi(argv[1]); // which steper motor
+		steps = atoi(argv[2]); // get steps from command line
+		dir = atoi(argv[3]);  // get dir from command line
 	} else {
+
+	printf("Ussage:  ~$sudo ./stepmotor <motor(1,2)> <steps> <dir(0,1)>\n");
+		motor = 3;// not part of the switch statment, so nuthing happens
 		steps=0;
 		dir=0;
 	}
 
-	wiringPiSetup();
-	pinMode(CLK,OUTPUT); //define port CLK to be an output
-	pinMode(DIR,OUTPUT); //define port DIR to be an output
 
-	digitalWrite (DIR, dir);  // sets direction
-	digitalWrite (CLK,LOW);
+	switch (motor) {
+		case (1):   // this is the polarimeter
+			wiringPiSetup();
+			pinMode(CLK1,OUTPUT); //define port CLK to be an output
+			pinMode(DIR1,OUTPUT); //define port DIR to be an output
+			digitalWrite (DIR1, dir);  // sets direction
+			digitalWrite (CLK1,LOW);
+		for (i=0;i<steps;i++){
+			digitalWrite(CLK1,HIGH);
+			delayMicrosecondsHard(1500); // this delay will(should?) not allow other OS processes
+			digitalWrite (CLK1,LOW);
+			delayMicrosecondsHard(1500);
+		}
+		break;
+		case (2):
+			wiringPiSetup();
+			pinMode(CLK2,OUTPUT); //define port CLK to be an output
+			pinMode(DIR2,OUTPUT); //define port DIR to be an output
+			digitalWrite (DIR2, dir);  // sets direction
+			digitalWrite (CLK2,LOW);
+		for (i=0;i<steps;i++){
+			digitalWrite(CLK2,HIGH);
+			delayMicrosecondsHard(1500); // this delay will(should?) not allow other OS processes
+			digitalWrite (CLK2,LOW);
+			delayMicrosecondsHard(1500);
+		}
+		break;
 
-
-
-	for (i=0;i<steps;i++){
-		digitalWrite(CLK,HIGH);
-		//delay(del);
-		delayMicrosecondsHard(1500); // this delay will(should?) not allow other OS processes
-		digitalWrite (CLK,LOW);
-		//delay(del);
-		delayMicrosecondsHard(1500);
 	}
+
+
 
 return 0;
 }

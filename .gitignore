@@ -15,6 +15,10 @@ setProbeLaser
 test-usb1208LS
 tmp.txt
 gnutest
+faradayscan2
+getIonGauge
+getStats
+setLaserFlag
 
 *.data
 *~

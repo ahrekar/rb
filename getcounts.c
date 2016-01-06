@@ -53,9 +53,9 @@ numit = 0;
 
 if (argc==3){
 	numit = atoi(argv[1]); //number of interations
-	dwell=atoi(argv[2]);
+	dwell = atoi(argv[2]);
 	}else{
-	printf("Usage:\n\n ~$ sudo ./getcounts xx \n\nwhere xx is the number of one-second iterations to aquire before exiting\n\n");
+	printf("Usage:\n\n ~$ sudo ./getcounts xx yyy \n\nwhere xx is the number of yyy-milisecond iterations to aquire before exiting\n\n");
 	return(1);
 	}
 
@@ -84,7 +84,7 @@ if (argc==3){
 totalcount=0;
 for (i=0;i<numit;i++){
 	usbInitCounter_USB1208LS(hid);
-	delayMicrosecondsHard(dwell*1000000); // wiringPi one second delay
+	delayMicrosecondsHard(dwell*1000); // wiringPi one second delay
 	counts=usbReadCounter_USB1208LS(hid);
 	totalcount+=counts;
 	printf("%d: Counts %d\n",i,counts);
