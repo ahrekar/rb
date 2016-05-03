@@ -30,6 +30,7 @@
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#include "mathTools.h"
 
 #define CLK 4
 #define DIR 2
@@ -173,6 +174,7 @@ int main (int argc, char **argv)
 			}
 
 		}
+
 		// reverse motor to bring back to same starting point.  This would not be needed
 		// but there is a small mis-match with the belt-pulley size. 
 		digitalWrite(DIR,0);
@@ -185,7 +187,6 @@ int main (int argc, char **argv)
 			digitalWrite(CLK,LOW);
 			delayMicrosecondsHard(DEL);
 		}
-
 
 		digitalWrite(DIR,1);
 

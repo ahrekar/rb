@@ -31,12 +31,14 @@ Usage:
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#define BASE 100
+#define SPI_CHAN 0
 
 float stdDeviation(float* values, int numValues);
 
 int main (int argc, char **argv)
 {
-	int counts,i,stepsize,steprange;
+	int counts,i,stepsize,steprange,chan;
 	int minstepsize,maxstepsize, nSamples;
 	time_t rawtime;
 	struct tm * timeinfo;
@@ -102,6 +104,8 @@ int main (int argc, char **argv)
 		printf("USB 208LS Device is found! interface = %d\n", interface);
 	}
 
+mcp3004Setup(BASE,SPI_CHAN);
+
 
 	// config mask 0x01 means all inputs
 	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
@@ -155,13 +159,6 @@ int main (int argc, char **argv)
 	gain = BP_10_00V;
 
 
-	//printf("Starting exciation Function scan Ch1 Aout\n");
-	//	temp=1;
-	//	channel = (__u8) temp;
-	//temp=1;
-	//channel = (__u8) temp;
-
-
 	// Allocate some memory to store measurements for calculating
 	// error bars.
 	nSamples = 16;
@@ -204,10 +201,11 @@ int main (int argc, char **argv)
 		fprintf(fp,"%f\t%f\t",involts,stdDeviation(measurement,nSamples));
 
 		involts = 0.0;
+		chan = 1;
 		// grab several readings and average
 		for (i=0;i<8;i++){
-			svalue = usbAIn_USB1208LS(hid,1,gain);  //channel = 0 for Iongauge
-			involts = involts + volts_LS(gain,svalue);
+			svalue= analogRead(BASE+chan);
+			involts = involts + 0.0107 * (float) svalue;
 		}
 		involts=involts/8.0;
 		involts = pow(10,involts-9.97);

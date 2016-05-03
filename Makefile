@@ -1,4 +1,4 @@
-# Makefiles! Every lazy programmer's best friend. Becuase
+# Makefiles! Every lazy programmer's best friend. Because
 # just typing "make" is so much easier than scrolling
 # through bash commands to find the last compile that
 # you did.
@@ -33,9 +33,9 @@ PIFLAGS= -l wiringPi -l mcchid -L. -lm -L/usr/local/lib -lhid -lusb
 # <TAB>Code to execute to compile.
 #
 # The previously created variables can be referenced by
-# putting using $(VARIABLE)
+# using $(VARIABLE)
 #
-# Additionally, the "$@" characters refer to the target.
+# Additionally, the "$@" character refers to the target.
 
 # Everything depends on the binaries. If any of the 
 # binaries are edited, we should do stuff. I don't really

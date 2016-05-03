@@ -34,12 +34,12 @@ Note: Comments must be enclosed in quotes.
 #include "pmd.h"
 #include "usb-1208LS.h"
 
-#define CLK 0		// We will control the clock with pin 0 on the RPi
-#define DIR 1		// We will control the direction with pin 1 on the RPi
+#define CLK 21		// We will control the clock with pin 0 on the RPi
+#define DIR 26		// We will control the direction with pin 1 on the RPi
 #define DEL 2000	// Whenever a delay is needed, use this value
 #define CWISE 0		// Clockwise =0
 #define CCWISE 1	// CounterClockwise =1
-#define STEPSPERREV 1500; // Define the number of steps in a revolution
+#define STEPSPERREV 350; // Define the number of steps in a revolution
 #define PI 3.14159265358979 
 
 void moveStepperMotorSingleStep();

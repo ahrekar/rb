@@ -36,58 +36,78 @@ int main (int argc, char *argv[]){
 	int i, steps, dir;
 	int motor;
 
-	if (argc==4){
+	if (argc==2){
 		motor = atoi(argv[1]); // which steper motor
-		steps = atoi(argv[2]); // get steps from command line
-		dir = atoi(argv[3]);  // get dir from command line
 	} else {
 
-	printf("Ussage:  ~$sudo ./stepmotor <motor(0,1,2)> <steps> <dir(0,1)>\n");
+	printf("Ussage:  ~$sudo ./homemotor2 <motor(0,1,2)> \n");
 		motor = 3;// not part of the switch statment, so nuthing happens
 		steps=0;
 		dir=0;
 	}
+			wiringPiSetup();
 
 
 	switch (motor) {
 		case (0):   // this is the polarimeter
-			wiringPiSetup();
+			dir=0;
 			pinMode(CLK0,OUTPUT); //define port CLK to be an output
 			pinMode(DIR0,OUTPUT); //define port DIR to be an output
+			pinMode(HOME0,INPUT);
+			digitalWrite (CLK0,LOW);
+		if (digitalRead(HOME0)){ // already in home
 			digitalWrite (DIR0, dir);  // sets direction
-			digitalWrite (CLK0,LOW);
-		for (i=0;i<steps;i++){
+			printf("already in home, reversing 100 steps...");
+			fflush(stdout);
+			for (i=0;i<100;i++){
 			digitalWrite(CLK0,HIGH);
-			delayMicrosecondsHard(5000); // this delay will(should?) not allow other OS processes
+			delayMicrosecondsHard(2000); // this delay will(should?) not allow other OS processes
 			digitalWrite (CLK0,LOW);
-			delayMicrosecondsHard(5000);
+			delayMicrosecondsHard(2000);
+			}
 		}
-		break;
-		case (1):  // this is the absorption analyzer
-			wiringPiSetup();
-			pinMode(CLK1,OUTPUT); //define port CLK to be an output
-			pinMode(DIR1,OUTPUT); //define port DIR to be an output
-			digitalWrite (DIR1, dir);  // sets direction
-			digitalWrite (CLK1,LOW);
-		for (i=0;i<steps;i++){
-			digitalWrite(CLK1,HIGH);
-			delayMicrosecondsHard(1500); // this delay will(should?) not allow other OS processes
-			digitalWrite (CLK1,LOW);
-			delayMicrosecondsHard(1500);
+		i=0;
+		dir = 1;
+		while (!digitalRead(HOME0)) {
+			digitalWrite (DIR0, dir);  // sets direction
+			digitalWrite(CLK0,HIGH);
+			delayMicrosecondsHard(2000); // this delay will(should?) not allow other OS processes
+			digitalWrite (CLK0,LOW);
+			delayMicrosecondsHard(2000);
 		}
+		if (digitalRead(HOME0)) printf("found home \n");
 		break;
-		case (2): // this will be the pump laser quarterwave plate
-			wiringPiSetup();
+		case (1):
+			printf("This motor not setup for home detection\n");
+
+		break;
+		case (2):
+			dir=0;
 			pinMode(CLK2,OUTPUT); //define port CLK to be an output
 			pinMode(DIR2,OUTPUT); //define port DIR to be an output
+			pinMode(HOME2,INPUT);
+			digitalWrite (CLK2,LOW);
+		if (digitalRead(HOME2)){ // already in home
 			digitalWrite (DIR2, dir);  // sets direction
-			digitalWrite (CLK2,LOW);
-		for (i=0;i<steps;i++){
+			printf("already in home, reversing 100 steps...");
+			fflush(stdout);
+			for (i=0;i<100;i++){
 			digitalWrite(CLK2,HIGH);
-			delayMicrosecondsHard(3000); // this delay will(should?) not allow other OS processes
+			delayMicrosecondsHard(1200); // this delay will(should?) not allow other OS processes
 			digitalWrite (CLK2,LOW);
-			delayMicrosecondsHard(3000);
+			delayMicrosecondsHard(1200);
+			}
 		}
+		i=0;
+		dir = 1;
+		while (!digitalRead(HOME2)) {
+			digitalWrite (DIR2, dir);  // sets direction
+			digitalWrite(CLK2,HIGH);
+			delayMicrosecondsHard(1200); // this delay will(should?) not allow other OS processes
+			digitalWrite (CLK2,LOW);
+			delayMicrosecondsHard(1200);
+		}
+		if (digitalRead(HOME2)) printf("found home \n");
 		break;
 
 	}

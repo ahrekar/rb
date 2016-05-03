@@ -3,16 +3,14 @@
 uses the RasPi GPIO ports to bit-band a stepper motor driver.  
 
 uses two ports (defined below) to set the direction and number of stepts.
-
 usage:
+~$ sudo ./stepmotor 100 1
+steps the motor 100 steps in direction 1.
+~$ sudo ./stepmotor 500 0
+steps the motor 500 steps in direction 0.
 
-~$  gcc -o homemotor homepmotor.c -l wiringPi
-
-
-// move motor until read IR LED and PhotoNPN alignment.
-// digitalRead(HOMEIN) = 0 when not aligned
-// 			=1 when aligned
-
+compile
+~$  gcc -o stepmotor stepmotor.c -l wiringPi
 
 */
 
@@ -20,63 +18,101 @@ usage:
 #include <wiringPi.h>
 
 //define the GPIO ports for the clock and direction TTL signals
-#define CLK 0   // for stepper motor #1
-#define DIR 1
-#define HOMECTR 7  //output pin
-#define HOMEIN 5 // input pin
+#define CLK0 3
+#define DIR0 4
+#define HOME0 5
+// these are the wiringPi GPIO numbers
+#define CLK1 21
+#define DIR1 26
+#define HOME1 22
+
+#define CLK2 1
+#define DIR2 0
+#define HOME2 2
+#define DEL2 3000
+
 
 int main (int argc, char *argv[]){
 	int i, steps, dir;
-//	int del;
+	int motor;
 
-/*	del = 2;
-	if (argc=3){
-		steps = atoi(argv[1]); // get steps from command line
-		dir = atoi(argv[2]);  // get dir from command line
+	if (argc==2){
+		motor = atoi(argv[1]); // which steper motor
 	} else {
+
+	printf("Ussage:  ~$sudo ./homemotor2 <motor(0,1,2)> \n");
+		motor = 3;// not part of the switch statment, so nuthing happens
 		steps=0;
 		dir=0;
 	}
-*/
-	wiringPiSetup();
-	pinMode(CLK,OUTPUT); //define port CLK to be an output
-	pinMode(DIR,OUTPUT); //define port DIR to be an output
+			wiringPiSetup();
 
-	pinMode(HOMECTR,OUTPUT); // pin to turn on and off the IR LED in the home mechanism
-	pinMode(HOMEIN,INPUT);//pin to read status
 
-	digitalWrite(HOMECTR,0); // turn on IR LED
-
-	delayMicrosecondsHard(5000); // delay needed - to allow detector circuit to power up. 
-
-	digitalWrite (DIR, 1);  // sets direction
-
-// if happen to detect alignment already, back the motor up so that it is not aligned.
-	if (digitalRead(HOMEIN)){
-		printf("Started in home. Reversing motor and reestablishing home\n");
-		for (i=0;steps<100;steps++){
-		digitalWrite(CLK,HIGH);
-		delayMicrosecondsHard(5000); // this delay will(should?) not allow other OS processes
-		digitalWrite (CLK,LOW);
-		delayMicrosecondsHard(5000);
+	switch (motor) {
+		case (0):   // this is the polarimeter
+			dir=0;
+			pinMode(CLK0,OUTPUT); //define port CLK to be an output
+			pinMode(DIR0,OUTPUT); //define port DIR to be an output
+			pinMode(HOME0,INPUT);
+			digitalWrite (CLK0,LOW);
+		if (digitalRead(HOME0)){ // already in home
+			digitalWrite (DIR0, dir);  // sets direction
+			printf("already in home, reversing 100 steps...");
+			fflush(stdout);
+			for (i=0;i<100;i++){
+			digitalWrite(CLK0,HIGH);
+			delayMicrosecondsHard(2000); // this delay will(should?) not allow other OS processes
+			digitalWrite (CLK0,LOW);
+			delayMicrosecondsHard(2000);
+			}
 		}
-		if (digitalRead(HOMEIN)) printf("Error: motor failed to move\n");
-	}
-// move motor until read IR LED and PhotoNPN alignment. This way, the alignment is approached the same way every time.
-// if steps exceeds 1300 then the hole was not found and there is something wrong.
-	digitalWrite (DIR, 0);  // sets direction
-	steps=0;
-	while (!digitalRead(HOMEIN)  && (steps < 1300)){
-		digitalWrite(CLK,HIGH);
-		delayMicrosecondsHard(5000); // this delay will(should?) not allow other OS processes
-		digitalWrite (CLK,LOW);
-		delayMicrosecondsHard(5000);
-	steps++;
+		i=0;
+		dir = 1;
+		while (!digitalRead(HOME0)) {
+			digitalWrite (DIR0, dir);  // sets direction
+			digitalWrite(CLK0,HIGH);
+			delayMicrosecondsHard(2000); // this delay will(should?) not allow other OS processes
+			digitalWrite (CLK0,LOW);
+			delayMicrosecondsHard(2000);
+		}
+		if (digitalRead(HOME0)) printf("found home \n");
+		break;
+		case (1): // this is the absorption Linear Polarizeer / analyzer
+			printf("This motor not setup for home detection\n");
+
+		break;
+		case (2):  //  theis WILL BE the pump laser QuarterWave Plate
+			dir=0;
+			pinMode(CLK2,OUTPUT); //define port CLK to be an output
+			pinMode(DIR2,OUTPUT); //define port DIR to be an output
+			pinMode(HOME2,INPUT);
+			digitalWrite (CLK2,LOW);
+		if (digitalRead(HOME2)){ // already in home
+			digitalWrite (DIR2, dir);  // sets direction
+			printf("already in home, reversing 100 steps...");
+			fflush(stdout);
+			for (i=0;i<100;i++){
+			digitalWrite(CLK2,HIGH);
+			delayMicrosecondsHard(DEL2); // this delay will(should?) not allow other OS processes
+			digitalWrite (CLK2,LOW);
+			delayMicrosecondsHard(DEL2);
+			}
+		}
+		i=0;
+		dir = 1;
+		while (!digitalRead(HOME2)) {
+			digitalWrite (DIR2, dir);  // sets direction
+			digitalWrite(CLK2,HIGH);
+			delayMicrosecondsHard(DEL2); // this delay will(should?) not allow other OS processes
+			digitalWrite (CLK2,LOW);
+			delayMicrosecondsHard(DEL2);
+		}
+		if (digitalRead(HOME2)) printf("found home \n");
+		break;
+
 	}
 
-if (steps==1300) printf("Error: home alignment not found\n");
-printf("Moved %d steps\n",steps);
-digitalWrite(HOMECTR,1); //turn off IR LED
+
 
 return 0;
 }

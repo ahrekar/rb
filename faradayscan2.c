@@ -30,11 +30,11 @@
 #include "usb-1208LS.h"
 #include "mathTools.h" //includes stdDeviation
 
-#define CLK 4
-#define DIR 2
+#define CLK 21
+#define DIR 26
 #define DEL 1200
 #define PI 3.14159265358979
-#define NUMSTEPS 1500	
+#define NUMSTEPS 350	
 #define STEPSIZE 60
 #define STEPSPERREV 1500.0
 
