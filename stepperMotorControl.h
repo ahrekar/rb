@@ -3,10 +3,40 @@
 
 #define DEL 2000	// Whenever a delay is needed, use this value
 
+// Motor 0 -> Polarimeter
+// Motor 1 -> Absorption Analyzer
+// Motor 2 -> QWP
+
+void homeMotor(int motor);
 void moveMotor(int motor,int dir, int steps);
 void moveStepperMotor(int p_clock, int p_dir, int p_home, int dir, int steps);
 
-void moveMotor(int motor,int dir, int steps)
+void homeMotor(int motor)
+{
+	int p_home;
+	if(motor==1){
+		printf("This motor not setup for home detection\n");
+	}
+	else if(motor==0){
+		p_home=5;
+	} else{
+		p_home=2;
+	}
+	pinMode(p_home,INPUT);
+	if(digitalRead(p_home)){ // Already in home
+		// Then move away from home and allow it 
+		// to re-find it.
+		printf("Already in home, reversing 100 steps...\n");
+		fflush(stdout);
+		moveMotor(motor,0,100);
+	}
+	while(!digitalRead(p_home)){
+		moveMotor(motor,1,1);
+	}
+	printf("Found home!\n");
+}
+
+void moveMotor(int motor, int dir, int steps)
 {
 	int p_clock, p_dir, p_home;
 	switch(motor){
@@ -35,7 +65,6 @@ void moveStepperMotor(int p_clock, int p_dir, int p_home, int dir, int steps){
 	pinMode(p_clock,OUTPUT);
 	digitalWrite(p_dir,dir);
 	digitalWrite(p_clock,LOW);
-	printf("Well Something is working like it should");
 	
 	int i;
 	for (i=0;i<steps;i++){
