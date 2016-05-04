@@ -19,6 +19,7 @@ faradayscan2
 getIonGauge
 getStats
 setLaserFlag
+homemotor2
 
 *.data
 *~
