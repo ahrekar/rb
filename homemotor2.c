@@ -27,7 +27,7 @@ int main (int argc, char *argv[]){
 	} else {
 
 	printf("Usage:  ~$sudo ./homemotor2 <motor(0,1,2)> \n");
-		motor = 3;// not part of the switch statment, so nuthing happens
+		motor = 3;// not part of the switch statment, so nothing happens
 		steps=0;
 		dir=0;
 	}

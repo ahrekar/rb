@@ -1,13 +1,24 @@
 /*
 
-uses the RasPi GPIO ports to bit-band a stepper motor driver.  
+Uses the RasPi GPIO ports to bit-band a stepper motor driver.  
 
-uses two ports (defined below) to set the direction and number of stepts.
+Uses three ports (defined below) to select the motor, direction, 
+and number of stepts.
+
 usage:
-~$ sudo ./stepmotor 100 1
-steps the motor 100 steps in direction 1.
-~$ sudo ./stepmotor 500 0
-steps the motor 500 steps in direction 0.
+~$ sudo ./stepmotor 0 100 1
+steps motor "0" 100 steps in direction 1.
+
+~$ sudo ./stepmotor 1 500 0
+steps motor "1" 500 steps in direction 0.
+
+Currently, the motors are determined by the pins used on the
+raspberry pi to control them. These are set up in the
+stepperMotorControl.h file. Right now,
+
+ Motor 0 -> Polarimeter
+ Motor 1 -> Absorption Analyzer
+ Motor 2 -> QWP
 
 compile
 ~$  gcc -o stepmotor stepmotor.c -l wiringPi
