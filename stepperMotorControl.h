@@ -1,34 +1,47 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define CLK 0		// We will control the clock with pin 0 on the RPi
-#define DIR 1		// We will control the direction with pin 1 on the RPi
 #define DEL 2000	// Whenever a delay is needed, use this value
-#define CWISE 0		// Clockwise =0
-#define CCWISE 1	// CounterClockwise =1
 
-void moveStepperMotorSingleStep();
-void moveStepperMotorSingleStepWithDirection(int dir);
-void moveStepperMotor(int dir, int steps);
+void moveMotor(int motor,int dir, int steps);
+void moveStepperMotor(int p_clock, int p_dir, int p_home, int dir, int steps);
 
-void moveStepperMotorSingleStep(){
-	digitalWrite(CLK,HIGH);
-	delayMicrosecondsHard(DEL);
-	digitalWrite(CLK,LOW);
-	delayMicrosecondsHard(DEL);
+void moveMotor(int motor,int dir, int steps)
+{
+	int p_clock, p_dir, p_home;
+	switch(motor){
+		case(0):
+			p_clock=3;
+			p_dir=4;
+			p_home=5;
+		break;
+		case(1):
+			p_clock=21;
+			p_dir=26;
+			p_home=22;
+		break;
+		case(2):
+			p_clock=1;
+			p_dir=0;
+			p_home=2;
+		break;
+	}
+	moveStepperMotor(p_clock, p_dir, p_home, dir, steps);
 }
 
-void moveStepperMotorSingleStepWithDirection(int dir){
-	digitalWrite(DIR,dir);
-
-	moveStepperMotorSingleStep();
-}
-
-void moveStepperMotor(int dir, int steps){
-	digitalWrite(DIR,dir);
+void moveStepperMotor(int p_clock, int p_dir, int p_home, int dir, int steps){
+	wiringPiSetup();
+	pinMode(p_dir,OUTPUT);
+	pinMode(p_clock,OUTPUT);
+	digitalWrite(p_dir,dir);
+	digitalWrite(p_clock,LOW);
+	printf("Well Something is working like it should");
 	
 	int i;
 	for (i=0;i<steps;i++){
-		moveStepperMotorSingleStep();
+		digitalWrite(p_clock,HIGH);
+		delayMicrosecondsHard(DEL);
+		digitalWrite(p_clock,LOW);
+		delayMicrosecondsHard(DEL);
 	}
 }

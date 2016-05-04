@@ -48,3 +48,7 @@ all: ${BINARIES}
 # represents the binary file's name. 
 ${BINARIES}: % : %.c
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+
+stepmotor: stepmotor.c stepperMotorControl.h
+	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+
