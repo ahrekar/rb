@@ -13,14 +13,18 @@ void moveStepperMotor(int p_clock, int p_dir, int p_home, int dir, int steps);
 
 void homeMotor(int motor)
 {
+	wiringPiSetup();
 	int p_home;
 	if(motor==1){
 		printf("This motor not setup for home detection\n");
+		return;
 	}
 	else if(motor==0){
 		p_home=5;
-	} else{
+	} else if(motor==2){
 		p_home=2;
+	} else {
+		return;
 	}
 	pinMode(p_home,INPUT);
 	if(digitalRead(p_home)){ // Already in home
