@@ -31,14 +31,12 @@
 #include "pmd.h"
 #include "usb-1208LS.h"
 #include "mathTools.h"
+#include "stepperMotorControl.h"
 
-#define CLK 4
-#define DIR 2
-#define DEL 1200
 #define PI 3.14159265358979
-#define NUMSTEPS 1500
-#define STEPSIZE 60
-#define STEPSPERREV 1500.0
+#define NUMSTEPS 700
+#define STEPSIZE 25
+#define STEPSPERREV 350.0
 
 
 int main (int argc, char **argv)
@@ -96,11 +94,6 @@ int main (int argc, char **argv)
 
 	// set up for stepmotor
 
-	wiringPiSetup();
-	pinMode(CLK,OUTPUT);
-	pinMode(DIR,OUTPUT);
-	digitalWrite(DIR,1);
-
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -119,8 +112,6 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	digitalWrite(CLK,LOW);
-	delayMicrosecondsHard(2000);
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;
 
@@ -164,24 +155,27 @@ int main (int argc, char **argv)
 			printf("steps %d\t",(steps));
 			printf("PhotoI %f\t",involts);
 			fflush(stdout);
-
+			moveMotor(1,1,STEPSIZE);
+/*
 			for (i=0;i<STEPSIZE;i++){
-				// increment steppermotor by ninc steps
+increment steppermotor by ninc steps
 				digitalWrite(CLK,HIGH);
 				delayMicrosecondsHard(DEL);
 				digitalWrite(CLK,LOW);
 				delayMicrosecondsHard(DEL);
 			}
+*/
 
-		}
+		} // end increment num steps
 
 		// reverse motor to bring back to same starting point.  This would not be needed
 		// but there is a small mis-match with the belt-pulley size. 
+/*
 		digitalWrite(DIR,0);
 
 		printf("Reset steppermotor\n");
 		for (steps=0;steps<NUMSTEPS;steps++){
-			// increment steppermotor by ninc steps
+			 increment steppermotor by ninc steps
 			digitalWrite(CLK,HIGH);
 			delayMicrosecondsHard(DEL);
 			digitalWrite(CLK,LOW);
@@ -189,6 +183,7 @@ int main (int argc, char **argv)
 		}
 
 		digitalWrite(DIR,1);
+*/
 
 		sumI=sumI/count;
 		sumsin2b=sumsin2b/count;
