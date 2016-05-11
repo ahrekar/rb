@@ -46,7 +46,7 @@ int main (int argc, char **argv)
 	signed short svalue;
 	float sumI,sumsin2b,sumcos2b,angle,count;
 	struct tm * timeinfo;
-	char buffer[80],comments[80];
+	char fileName[80], buffer[80],comments[80];
 	float involts;
 	FILE *fp;
 	__s16 sdata[1024];
@@ -98,15 +98,15 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(buffer,80,"/home/pi/RbData/FDayScan%F_%H%M%S.dat",timeinfo);
+	strftime(fileName,80,"/home/pi/RbData/FDayScan%F_%H%M%S.dat",timeinfo);
 
 	printf("\n");
-	printf(buffer);
+	printf(fileName);
 	printf("\n");
 	printf(comments);
 
 
-	fp=fopen(buffer,"w");
+	fp=fopen(fileName,"w");
 	if (!fp) {
 		printf("unable to open file \n");
 		exit(1);
@@ -115,7 +115,7 @@ int main (int argc, char **argv)
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;
 
-	fprintf(fp,buffer);
+	fprintf(fp,fileName);
 	fprintf(fp,"\n");
 	fprintf(fp,comments);
 	fprintf(fp,"\n");
