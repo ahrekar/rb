@@ -55,3 +55,5 @@ stepmotor: stepmotor.c stepperMotorControl.h
 homemotor2: homemotor2.c stepperMotorControl.h
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
 
+faradayscan: faradayscan.c stepperMotorControl.h
+	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
