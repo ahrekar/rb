@@ -190,7 +190,8 @@ increment steppermotor by ninc steps
 		sumcos2b=sumcos2b/count;
 
 		// NEEDED there needs to be a check?? for atan.  what if sumcos2b is zero?
-		angle = 0.5*atan(sumsin2b/sumcos2b);
+		//   CHANGED atan2 takes care of sumcos2b being zero.
+		angle = 0.5*atan2(sumsin2b,sumcos2b);
 		angle = angle*180.0/PI;
 
 		// WOULD BE NICE.  atan always returns a number between -45 and 45.  

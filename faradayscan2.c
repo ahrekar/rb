@@ -208,8 +208,8 @@ int main (int argc, char **argv)
 			df4=sqrt(df4)/count;
 
 			// NEEDED there needs to be a check?? for atan.  what if sumcos2b is zero?
-			// TO DO look into using function atan2(x,y)
-			angle = 0.5*atan(f4/f3);
+			//     CHANGED: Implemented atan2, which handles when f3 is zero.
+			angle = 0.5*atan2(f4,f3);
 			angle = angle*180.0/PI;
 
 			//		stderrangle=pow(f4/f3,2);
