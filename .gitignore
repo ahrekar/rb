@@ -20,6 +20,9 @@ getIonGauge
 getStats
 setLaserFlag
 homemotor2
+this
+that
+fileTools
 
 *.data
 *~
