@@ -18,8 +18,8 @@
 #include "pmd.h"
 #include "usb-1208LS.h"
 
-#define CLK 0
-#define DIR 1
+#define CLK 3
+#define DIR 4
 
 int main (int argc, char **argv)
 {
@@ -151,7 +151,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"\nsteps\tCounts\tCurrent\n");
 	gain=BP_10_00V;
 	channel = 0; // analog input for k617 ammeter
-	usbDOut_USB1208LS(hid, DIO_PORTA, flag);
+	//usbDOut_USB1208LS(hid, DIO_PORTA, flag);
 	digitalWrite(CLK,LOW);
 	delayMicrosecondsHard(2000);
 
