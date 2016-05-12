@@ -2,7 +2,7 @@
    Program to record polarization.
    RasPi connected to USB 1208LS.
 
-   FARADAY ROTATION
+   FARADAY SCAN
 
    steppermotor 1500 steps per revolution. 
 
@@ -35,8 +35,8 @@
 #define DEL 1200
 #define PI 3.14159265358979
 #define NUMSTEPS 350	
-#define STEPSIZE 60
-#define STEPSPERREV 1500.0
+#define STEPSIZE 25
+#define STEPSPERREV 350.0
 
 int main (int argc, char **argv)
 {
@@ -133,9 +133,9 @@ int main (int argc, char **argv)
 	fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\n");
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
-		for (j=0;j<2;j++){
+		//for (j=0;j<2;j++){
 
-			usbDOut_USB1208LS(hid, DIO_PORTA, (j*2));  // this sets the  beam flag
+		//	usbDOut_USB1208LS(hid, DIO_PORTA, (j*2));  // this sets the  beam flag
 
 			printf("Aout %d\n",Aout);
 			sumSin=0.0;
@@ -158,7 +158,7 @@ int main (int argc, char **argv)
 					svalue=usbAIn_USB1208LS(hid,channel,gain);
 					measurement[i]=volts_LS(gain,svalue);
 					involts=involts+measurement[i];
-					delay(1);
+					delay(2);
 				}
 				involts=involts/(float)nsamples; 
 
@@ -185,8 +185,8 @@ int main (int argc, char **argv)
 				}
 
 			}
-			// reverse motor to bring back to same starting point.  This would not be needed
-			// but there is a small mis-match with the belt-pulley size. 
+		/* reverse motor to bring back to same starting point.  This would not be needed
+		 but there is a small mis-match with the belt-pulley size. 
 			digitalWrite(DIR,0);
 
 			printf("Reset steppermotor\n");
@@ -198,9 +198,8 @@ int main (int argc, char **argv)
 				delayMicrosecondsHard(DEL);
 			}
 
-
 			digitalWrite(DIR,1);
-
+*/
 			sumI=sumI/count;
 			f3=sumSin/count;
 			f4=sumCos/count;
@@ -226,7 +225,7 @@ int main (int argc, char **argv)
 			printf("angle = %f (%f)\n",angle,stderrangle);
 			// As a reminder, these are the headers: fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\n");
 			fprintf(fp,"%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",j,Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
-		}//end j
+		//}//end j
 	}//end for Aout
 
 	fclose(fp);

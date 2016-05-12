@@ -157,11 +157,11 @@ int main (int argc, char **argv)
 	//6000    30
 	for (steps=0;steps < nsteps;steps+=ninc){
 
-		delay(300);
+		delay(150);
 
 		//1500?? steps per revoluion
 		involts=0.0;
-		numMeasurements=8;
+		numMeasurements=32;
 
 		for (i=0;i<numMeasurements;i++){
 			svalue=usbAIn_USB1208LS(hid,channel,gain);
@@ -188,12 +188,15 @@ int main (int argc, char **argv)
 
 	// reverse motor to bring back to same starting point.  This would not be needed
 	// but there is a small mis-match with the belt-pulley size. 
+	
+	/* Fixed need for reversing stepper motor?
 	printf("moving stepper back\n");
 	moveStepperMotor(CWISE,nsteps);
+	*/
 
 	sumsin2b=sumsin2b/count;
 	sumcos2b=sumcos2b/count;
-	angle = 0.5*atan(sumsin2b/sumcos2b);
+	angle = 0.5*atan2(sumcos2b,sumsin2b);
 	angle = angle*180.0/PI;
 	printf("f3 = %f\n",sumsin2b);
 	printf("f4 = %f\n",sumcos2b);
