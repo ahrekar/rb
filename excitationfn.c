@@ -40,6 +40,7 @@ int main (int argc, char **argv)
 {
 	int counts,i,stepsize,steprange,chan;
 	int minstepsize,maxstepsize, nSamples;
+	int dwell;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
@@ -62,20 +63,21 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
-	if (argc == 6){
+	if (argc == 7){
 		bias = atof(argv[1]);
 		offset = atof(argv[2]);
 		scanrange =atof(argv[3]);
 		stepsize = atoi(argv[4]);
-		strcpy(comments,argv[5]);
+		dwell= atoi(argv[5]);
+		strcpy(comments,argv[6]);
 	} else{
 		printf("Hey, DUMBASS. you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
 		printf("...dumbass\n");
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
-		printf("           sudo ./excitationfn <filament bias> <target offset> <scan range> <step size> <comments>\n");
-		printf("                                                               (   0-30   ) (  1-24   )           \n");
+		printf("           sudo ./excitationfn <filament bias> <target offset> <scan range> <step size> <dwell time> <comments>\n");
+		printf("                                                               (   0-30   ) (  1-24   )    (1-5)s       \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
 		printf("               1: 0.029V    9: 0.263V   17: 0.497V                                             \n");
@@ -180,7 +182,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 		counts=0;
 		for (i=0;i<1;i++){
 			usbInitCounter_USB1208LS(hid);
-			delayMicrosecondsHard(1000000); // wiringPi
+			delayMicrosecondsHard(dwell*1000000); // wiringPi
 			counts+=usbReadCounter_USB1208LS(hid);
 		}
 		printf("Counts %d\t",counts);

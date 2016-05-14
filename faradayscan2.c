@@ -120,7 +120,8 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	digitalWrite(CLK,LOW);
+	digitalWrite(CLK,LOW);  //Karl - it is important that a  program which uses the steppermotor begins and ends witth the clock signal in the same state
+		//and keep up with how many High -> low transistions as "steps"
 	delayMicrosecondsHard(2000);
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;
@@ -185,21 +186,6 @@ int main (int argc, char **argv)
 				}
 
 			}
-		/* reverse motor to bring back to same starting point.  This would not be needed
-		 but there is a small mis-match with the belt-pulley size. 
-			digitalWrite(DIR,0);
-
-			printf("Reset steppermotor\n");
-			for (steps=0;steps<NUMSTEPS;steps++){
-				// increment steppermotor by ninc steps
-				digitalWrite(CLK,HIGH);
-				delayMicrosecondsHard(DEL);
-				digitalWrite(CLK,LOW);
-				delayMicrosecondsHard(DEL);
-			}
-
-			digitalWrite(DIR,1);
-*/
 			sumI=sumI/count;
 			f3=sumSin/count;
 			f4=sumCos/count;
