@@ -3,7 +3,7 @@
    RasPi connected to USB 1208LS.
    Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
    PMT Counts: data received from CTR in USB1208
-*/
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,13 +21,17 @@
 #define CLK 3
 #define DIR 4
 
+FILE* getPolarizationData(int dataPoints);
+float* calculateFourierCoefficients(FILE* data, int dataPoints);
+float* calculateStokesParameters(float* fourierCoefficients, int dataPoints);
+
 int main (int argc, char **argv)
 {
 	int counts,i,steps,nsteps,ninc,dwell,aout,flag;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer[80],comments[80];
+	char fileName[80],comments[80];
 	float bias, offset, HPcal,energy, current;
 	FILE *fp;
 	__s16 sdata[1024];
@@ -50,9 +54,9 @@ int main (int argc, char **argv)
 		aout=atoi(argv[4]);
 		flag=atoi(argv[5]);
 		strcpy(comments,argv[6]);
-		} else {
-	printf("usage '~$ sudo ./polarization <num_rotations> <step_size> <pmt_dwell> <aout_for_target> <Pump Laser Flag> <comments_in_double_quotes>'\n");
-	return 1;
+	} else {
+		printf("usage '~$ sudo ./polarization <num_rotations> <step_size> <pmt_dwell> <aout_for_target> <Pump Laser Flag> <comments_in_double_quotes>'\n");
+		return 1;
 	}
 
 
@@ -76,7 +80,7 @@ int main (int argc, char **argv)
 	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
 
 
-//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+	//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 	// set up for stepmotor
 
@@ -89,42 +93,21 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(buffer,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo);
+	strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo);
 
 	printf("\n");
-	printf(buffer);
+	printf(fileName);
 	printf("\n");
 
 
-	fp=fopen(buffer,"w");
+	fp=fopen(fileName,"w");
 	if (!fp) {
 		printf("unable to open file \n");
 		exit(1);
 	}
-	fprintf(fp,buffer);
+	fprintf(fp,fileName);
 	fprintf(fp,"\n");
-	/*
-	DO AWAY WITH THIS. THIS INFORMATION IS NOT SPECIFICALLY USED IN THE PROGRAM. USER SHOULD JUST SPECIFY THE NOMINAL ELECTRON ENERGY
-	printf("Enter filament bias potential ");
-	scanf("%f",&bias);
-	printf("Enter target offset potential ");
-	scanf("%f",&offset);
-	fprintf(fp,"filament bias %4.2f\n",bias);
-	fprintf(fp,"target offset %4.2f\n",offset);
-	*/
-
 	// Set up for stepmotor
-	/*  REPLACED WITH COMMAND LINE ARGS
-	printf("Enter total number of steps (1200/revolution) ");
-	scanf("%d",&nsteps);
-	printf("Enter number of steps per data point");
-	scanf("%d",&ninc);
-	printf("Enter number of seconds of data to aquire per data point");
-	scanf("%d",&dwell);
-	printf("Enter, other, single line comments for data run(80 char limit): ");
-	scanf("%s",buffer);
-	fprintf(fp,buffer);
-	*/
 
 	// RUDAMENTARIY ERROR CHECKING
 	if (nsteps<1200) nsteps=1200;
@@ -160,11 +143,11 @@ int main (int argc, char **argv)
 		//200 steps per revoluion
 
 		for (i=0;i<ninc;i++){
-		// increment steppermotor by ninc steps
-		digitalWrite(CLK,HIGH);
-		delayMicrosecondsHard(2300);
-		digitalWrite(CLK,LOW);
-		delayMicrosecondsHard(2300);
+			// increment steppermotor by ninc steps
+			digitalWrite(CLK,HIGH);
+			delayMicrosecondsHard(2300);
+			digitalWrite(CLK,LOW);
+			delayMicrosecondsHard(2300);
 		}
 
 		printf("steps %d\t",(steps));
@@ -180,8 +163,8 @@ int main (int argc, char **argv)
 		current=0.0;
 		for (i=0;i<8;i++){
 
-		svalue = usbAIn_USB1208LS(hid,channel,gain);
-		current = current+volts_LS(gain,svalue);
+			svalue = usbAIn_USB1208LS(hid,channel,gain);
+			current = current+volts_LS(gain,svalue);
 		}
 		current = current/8.0;
 
@@ -192,7 +175,6 @@ int main (int argc, char **argv)
 		printf("current %f\n",current);
 		fflush(stdout);
 		fprintf(fp,"%f \n",current);
-
 	}
 
 
@@ -212,7 +194,3 @@ int main (int argc, char **argv)
 	}
 	return 0;
 }
-
-
-
-
