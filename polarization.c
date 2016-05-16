@@ -23,7 +23,6 @@
 #define DIR 4
 #define STEPSPERREV 1200
 #define DATAPOINTS 16
-#DEFINE
 
 FILE* getPolarizationData(char* fileName, int aout);
 int calculateFourierCoefficients(FILE* data, int dataPoints, float** fcCReturn, float** fcSReturn);
@@ -32,7 +31,9 @@ int calculateStokesParameters(float** fourierCoefficientsCos,float** fourierCoef
 int main (int argc, char **argv)
 {
 	int aout,flag,kmax;
-	char fileName[80], comments[80];
+	char* fileName="home/karl/Dropbox/00School/gradYear02Summer/polarizationData/POL2016-05-12_151549.dat";
+	char comments[80];
+	//char fileName[80], comments[80];
 	float HPcal;
 	FILE* data;
 
@@ -61,8 +62,6 @@ int main (int argc, char **argv)
 	timeinfo=localtime(&rawtime);
 	// Commenting out this line so that I can use a static filename
 	//strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo);
-	fileName = "home/karl/Dropbox/00School/gradYear02Summer/polarizationData/POL2016-05-12_151549.dat";
-
 	printf("\n%s\n",fileName); //TODO Consolidation
 
 	// Collect raw data
@@ -82,8 +81,8 @@ int main (int argc, char **argv)
 	}
 
 	kmax=DATAPOINTS/2;
-	float* fourierCoefficientsSin = malloc(kmax*sizeof(float));
-	float* fourierCoefficientsCos = malloc(kmax*sizeof(float));
+	float** fourierCoefficientsSin = malloc(kmax*sizeof(float));
+	float** fourierCoefficientsCos = malloc(kmax*sizeof(float));
 
 	// Find fourier coefficients from raw data.
 	calculateFourierCoefficients(data,DATAPOINTS,fourierCoefficientsCos,fourierCoefficientsSin);
@@ -256,11 +255,17 @@ FILE* getPolarizationData(char* fileName, int aout){
 }
 
 int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoefficientsCosReturn,float* fourierCoefficientsSinReturn){	
+	// TODO: implement the FFT version of this. 
 	int i;
+	// Zero the malloced data. 
+	int k;
+	for (k=0; k< dataPoints/2; k++){
+		fourierCoefficientsCosReturn[k]=0;
+		fourierCoefficientsSinReturn[k]=0;
+	}
 	for (i=0; i< dataPoints; i++){
 		int steps, counts;
 		float current;
-		int k; 
 		int d0_L;	// d0_L represents two delta functions. See Berry for
 					// more info.
 		for (k=0; k< dataPoints/2; k++){
@@ -268,8 +273,7 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 				d0_L=1;
 			fourierCoefficientsCosReturn[k]+= count * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 			fourierCoefficientsSinReturn[k]+= count * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
-
-
+		}
 	}
 	return 0;
 }
