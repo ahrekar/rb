@@ -27,7 +27,7 @@ Analog in Pin 0 = GND
 
 #include <stdio.h>
 #include <wiringPi.h>
-#include <mcp3004.h>
+//#include <mcp3004.h>
 #include <stdlib.h>
 
 #define BASE 100

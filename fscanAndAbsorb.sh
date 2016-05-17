@@ -17,7 +17,7 @@
 # at an Aout of about 800±50. This saves time vs. doing the full
 # scan.
 
-sudo ./RbAbsorbScan 700 1000 10 "$1"
+sudo ./RbAbsorbScan 700 1000 5 "$1"
 
 # faraday rotation is supposed to be taken at large detunings.
 # this is at the other extreme of Aout.

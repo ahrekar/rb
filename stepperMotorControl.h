@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define DEL 1200	// Whenever a delay is needed, use this value
+#define DEL 1500	// Whenever a delay is needed, use this value
 
 // Motor 0 -> Polarimeter
 // Motor 1 -> Absorption Analyzer

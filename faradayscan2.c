@@ -4,7 +4,6 @@
 
    FARADAY SCAN
 
-   steppermotor 1500 steps per revolution. 
 
    use Aout 0 to set laser wavelength. see page 98-100
    usage
@@ -38,6 +37,9 @@
 #define STEPSIZE 25
 #define STEPSPERREV 350.0
 
+#define BASE 100
+#define SPI_CHAN 0
+
 int main (int argc, char **argv)
 {
 	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples,j;
@@ -56,6 +58,10 @@ int main (int argc, char **argv)
 	//	__u8 gains[8];
 	//	__u8 options;
 	__u8 input, pin = 0, channel, gain;
+
+	int x;
+	int chan;
+	float CVGauge,IonGauge; // Rb target CV Gauge (buffer pressure)
 
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
@@ -98,6 +104,7 @@ int main (int argc, char **argv)
 	// set up for stepmotor
 
 	wiringPiSetup();
+	mcp3004Setup(BASE,SPI_CHAN);
 	pinMode(CLK,OUTPUT);
 	pinMode(DIR,OUTPUT);
 	digitalWrite(DIR,1);
@@ -120,16 +127,32 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
+	fprintf(fp,fileName);
+	fprintf(fp,"\n");
+	fprintf(fp,comments);
+	fprintf(fp,"\n");
+
+	chan = 1; // IonGauge
+	x=analogRead(BASE + chan);
+	IonGauge = 0.0107 * (float)x;
+	IonGauge = pow(10,(IonGauge-9.97));
+	printf("IonGauge %2.2E Torr \n",IonGauge);
+	fprintf(fp,"IonGauge %2.2E Torr \n",IonGauge);
+
+	chan = 3; //pressure
+	x=analogRead(BASE + chan);
+	CVGauge = (float)x;
+	CVGauge = pow(10,(0.00499*CVGauge - 4.05));
+	printf("CVGauge %2.2E Torr\n", CVGauge);
+	fprintf(fp,"CVGauge %2.2E Torr\n", CVGauge);
+
+
 	digitalWrite(CLK,LOW);  //Karl - it is important that a  program which uses the steppermotor begins and ends witth the clock signal in the same state
 		//and keep up with how many High -> low transistions as "steps"
 	delayMicrosecondsHard(2000);
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;
 
-	fprintf(fp,fileName);
-	fprintf(fp,"\n");
-	fprintf(fp,comments);
-	fprintf(fp,"\n");
 	// Write the header for the data to the file.
 	fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\n");
 
