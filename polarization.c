@@ -22,30 +22,35 @@
 #define CLK 3
 #define DIR 4
 #define STEPSPERREV 1200
-#define DATAPOINTS 16
+#define DATAPOINTS 96
+#define PI 3.14159265358979
 
 FILE* getPolarizationData(char* fileName, int aout);
-int calculateFourierCoefficients(FILE* data, int dataPoints, float** fcCReturn, float** fcSReturn);
-int calculateStokesParameters(float** fourierCoefficientsCos,float** fourierCoefficientsSin, int numberOfCoefficients, float** stokesReturn);
+int calculateFourierCoefficients(FILE* data, int dataPoints, float* fcCReturn, float* fcSReturn);
+int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, int numberOfCoefficients, float* stokesReturn);
+int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int kmax);
 
 int main (int argc, char **argv)
 {
-	int aout,flag,kmax;
-	char* fileName="home/karl/Dropbox/00School/gradYear02Summer/polarizationData/POL2016-05-12_151549.dat";
+	int aout,kmax;
+	// int flag; NOT USED
+	//char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/POL2016-05-12_151549.dat";
+	char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/tester.dat";
+
 	char comments[80];
 	//char fileName[80], comments[80];
-	float HPcal;
+	// float HPcal; NOT USED
 	FILE* data;
 
 	// Variables for getting time information to identify
 	// when we recorded the data
-	time_t rawtime;
-	struct tm * timeinfo;
+	// time_t rawtime; NOT USED
+	// struct tm * timeinfo; NOT USED
 
 	// Get parameters.
 	if (argc==4){
 		aout=atoi(argv[1]);
-		flag=atoi(argv[2]);
+	//	flag=atoi(argv[2]); NOT USED
 		strcpy(comments,argv[3]);
 	} else {
 		printf("usage '~$ sudo ./polarization <aout_for_target> <Pump Laser Flag> <comments_in_double_quotes>'\n");
@@ -58,8 +63,8 @@ int main (int argc, char **argv)
 
 
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
-	time(&rawtime);
-	timeinfo=localtime(&rawtime);
+	// time(&rawtime); NOT USED
+	// timeinfo=localtime(&rawtime); NOT USED
 	// Commenting out this line so that I can use a static filename
 	//strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo);
 	printf("\n%s\n",fileName); //TODO Consolidation
@@ -81,12 +86,13 @@ int main (int argc, char **argv)
 	}
 
 	kmax=DATAPOINTS/2;
-	float** fourierCoefficientsSin = malloc(kmax*sizeof(float));
-	float** fourierCoefficientsCos = malloc(kmax*sizeof(float));
+	float* fourierCoefficientsSin = malloc(kmax*sizeof(float));
+	float* fourierCoefficientsCos = malloc(kmax*sizeof(float));
 
 	// Find fourier coefficients from raw data.
 	calculateFourierCoefficients(data,DATAPOINTS,fourierCoefficientsCos,fourierCoefficientsSin);
 	
+	printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,kmax);
 
 
 	// These statements are useful pieces of information
@@ -192,7 +198,7 @@ FILE* getPolarizationData(char* fileName, int aout){
 
 	// Give a small delay so that we can be sure
 	// the stepperMotor has settled into its state.
-	delayMicrosecondsHard(2000);
+	// delayMicrosecondsHard(2000); NOT USED
 
 	dwell=3;
 	revolutions=1;
@@ -203,9 +209,9 @@ FILE* getPolarizationData(char* fileName, int aout){
 		for (i=0;i<ninc;i++){
 			// increment steppermotor by ninc steps
 			digitalWrite(CLK,HIGH);
-			delayMicrosecondsHard(2300);
+			// delayMicrosecondsHard(2300); NOT USED
 			digitalWrite(CLK,LOW);
-			delayMicrosecondsHard(2300);
+			// delayMicrosecondsHard(2300); NOT USED
 		}
 
 		printf("steps %d\t",(steps));
@@ -214,7 +220,7 @@ FILE* getPolarizationData(char* fileName, int aout){
 		counts=0;
 		for (i=0;i<dwell;i++){
 			usbInitCounter_USB1208LS(hid);
-			delayMicrosecondsHard(1000000); // wiringPi
+			//delayMicrosecondsHard(1000000); // wiringPi  NOT USED
 			counts+=usbReadCounter_USB1208LS(hid);
 		}
 
@@ -266,18 +272,36 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 	for (i=0; i< dataPoints; i++){
 		int steps, counts;
 		float current;
-		int d0_L;	// d0_L represents two delta functions. See Berry for
+		fscanf(data,"%d,%d,%f",&steps,&counts,&current);
+		int d0_L=0;	// d0_L represents two delta functions. See Berry for
 					// more info.
-		for (k=0; k< dataPoints/2; k++){
-			if(k==0 || k==(datapoints/2)-1ve )
+		for (k=0; k < dataPoints/2; k++){
+			if(k==0 || k==dataPoints/2-1){
 				d0_L=1;
-			fourierCoefficientsCosReturn[k]+= count * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
-			fourierCoefficientsSinReturn[k]+= count * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			}else{
+				d0_L=0;
+			}
+			printf("k=%d    d0_L=%d\n",k,d0_L);
+			fourierCoefficientsCosReturn[k]+= 2 * counts * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			fourierCoefficientsSinReturn[k]+= 2 * counts * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 		}
 	}
 	return 0;
 }
 
-int calculateStokesParameters(float** fourierCoefficientsCos,float** fourierCoefficientsSin, int numOfCoefficients, float* stokesReturn){
+int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, int numOfCoefficients, float* stokesReturn){
+	return 0;
+}
+
+int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int kmax){
+	printf("Cos Coefficients:\n");
+	int i;
+	for(i=0;i<kmax;i++){
+		printf("%f\n", fourierCoefficientsCos[i]);
+	}
+	printf("Sin Coefficients:\n");
+	for(i=0;i<kmax;i++){
+		printf("%f\n", fourierCoefficientsSin[i]);
+	}
 	return 0;
 }
