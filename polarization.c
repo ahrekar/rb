@@ -18,29 +18,38 @@
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#include "fileTools.c"
 
 #define CLK 3
 #define DIR 4
 #define STEPSPERREV 1200
-#define DATAPOINTS 96
+#define DATAPOINTS 150
 #define PI 3.14159265358979
+#define REVOLUTIONS 1
+#define DWELL 1
+#define ALPHA 0
+#define BETA 16
+#define DELTA 90
 
 FILE* getPolarizationData(char* fileName, int aout);
 int calculateFourierCoefficients(FILE* data, int dataPoints, float* fcCReturn, float* fcSReturn);
-int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, int numberOfCoefficients, float* stokesReturn);
+int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, float* stokesReturn);
 int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int kmax);
+int printOutFloatArray(float* array, int n);
 
 int main (int argc, char **argv)
 {
 	int aout,kmax;
 	// int flag; NOT USED
-	//char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/POL2016-05-12_151549.dat";
+	//char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/POL2016-05-12_151549.dat"; REMOVE
 	char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/tester.dat";
+	char* tmp="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/tmp.dat";
 
 	char comments[80];
 	//char fileName[80], comments[80];
-	// float HPcal; NOT USED
+	float HPcal;
 	FILE* data;
+	FILE* dataSummary;
 
 	// Variables for getting time information to identify
 	// when we recorded the data
@@ -67,7 +76,7 @@ int main (int argc, char **argv)
 	// timeinfo=localtime(&rawtime); NOT USED
 	// Commenting out this line so that I can use a static filename
 	//strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo);
-	printf("\n%s\n",fileName); //TODO Consolidation
+	printf("\n%s\n",fileName);
 
 	// Collect raw data
 	// 
@@ -78,7 +87,8 @@ int main (int argc, char **argv)
 	// data = getPolarizationData(fileName, aout);
 	
 	// Instead, I'll just import a file that has the 
-	// data that I want to analyze.
+	// data that I want to analyze. This should be removed
+	// when we go back to the Pi.
 	data=fopen(fileName,"r");
 	if (!data) {
 		printf("Unable to open file \n");
@@ -92,25 +102,48 @@ int main (int argc, char **argv)
 	// Find fourier coefficients from raw data.
 	calculateFourierCoefficients(data,DATAPOINTS,fourierCoefficientsCos,fourierCoefficientsSin);
 	
-	printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,kmax);
+	printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,150);
 
+	// Calculate Stokes Parameters from Fourier Coefficients.
+	float* stokesParameters = malloc(4*sizeof(float));
+	calculateStokesParameters(fourierCoefficientsCos,fourierCoefficientsSin,stokesParameters);
 
-	// These statements are useful pieces of information
-	// that should be included in the analysis file, but
-	// I will not record them in the rawData. Until I figure
-	// out exactly how that analysis file will work,
-	// These statements will live, commented out, here.
-	/**
-	fprintf(rawData,"%s\n",fileName);
-	// Set up for stepmotor
+	printf("Stokes Parameters:\n");
+	printOutFloatArray(stokesParameters,4);
 
+	dataSummary=fopen(tmp,"w");
+	if (!dataSummary) {
+		printf("Unable to open file \n");
+		exit(1);
+	}
 
 	HPcal=28.1/960.0;
-	fprintf(rawData,"#nsteps %d\n",nsteps);
-	fprintf(rawData,"#Aout %d\n",aout);
-	fprintf(rawData,"#%s\n",comments);
-	fprintf(rawData,"#Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
-	**/
+	fprintf(dataSummary,"#File\t%s\n",tmp);
+	fprintf(dataSummary,"#Aout\t%d\n",aout);
+	fprintf(dataSummary,"#Assumed USB1208->HP3617A conversion\t%2.6f\n",HPcal);
+	fprintf(dataSummary,"#DataPoints\t%d\n",DATAPOINTS);
+	fprintf(dataSummary,"#PMT dwell time (s)\t%d\n",DWELL);
+	fprintf(dataSummary,"#REVOLUTIONS\t%d\n",REVOLUTIONS);
+	fprintf(dataSummary,"#Comments\t%s\n",comments);
+	fprintf(dataSummary,"#ALPHA\t%d\n",ALPHA);
+	fprintf(dataSummary,"#BETA\t%d\n",BETA);
+	fprintf(dataSummary,"#DELTA\t%d\n",DELTA);
+	fprintf(dataSummary,"#f0\t%f\n",fourierCoefficientsCos[0]);
+	fprintf(dataSummary,"#f1\t%f\n",fourierCoefficientsCos[4]);
+	fprintf(dataSummary,"#f2\t%f\n",fourierCoefficientsSin[4]);
+	fprintf(dataSummary,"#f3\t%f\n",fourierCoefficientsSin[2]);
+	fprintf(dataSummary,"#f4\t%f\n",fourierCoefficientsCos[2]);
+	fprintf(dataSummary,"#p1\t%f\n",stokesParameters[0]);
+	fprintf(dataSummary,"#p2\t%f\n",stokesParameters[1]);
+	fprintf(dataSummary,"#p3\t%f\n",stokesParameters[2]);
+	fprintf(dataSummary,"#p4\t%f\n",stokesParameters[3]);
+	fprintf(dataSummary,"#steps\tcount\tcurrent\n\n\n");
+
+	fclose(dataSummary);
+	fclose(data);
+
+	append(tmp,fileName);
+
 
 	return 0;
 }
@@ -127,7 +160,7 @@ FILE* getPolarizationData(char* fileName, int aout){
 	__u8 channel, gain;
 	
 	// Variables for stepper motor control.
-	int dwell,revolutions,nsteps,steps,ninc,i;
+	int nsteps,steps,ninc,i;
 
 	// Variables for data collections.
 	int counts,numMeasurements;
@@ -200,9 +233,7 @@ FILE* getPolarizationData(char* fileName, int aout){
 	// the stepperMotor has settled into its state.
 	// delayMicrosecondsHard(2000); NOT USED
 
-	dwell=3;
-	revolutions=1;
-	nsteps=STEPSPERREV*revolutions;
+	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTS; // The number of steps to take between readings.
 
 	for (steps=0;steps<nsteps;steps+=ninc){
@@ -218,7 +249,7 @@ FILE* getPolarizationData(char* fileName, int aout){
 		fprintf(rawData,"%d\t",(steps));
 
 		counts=0;
-		for (i=0;i<dwell;i++){
+		for (i=0;i<DWELL;i++){
 			usbInitCounter_USB1208LS(hid);
 			//delayMicrosecondsHard(1000000); // wiringPi  NOT USED
 			counts+=usbReadCounter_USB1208LS(hid);
@@ -281,7 +312,6 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 			}else{
 				d0_L=0;
 			}
-			printf("k=%d    d0_L=%d\n",k,d0_L);
 			fourierCoefficientsCosReturn[k]+= 2 * counts * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 			fourierCoefficientsSinReturn[k]+= 2 * counts * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 		}
@@ -289,19 +319,35 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 	return 0;
 }
 
-int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, int numOfCoefficients, float* stokesReturn){
+int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, float* stokesReturn){
+	float delta=2*PI*(DELTA)/360.0;
+	float alpha=2*PI*(ALPHA)/360.0;
+	float beta_0=2*PI*(BETA)/360.0;
+	float c0=fourierCoefficientsCos[0];
+	float c2=fourierCoefficientsCos[2];
+	float c4=fourierCoefficientsCos[4];
+	float s2=fourierCoefficientsSin[2];
+	float s4=fourierCoefficientsSin[4];
+	stokesReturn[0]=c0-(1+cos(delta))/(1-cos(delta))*(c4*cos(4*alpha+4*beta_0)+s4*sin(4*alpha+4*beta_0));
+	stokesReturn[1]=2.0/(1-cos(delta))*(c4*cos(2*alpha+4*beta_0)+s4*sin(2*alpha+4*beta_0))/stokesReturn[0];
+	stokesReturn[2]=2.0/(1-cos(delta))*(s4*cos(2*alpha+4*beta_0)-c4*sin(2*alpha+4*beta_0))/stokesReturn[0];
+	stokesReturn[3]=sqrt(pow(c2,2)+pow(s2,2))/pow(sin(delta),2)/stokesReturn[0];
 	return 0;
 }
 
 int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int kmax){
 	printf("Cos Coefficients:\n");
-	int i;
-	for(i=0;i<kmax;i++){
-		printf("%f\n", fourierCoefficientsCos[i]);
-	}
+	printOutFloatArray(fourierCoefficientsCos,5);
 	printf("Sin Coefficients:\n");
-	for(i=0;i<kmax;i++){
-		printf("%f\n", fourierCoefficientsSin[i]);
+	printOutFloatArray(fourierCoefficientsSin,5);
+	return 0;
+}
+
+
+int printOutFloatArray(float* array, int n){
+	int i;
+	for(i=0;i<n;i++){
+		printf("%f\n", array[i]);
 	}
 	return 0;
 }
