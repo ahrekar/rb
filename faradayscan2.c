@@ -147,8 +147,10 @@ int main (int argc, char **argv)
 	fprintf(fp,"CVGauge %2.2E Torr\n", CVGauge);
 
 
-	digitalWrite(CLK,LOW);  //Karl - it is important that a  program which uses the steppermotor begins and ends witth the clock signal in the same state
-		//and keep up with how many High -> low transistions as "steps"
+	digitalWrite(CLK,LOW);  //Karl - it is important that a  program which uses the steppermotor begins and ends with the clock signal in the same state
+							//and keep up with how many High -> low transistions as "steps"
+							//Ken - Duly noted.
+		
 	delayMicrosecondsHard(2000);
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;

@@ -100,14 +100,16 @@ int main (int argc, char *argv[]){
 		}
 		i=0;
 		dir = 1;
-		while (!digitalRead(HOME2)) {
+		while (!digitalRead(HOME2)&(i<400)) {
 			digitalWrite (DIR2, dir);  // sets direction
 			digitalWrite(CLK2,HIGH);
 			delayMicrosecondsHard(DEL2); // this delay will(should?) not allow other OS processes
 			digitalWrite (CLK2,LOW);
 			delayMicrosecondsHard(DEL2);
+		i++;
 		}
-		if (digitalRead(HOME2)) printf("found home \n");
+		if (digitalRead(HOME2)) printf("found home. %d steps \n",i);
+		if (!digitalRead(HOME2)) printf("error\n");
 		break;
 
 	}
