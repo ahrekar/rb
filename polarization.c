@@ -31,7 +31,7 @@
 #define BETA 0
 #define DELTA 90
 
-FILE* getPolarizationData(char* fileName, int aout);
+int getPolarizationData(FILE* filePointerReturn, char* fileName, int aout);
 int calculateFourierCoefficients(FILE* data, int dataPoints, float* fcCReturn, float* fcSReturn);
 int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, float* stokesReturn);
 int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int kmax);
@@ -41,13 +41,9 @@ int main (int argc, char **argv)
 {
 	int aout,kmax;
 	int flag;
-	char* tmp="/home/pi/RbData/POL2016-05-17_121751.dat"; //INCLUDE
+	char* tmp="/home/pi/RbData/tmp.dat"; //INCLUDE
 	
-	// For development on home laptop
-	char* fileName="/home/pi/RbData/test.dat"; // REMOVE
-
-	//char fileName[80], comments[80],backgroundFile[80]; //INCLUDE
-	char comments[80],backgroundFile[80]; // REMOVE
+	char fileName[80], comments[80],backgroundFile[80]; //INCLUDE
 	float HPcal;
 	FILE* data;
 	FILE* dataSummary;
@@ -80,18 +76,13 @@ int main (int argc, char **argv)
 
 
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
-	//time(&rawtime); //INCLUDE
-	//timeinfo=localtime(&rawtime); //INCLUDE
-	//strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
+	time(&rawtime); //INCLUDE
+	timeinfo=localtime(&rawtime); //INCLUDE
+	strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
 	printf("\n%s\n",fileName);
 
 	// Collect raw data
-	//data = getPolarizationData(tmp, aout); //INCLUDE
-	data = fopen(tmp,"r"); // REMOVE
-	if (!data) {	//REMOVE
-		printf("Unable to open file %s\n",fileName);// REMOVE
-		exit(1); //REMOVE
-	} //REMOVE
+	getPolarizationData(data, tmp, aout); //INCLUDE
 	
 	kmax=DATAPOINTS/2;
 	float* fourierCoefficientsSin = malloc(kmax*sizeof(float));
@@ -166,11 +157,8 @@ int main (int argc, char **argv)
 
 	return 0;
 }
-/* // INCLUDE
-FILE* getPolarizationData(char* fileName, int aout){
-	// File variables.
-	FILE* rawData;
-
+// INCLUDE
+int getPolarizationData(FILE* rawData, char* fileName, int aout){
 	// Variables for interfacing with the USB1208
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
@@ -199,7 +187,7 @@ FILE* getPolarizationData(char* fileName, int aout){
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_init failed with return code %d\n", ret);
-		return -1;
+		exit(1);
 	}
 
 	if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
@@ -218,16 +206,19 @@ FILE* getPolarizationData(char* fileName, int aout){
 //	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 	// set up for stepmotor
-
 	wiringPiSetup();
 	pinMode(CLK,OUTPUT);
 	pinMode(DIR,OUTPUT);
 	digitalWrite(DIR,1);
 
+	// Setup for AnalogUSB
+	gain=BP_10_00V;
+	channel = 0;
+
 	// Begin File setup
 	rawData=fopen(fileName,"w");
 	if (!rawData) {
-		printf("unable to open file \n");
+		printf("Unable to open file: %s\n",fileName);
 		exit(1);
 	}
 	// End File setup
@@ -278,28 +269,28 @@ FILE* getPolarizationData(char* fileName, int aout){
 
 		printf("current %f\n",current);
 		fflush(stdout);
-		fprintf(fp,"%f \n",current);
+		fprintf(rawData,"%f \n",current);
 
 	}
 
 
-	fclose(fp);
+	fclose(rawData);
 	//cleanly close USB
 	ret = hid_close(hid);
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_close failed with return code %d\n", ret);
-		return 1;
+		exit(1);
 	}
 
 	hid_delete_HIDInterface(&hid);
 	ret = hid_cleanup();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
-		return 1;
+		exit(1);
 	}
 	return 0;
 }
-**/
+
 
 int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoefficientsCosReturn,float* fourierCoefficientsSinReturn){	
 	// TODO: implement the FFT version of this. 
