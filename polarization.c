@@ -40,29 +40,37 @@ int printOutFloatArray(float* array, int n);
 int main (int argc, char **argv)
 {
 	int aout,kmax;
-	// int flag; NOT USED
-	//char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/POL2016-05-12_151549.dat"; REMOVE
-	char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/tester.dat";
-	char* tmp="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/tmp.dat";
+	int flag;
+	//char* tmp="/home/pi/RbData/tmp.dat"; //INCLUDE
+	
+	// For development on home laptop
+	char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/data.csv"; // REMOVE
+	char* tmp="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/tmp.dat"; // REMOVE
 
-	char comments[80];
-	//char fileName[80], comments[80];
+	//char fileName[80], comments[80],backgroundFile[80]; //INCLUDE
+	char comments[80],backgroundFile[80]; // REMOVE
 	float HPcal;
 	FILE* data;
 	FILE* dataSummary;
 
 	// Variables for getting time information to identify
 	// when we recorded the data
-	// time_t rawtime; NOT USED
-	// struct tm * timeinfo; NOT USED
+	time_t rawtime;
+	struct tm * timeinfo;
 
 	// Get parameters.
 	if (argc==4){
 		aout=atoi(argv[1]);
-	//	flag=atoi(argv[2]); NOT USED
+		flag=atoi(argv[2]); 
 		strcpy(comments,argv[3]);
-	} else {
-		printf("usage '~$ sudo ./polarization <aout_for_target> <Pump Laser Flag> <comments_in_double_quotes>'\n");
+	} else if(argc==5){
+		aout=atoi(argv[1]);
+		flag=atoi(argv[2]); 
+		strcpy(backgroundFile,argv[3]);
+		strcpy(comments,argv[4]);
+	}
+	else {
+		printf("usage '~$ sudo ./polarization <aout_for_target> <Pump Laser Flag> <(optional) background file> <comments_in_double_quotes>'\n");
 		return 1;
 	}
 
@@ -72,38 +80,49 @@ int main (int argc, char **argv)
 
 
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
-	// time(&rawtime); NOT USED
-	// timeinfo=localtime(&rawtime); NOT USED
-	// Commenting out this line so that I can use a static filename
-	//strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo);
+	//time(&rawtime); //INCLUDE
+	//timeinfo=localtime(&rawtime); //INCLUDE
+	//strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
 	printf("\n%s\n",fileName);
 
 	// Collect raw data
-	// 
-	// For the moment, I'm going to comment the following
-	// line out because I won't be collecting new data, 
-	// but working with stuff I already have.
-	//
-	// data = getPolarizationData(fileName, aout);
+	//data = getPolarizationData(tmp, aout); //INCLUDE
+	data = fopen(tmp,"r"); // REMOVE
+	if (!data) {	//REMOVE
+		printf("Unable to open file %s\n",fileName);// REMOVE
+		exit(1); //REMOVE
+	} //REMOVE
 	
-	// Instead, I'll just import a file that has the 
-	// data that I want to analyze. This should be removed
-	// when we go back to the Pi.
-	data=fopen(fileName,"r");
-	if (!data) {
-		printf("Unable to open file \n");
-		exit(1);
-	}
-
 	kmax=DATAPOINTS/2;
 	float* fourierCoefficientsSin = malloc(kmax*sizeof(float));
 	float* fourierCoefficientsCos = malloc(kmax*sizeof(float));
 
 	// Find fourier coefficients from raw data.
 	calculateFourierCoefficients(data,DATAPOINTS,fourierCoefficientsCos,fourierCoefficientsSin);
-	
-	printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,150);
 
+	// Calculate fourier coefficients from BG data, if provided
+	if(argc==5){
+		// Begin File setup
+		FILE* background = fopen(backgroundFile,"r");
+		if (!background) {
+			printf("Unable to open file %s\n",backgroundFile);
+			exit(1);
+		}
+		// End File setup
+		
+		float* fcSinBg = malloc(kmax*sizeof(float));
+		float* fcCosBg = malloc(kmax*sizeof(float));
+		calculateFourierCoefficients(background,DATAPOINTS,fcCosBg,fcSinBg);
+
+		printOutFC(fcCosBg,fcSinBg,kmax);
+
+		int k;
+		for (k=0; k < kmax; k++){
+			fourierCoefficientsCos[k]=fourierCoefficientsCos[k]-fcCosBg[k];
+			fourierCoefficientsSin[k]=fourierCoefficientsSin[k]-fcSinBg[k];
+		}
+	}
+	
 	// Calculate Stokes Parameters from Fourier Coefficients.
 	float* stokesParameters = malloc(4*sizeof(float));
 	calculateStokesParameters(fourierCoefficientsCos,fourierCoefficientsSin,stokesParameters);
@@ -111,43 +130,42 @@ int main (int argc, char **argv)
 	printf("Stokes Parameters:\n");
 	printOutFloatArray(stokesParameters,4);
 
-	dataSummary=fopen(tmp,"w");
+	dataSummary=fopen(fileName,"w");
 	if (!dataSummary) {
-		printf("Unable to open file \n");
+		printf("Unable to open file: %s\n", fileName);
 		exit(1);
 	}
 
 	HPcal=28.1/960.0;
-	fprintf(dataSummary,"#File\t%s\n",tmp);
-	fprintf(dataSummary,"#Aout\t%d\n",aout);
-	fprintf(dataSummary,"#Assumed USB1208->HP3617A conversion\t%2.6f\n",HPcal);
-	fprintf(dataSummary,"#DataPoints\t%d\n",DATAPOINTS);
-	fprintf(dataSummary,"#PMT dwell time (s)\t%d\n",DWELL);
-	fprintf(dataSummary,"#REVOLUTIONS\t%d\n",REVOLUTIONS);
-	fprintf(dataSummary,"#Comments\t%s\n",comments);
-	fprintf(dataSummary,"#ALPHA\t%d\n",ALPHA);
-	fprintf(dataSummary,"#BETA\t%d\n",BETA);
-	fprintf(dataSummary,"#DELTA\t%d\n",DELTA);
-	fprintf(dataSummary,"#f0\t%f\n",fourierCoefficientsCos[0]);
-	fprintf(dataSummary,"#f1\t%f\n",fourierCoefficientsCos[4]);
-	fprintf(dataSummary,"#f2\t%f\n",fourierCoefficientsSin[4]);
-	fprintf(dataSummary,"#f3\t%f\n",fourierCoefficientsSin[2]);
-	fprintf(dataSummary,"#f4\t%f\n",fourierCoefficientsCos[2]);
-	fprintf(dataSummary,"#p1\t%f\n",stokesParameters[0]);
-	fprintf(dataSummary,"#p2\t%f\n",stokesParameters[1]);
-	fprintf(dataSummary,"#p3\t%f\n",stokesParameters[2]);
-	fprintf(dataSummary,"#p4\t%f\n",stokesParameters[3]);
-	fprintf(dataSummary,"#steps\tcount\tcurrent\n\n\n");
+	fprintf(dataSummary,"#File,%s\n",fileName);
+	if(argc==5){fprintf(dataSummary,"#BackgroundFile,%s\n",backgroundFile);}
+	fprintf(dataSummary,"#Aout,%d\n",aout);
+	fprintf(dataSummary,"#Assumed USB1208->HP3617A conversion,%2.6f\n",HPcal);
+	fprintf(dataSummary,"#DataPoints,%d\n",DATAPOINTS);
+	fprintf(dataSummary,"#PMT dwell time (s),%d\n",DWELL);
+	fprintf(dataSummary,"#REVOLUTIONS,%d\n",REVOLUTIONS);
+	fprintf(dataSummary,"#Comments,%s\n",comments);
+	fprintf(dataSummary,"#ALPHA,%d\n",ALPHA);
+	fprintf(dataSummary,"#BETA,%d\n",BETA);
+	fprintf(dataSummary,"#DELTA,%d\n",DELTA);
+	fprintf(dataSummary,"#f0,%f\n",fourierCoefficientsCos[0]);
+	fprintf(dataSummary,"#f1,%f\n",fourierCoefficientsCos[4]);
+	fprintf(dataSummary,"#f2,%f\n",fourierCoefficientsSin[4]);
+	fprintf(dataSummary,"#f3,%f\n",fourierCoefficientsSin[2]);
+	fprintf(dataSummary,"#f4,%f\n",fourierCoefficientsCos[2]);
+	fprintf(dataSummary,"#p1,%f\n",stokesParameters[0]);
+	fprintf(dataSummary,"#p2,%f\n",stokesParameters[1]);
+	fprintf(dataSummary,"#p3,%f\n",stokesParameters[2]);
+	fprintf(dataSummary,"#p4,%f\n",stokesParameters[3]);
 
 	fclose(dataSummary);
 	fclose(data);
 
-	append(tmp,fileName);
-
+	append(fileName,tmp);
 
 	return 0;
 }
-
+/* // INCLUDE
 FILE* getPolarizationData(char* fileName, int aout){
 	// File variables.
 	FILE* rawData;
@@ -231,27 +249,28 @@ FILE* getPolarizationData(char* fileName, int aout){
 
 	// Give a small delay so that we can be sure
 	// the stepperMotor has settled into its state.
-	// delayMicrosecondsHard(2000); NOT USED
+	delayMicrosecondsHard(2000); 
 
 	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTS; // The number of steps to take between readings.
 
+	fprintf(rawData,"#steps,count,current\n");
 	for (steps=0;steps<nsteps;steps+=ninc){
 		for (i=0;i<ninc;i++){
 			// increment steppermotor by ninc steps
 			digitalWrite(CLK,HIGH);
-			// delayMicrosecondsHard(2300); NOT USED
+			delayMicrosecondsHard(2300); 
 			digitalWrite(CLK,LOW);
-			// delayMicrosecondsHard(2300); NOT USED
+			delayMicrosecondsHard(2300);
 		}
 
-		printf("steps %d\t",(steps));
-		fprintf(rawData,"%d\t",(steps));
+		printf("steps %d,",(steps));
+		fprintf(rawData,"%d,",(steps));
 
 		counts=0;
 		for (i=0;i<DWELL;i++){
 			usbInitCounter_USB1208LS(hid);
-			//delayMicrosecondsHard(1000000); // wiringPi  NOT USED
+			delayMicrosecondsHard(1000000);//WiringPi
 			counts+=usbReadCounter_USB1208LS(hid);
 		}
 
@@ -263,9 +282,9 @@ FILE* getPolarizationData(char* fileName, int aout){
 		}
 		current = current/numMeasurements;
 
-		printf("Counts %d\t",counts);
+		printf("Counts %d,",counts);
 		fflush(stdout);
-		fprintf(rawData,"%d \t",counts);
+		fprintf(rawData,"%d,",counts);
 
 		printf("current %f\n",current);
 		fflush(stdout);
@@ -290,6 +309,7 @@ FILE* getPolarizationData(char* fileName, int aout){
 
 	return rawData;
 }
+**/
 
 int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoefficientsCosReturn,float* fourierCoefficientsSinReturn){	
 	// TODO: implement the FFT version of this. 
@@ -302,8 +322,16 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 	}
 	for (i=0; i< dataPoints; i++){
 		int steps, counts;
+		char trash[100];
 		float current;
-		fscanf(data,"%d,%d,%f",&steps,&counts,&current);
+		int j=0;
+		fgets(trash,100,data);
+		while(trash[0]=='#'){
+			printf("%s\n",trash);
+			fgets(trash,100,data);
+			j++;
+		}
+		fscanf(data,"%d,%d,%f\n",&steps,&counts,&current);
 		int d0_L=0;	// d0_L represents two delta functions. See Berry for
 					// more info.
 		for (k=0; k < dataPoints/2; k++){
