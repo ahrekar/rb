@@ -4,12 +4,19 @@
 #include <string.h>
 
 int append(char* _head, char* _tail);
+int appendFiles(FILE* _head, FILE* _tail);
 
 int append(char* _head, char* _tail)
 {
 	FILE* head = fopen(_head, "ab");
 	FILE* tail = fopen(_tail, "rb");
 
+	appendFiles(head,tail);
+	exit(EXIT_SUCCESS);
+}
+
+int appendFiles(FILE* head, FILE* tail)
+{
 	if(!head || !tail){
 		printf("Error opening files?\n");
 		abort();
@@ -34,6 +41,7 @@ int append(char* _head, char* _tail)
 	exit(EXIT_SUCCESS);
 }
 
+/*
 int main(int argc, char** argv){
 	char file1[80], file2[80];
 
@@ -42,3 +50,4 @@ int main(int argc, char** argv){
 
 	return append(file1,file2);
 }
+*/
