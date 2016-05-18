@@ -22,12 +22,6 @@
 
 #define CLK 3
 #define DIR 4
-<<<<<<< HEAD
-
-int main (int argc, char **argv)
-{
-	int counts,i,steps,nsteps,ninc,dwell,aout,flag;
-=======
 #define STEPSPERREV 1200
 #define DATAPOINTS 150
 #define PI 3.14159265358979
@@ -61,7 +55,6 @@ int main (int argc, char **argv)
 
 	// Variables for getting time information to identify
 	// when we recorded the data
->>>>>>> 8886bef88b754259a5b56f49b856a801d531bb39
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
