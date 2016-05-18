@@ -18,12 +18,12 @@
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
-#include "fileTools.c"
+#include "fileTools.h"
 
 #define CLK 3
 #define DIR 4
 #define STEPSPERREV 1200
-#define DATAPOINTS 150
+#define DATAPOINTS 120
 #define PI 3.14159265358979
 #define REVOLUTIONS 2
 #define DWELL 1
@@ -41,11 +41,10 @@ int main (int argc, char **argv)
 {
 	int aout,kmax;
 	int flag;
-	//char* tmp="/home/pi/RbData/tmp.dat"; //INCLUDE
+	char* tmp="/home/pi/RbData/POL2016-05-17_121751.dat"; //INCLUDE
 	
 	// For development on home laptop
-	char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/dataLessBack.csv"; // REMOVE
-	char* tmp="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/data.csv"; // REMOVE
+	char* fileName="/home/pi/RbData/test.dat"; // REMOVE
 
 	//char fileName[80], comments[80],backgroundFile[80]; //INCLUDE
 	char comments[80],backgroundFile[80]; // REMOVE
@@ -57,16 +56,7 @@ int main (int argc, char **argv)
 	// when we recorded the data
 	time_t rawtime;
 	struct tm * timeinfo;
-	signed short svalue;
-	char buffer[80],comments[80];
-	float bias, offset, HPcal,energy, current;
-	FILE *fp;
-	__s16 sdata[1024];
-	__u16 value;
-	__u16 count;
-	__u8 gains[8];
-	__u8 options;
-	__u8 input, pin = 0, channel, gain;
+	float bias, offset,energy, current;
 
 	// Get parameters.
 	if (argc==4){
