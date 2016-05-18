@@ -1,5 +1,5 @@
 /*
-   Program to record polarizqtion.
+   Program to record polarization.
    RasPi connected to USB 1208LS.
    Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
    PMT Counts: data received from CTR in USB1208
@@ -25,10 +25,10 @@
 #define STEPSPERREV 1200
 #define DATAPOINTS 150
 #define PI 3.14159265358979
-#define REVOLUTIONS 1
+#define REVOLUTIONS 2
 #define DWELL 1
 #define ALPHA 0
-#define BETA 16
+#define BETA 0
 #define DELTA 90
 
 FILE* getPolarizationData(char* fileName, int aout);
@@ -44,8 +44,8 @@ int main (int argc, char **argv)
 	//char* tmp="/home/pi/RbData/tmp.dat"; //INCLUDE
 	
 	// For development on home laptop
-	char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/data.csv"; // REMOVE
-	char* tmp="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/tmp.dat"; // REMOVE
+	char* fileName="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/dataLessBack.csv"; // REMOVE
+	char* tmp="/home/karl/Dropbox/00School/gradYear02Summer/polarizationData/data.csv"; // REMOVE
 
 	//char fileName[80], comments[80],backgroundFile[80]; //INCLUDE
 	char comments[80],backgroundFile[80]; // REMOVE
@@ -99,6 +99,7 @@ int main (int argc, char **argv)
 
 	// Find fourier coefficients from raw data.
 	calculateFourierCoefficients(data,DATAPOINTS,fourierCoefficientsCos,fourierCoefficientsSin);
+	printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,kmax);
 
 	// Calculate fourier coefficients from BG data, if provided
 	if(argc==5){
@@ -255,6 +256,7 @@ FILE* getPolarizationData(char* fileName, int aout){
 	ninc=STEPSPERREV/DATAPOINTS; // The number of steps to take between readings.
 
 	fprintf(rawData,"#steps,count,current\n");
+	fprintf(rawData,"\n"); // This extra newline is vital for being able to quickly process data. DON'T REMOVE
 	for (steps=0;steps<nsteps;steps+=ninc){
 		for (i=0;i<ninc;i++){
 			// increment steppermotor by ninc steps
@@ -320,18 +322,21 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 		fourierCoefficientsCosReturn[k]=0;
 		fourierCoefficientsSinReturn[k]=0;
 	}
+	char trash[100]; 	// We need to skip several lines in the file that aren't data
+					 	// This is a buffer to accomplish that.
+	trash[0]='#'; 	// This is a quickly thrown together hack to avoid having an fgets statement 
+				 	// outside of the while loop.
 	for (i=0; i< dataPoints; i++){
 		int steps, counts;
-		char trash[100];
 		float current;
 		int j=0;
-		fgets(trash,100,data);
-		while(trash[0]=='#'){
-			printf("%s\n",trash);
+		while(trash[0]=='#'){ // Skip over all lines that have a # at the beginning. 
 			fgets(trash,100,data);
 			j++;
 		}
+		trash[0]='a';
 		fscanf(data,"%d,%d,%f\n",&steps,&counts,&current);
+		printf("%d,%d,%f\n",steps,counts,current);
 		int d0_L=0;	// d0_L represents two delta functions. See Berry for
 					// more info.
 		for (k=0; k < dataPoints/2; k++){
@@ -343,6 +348,7 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 			fourierCoefficientsCosReturn[k]+= 2 * counts * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 			fourierCoefficientsSinReturn[k]+= 2 * counts * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 		}
+		printf("Lines Read: %d\n",i);
 	}
 	return 0;
 }
@@ -375,7 +381,7 @@ int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int
 int printOutFloatArray(float* array, int n){
 	int i;
 	for(i=0;i<n;i++){
-		printf("%f\n", array[i]);
+		printf("Element[%d]:%f\n",i,array[i]);
 	}
 	return 0;
 }
