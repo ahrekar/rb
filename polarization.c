@@ -33,6 +33,7 @@
 #define COS 0
 #define SIN (DATAPOINTS/2)
 
+int processFiles(char* backgroundFile, char* dataFile);
 int getPolarizationData(char* fileName, int aout);
 int calculateFourierCoefficients(char* fileName, int dataPoints, float* fcReturn, float* fcErrReturn);
 int calculateStokesParameters(float* fourierCoefficientsCos, float* stokesReturn);
@@ -66,8 +67,12 @@ int main (int argc, char **argv)
 		flag=atoi(argv[2]); 
 		strcpy(backgroundFile,argv[3]);
 		strcpy(comments,argv[4]);
-	}
-	else {
+	} else if(argc==3){
+		strcpy(backgroundFile,argv[1]);
+		strcpy(fileName,argv[2]);
+		processFiles(backgroundFile,fileName);
+		return 0;
+	}else {
 		printf("usage '~$ sudo ./polarization <aout_for_target> <Pump Laser Flag> <(optional) background file> <comments_in_double_quotes>'\n");
 		return 1;
 	}
@@ -75,7 +80,6 @@ int main (int argc, char **argv)
 	// RUDAMENTARIY ERROR CHECKING
 	if (aout<0) aout=0;
 	if (aout>1023) aout=1023;
-
 
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime); //INCLUDE
@@ -106,7 +110,8 @@ int main (int argc, char **argv)
 	printOutFC(fourierCoefficients,fcErr);
 	printf("\n");
 
-	// Calculate fourier coefficients from BG data, if provided
+	// Calculate fourier coefficients from BG data, if provided, and
+	// remove background from data
 	if(argc==5){
 		
 		float* fcBg = malloc(DATAPOINTS*sizeof(float));
@@ -118,7 +123,7 @@ int main (int argc, char **argv)
 		printf("\n");
 
 		int k;
-		for (k=0; k < kmax; k++){
+		for (k=0; k < DATAPOINTS; k++){
 			fourierCoefficients[k]-=fcBg[k];
 		}
 
@@ -138,12 +143,13 @@ int main (int argc, char **argv)
 	printOutFloatArray(stokesParameters,4);
 	printf("\n");
 
+	// Record the results along with the raw data in a file.
 	dataSummary=fopen(fileName,"w");
 	if (!dataSummary) {
 		printf("Unable to open file: %s\n", fileName);
 		exit(1);
 	}
-
+	
 	HPcal=28.1/960.0;
 	fprintf(dataSummary,"#File,%s\n",fileName);
 	if(argc==5){fprintf(dataSummary,"#BackgroundFile,%s\n",backgroundFile);}
@@ -161,10 +167,10 @@ int main (int argc, char **argv)
 	fprintf(dataSummary,"#f2,%f\n",fourierCoefficients[SIN+4]);
 	fprintf(dataSummary,"#f3,%f\n",fourierCoefficients[SIN+2]);
 	fprintf(dataSummary,"#f4,%f\n",fourierCoefficients[COS+2]);
-	fprintf(dataSummary,"#p1,%f\n",stokesParameters[0]);
-	fprintf(dataSummary,"#p2,%f\n",stokesParameters[1]);
-	fprintf(dataSummary,"#p3,%f\n",stokesParameters[2]);
-	fprintf(dataSummary,"#p4,%f\n",stokesParameters[3]);
+	fprintf(dataSummary,"#p0,%f\n",stokesParameters[0]);
+	fprintf(dataSummary,"#p1,%f\n",stokesParameters[1]);
+	fprintf(dataSummary,"#p2,%f\n",stokesParameters[2]);
+	fprintf(dataSummary,"#p3,%f\n",stokesParameters[3]);
 
 	free(fourierCoefficients);
 	free(fcErr);
@@ -183,7 +189,7 @@ int getPolarizationData(char* fileName, int aout){
 	int interface;
 	signed short svalue;
 	__u8 channel, gain;
-	
+
 	// Variables for stepper motor control.
 	int nsteps,steps,ninc,i;
 
@@ -221,7 +227,7 @@ int getPolarizationData(char* fileName, int aout){
 	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
 
 
-//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+	//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 	// set up for stepmotor
 	wiringPiSetup();
@@ -321,14 +327,13 @@ int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierC
 		exit(1);
 	}
 	// End File setup
+	int k;
+	for (k=0; k < dataPoints/2; k++){
+		fourierCoefficientsReturn[COS+k]=0;
+		fourierCoefficientsReturn[SIN+k]=0;
+	}
 	// TODO: implement the FFT version of this. 
 	int i;
-	// Zero the malloced data. 
-	int k;
-	for (k=0; k< dataPoints/2; k++){
-		fourierCoefficientsReturn[k]=0;
-		fourierCoefficientsErrReturn[k]=0;
-	}
 	char trash[100]; 	// We need to skip several lines in the file that aren't data
 					 	// This is a buffer to accomplish that.
 	trash[0]='#'; 	// This is a quickly thrown together hack to avoid having an fgets statement 
@@ -352,8 +357,8 @@ int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierC
 			}else{
 				d0_L=0;
 			}
-			fourierCoefficientsReturn[COS+k] += 2 * counts * fabs(current) * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
-			fourierCoefficientsReturn[SIN+k]+= 2 * counts * fabs(current) * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			fourierCoefficientsReturn[COS+k] += 2 * counts/fabs(current) * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			fourierCoefficientsReturn[SIN+k]+= 2 * counts/fabs(current) * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 		}
 		//printf("Lines Read: %d\n",i);
 	}
@@ -405,5 +410,58 @@ int printOutFloatArrayWithError(float* array, float* errorArray, int n){
 	for(i=0;i<n;i++){
 		printf("Element[%d]:%f\tError:%f\n",i,array[i],errorArray[i]);
 	}
+	return 0;
+}
+
+int processFiles(char* backgroundFile, char* dataFile){
+	float* fourierCoefficients = malloc(DATAPOINTS*sizeof(float));
+	float* fcErr = malloc(DATAPOINTS*sizeof(float));
+
+	// Find fourier coefficients from raw data.
+	calculateFourierCoefficients(dataFile,REVOLUTIONS*DATAPOINTS,fourierCoefficients,fcErr);
+	/**
+	printf("====Data Fourier Coefficients====\n");
+	printOutFC(fourierCoefficients,fcErr);
+	printf("\n");
+	**/
+
+	float* fcBg = malloc(DATAPOINTS*sizeof(float));
+	float* fcBgErr = malloc(DATAPOINTS*sizeof(float));
+	calculateFourierCoefficients(backgroundFile,REVOLUTIONS*DATAPOINTS,fcBg,fcBgErr);
+	/**
+	printf("====Background Fourier Coefficients====\n");
+	printOutFC(fcBg,fcErr);
+	printf("\n");
+	**/
+	float* stokesParameters = malloc(4*sizeof(float));
+	calculateStokesParameters(fcBg,stokesParameters);
+
+	printf("====Background Stokes Parameters====\n");
+	printOutFloatArray(stokesParameters,4);
+	printf("\n");
+
+	int k;
+	for (k=0; k < DATAPOINTS; k++){
+		fourierCoefficients[k]-=fcBg[k];
+	}
+
+	/**
+	printf("====Signal Fourier Coefficients====\n");
+	printOutFC(fourierCoefficients,fcErr);
+	printf("\n");
+	**/
+
+	// Calculate Stokes Parameters from Fourier Coefficients.
+	calculateStokesParameters(fourierCoefficients,stokesParameters);
+
+	printf("====Stokes Parameters====\n");
+	printOutFloatArray(stokesParameters,4);
+	printf("\n");
+	
+	free(fourierCoefficients);
+	free(fcErr);
+	free(fcBg);
+	free(fcBgErr);
+	free(stokesParameters);
 	return 0;
 }
