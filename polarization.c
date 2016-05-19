@@ -30,12 +30,15 @@
 #define ALPHA 0
 #define BETA 0
 #define DELTA 90
+#define COS 0
+#define SIN (DATAPOINTS/2)
 
 int getPolarizationData(char* fileName, int aout);
-int calculateFourierCoefficients(char* fileName, int dataPoints, float* fcCReturn, float* fcSReturn);
-int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, float* stokesReturn);
-int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int kmax);
+int calculateFourierCoefficients(char* fileName, int dataPoints, float* fcReturn, float* fcErrReturn);
+int calculateStokesParameters(float* fourierCoefficientsCos, float* stokesReturn);
+int printOutFC(float* fourierCoefficients, float* fcErr);
 int printOutFloatArray(float* array, int n);
+int printOutFloatArrayWithError(float* array, float* error, int n);
 
 int main (int argc, char **argv)
 {
@@ -83,42 +86,50 @@ int main (int argc, char **argv)
 	// Collect raw data
 	getPolarizationData(tmp, aout); //INCLUDE
 	
-	kmax=DATAPOINTS/2;
-	float* fourierCoefficientsSin = malloc(kmax*sizeof(float));
-	float* fourierCoefficientsCos = malloc(kmax*sizeof(float));
+	kmax=DATAPOINTS/2; 	// TODO idea: don't have separate array for sin and 
+						// cos, but just a single array twice the size of 
+						// my current arrays. Then, cos values will be
+						// assigned to the first half of the array, and 
+						// sin values will be assigned to the second half of
+						// the array. To aid in readability, I will  
+						// define variables Cos and Sin somewhere
+						// to be 0 and kmax. So to access the Cos coefficients
+						// I would write:
+						//     fourierCoefficients(Cos+i)
+	float* fourierCoefficients = malloc(DATAPOINTS*sizeof(float));
+	float* fcErr = malloc(DATAPOINTS*sizeof(float));
 
 	// Find fourier coefficients from raw data.
-	calculateFourierCoefficients(tmp,REVOLUTIONS*DATAPOINTS,fourierCoefficientsCos,fourierCoefficientsSin);
+	calculateFourierCoefficients(tmp,REVOLUTIONS*DATAPOINTS,fourierCoefficients,fcErr);
 
 	printf("====Raw Data Fourier Coefficients====\n");
-	printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,kmax);
+	printFC(fourierCoefficients,fcErr);
 	printf("\n");
 
 	// Calculate fourier coefficients from BG data, if provided
 	if(argc==5){
 		
-		float* fcSinBg = malloc(kmax*sizeof(float));
-		float* fcCosBg = malloc(kmax*sizeof(float));
-		calculateFourierCoefficients(backgroundFile,DATAPOINTS,fcCosBg,fcSinBg);
+		float* fcBg = malloc(DATAPOINTS*sizeof(float));
+		float* fcBgErr = malloc(DATAPOINTS*sizeof(float));
+		calculateFourierCoefficients(backgroundFile,REVOLUTIONS*DATAPOINTS,fcBg,fcBgErr);
 
 		printf("====Background Fourier Coefficients====\n");
-		printOutFC(fcCosBg,fcSinBg,kmax);
+		printFC(fcBg,fcBgErr);
 		printf("\n");
 
 		int k;
 		for (k=0; k < kmax; k++){
-			fourierCoefficientsCos[k]-=fcCosBg[k];
-			fourierCoefficientsSin[k]-=fcSinBg[k];
+			fourierCoefficients[k]-=fcBg[k];
 		}
 
 		printf("====Signal Fourier Coefficients====\n");
-		printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,kmax);
+		printFC(fourierCoefficients,fcErr);
 		printf("\n");
 	}
 	
 	// Calculate Stokes Parameters from Fourier Coefficients.
 	float* stokesParameters = malloc(4*sizeof(float));
-	calculateStokesParameters(fourierCoefficientsCos,fourierCoefficientsSin,stokesParameters);
+	calculateStokesParameters(fourierCoefficients,stokesParameters);
 
 	printf("====Stokes Parameters====\n");
 	printOutFloatArray(stokesParameters,4);
@@ -142,16 +153,21 @@ int main (int argc, char **argv)
 	fprintf(dataSummary,"#ALPHA,%d\n",ALPHA);
 	fprintf(dataSummary,"#BETA,%d\n",BETA);
 	fprintf(dataSummary,"#DELTA,%d\n",DELTA);
-	fprintf(dataSummary,"#f0,%f\n",fourierCoefficientsCos[0]);
-	fprintf(dataSummary,"#f1,%f\n",fourierCoefficientsCos[4]);
-	fprintf(dataSummary,"#f2,%f\n",fourierCoefficientsSin[4]);
-	fprintf(dataSummary,"#f3,%f\n",fourierCoefficientsSin[2]);
-	fprintf(dataSummary,"#f4,%f\n",fourierCoefficientsCos[2]);
+	fprintf(dataSummary,"#f0,%f\n",fourierCoefficients[COS+0]);
+	fprintf(dataSummary,"#f1,%f\n",fourierCoefficients[COS+4]);
+	fprintf(dataSummary,"#f2,%f\n",fourierCoefficients[SIN+4]);
+	fprintf(dataSummary,"#f3,%f\n",fourierCoefficients[SIN+2]);
+	fprintf(dataSummary,"#f4,%f\n",fourierCoefficients[COS+2]);
 	fprintf(dataSummary,"#p1,%f\n",stokesParameters[0]);
 	fprintf(dataSummary,"#p2,%f\n",stokesParameters[1]);
 	fprintf(dataSummary,"#p3,%f\n",stokesParameters[2]);
 	fprintf(dataSummary,"#p4,%f\n",stokesParameters[3]);
 
+	free(fourierCoefficients);
+	free(fcerr);
+	free(fcBg);
+	free(fcBgerr);
+	
 	fclose(dataSummary);
 
 	append(fileName,tmp);
@@ -296,7 +312,7 @@ int getPolarizationData(char* fileName, int aout){
 }
 
 
-int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierCoefficientsCosReturn,float* fourierCoefficientsSinReturn){	
+int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierCoefficientsReturn,float* fourierCoefficientsErrReturn){	
 	// Begin File setup
 	FILE* data = fopen(fileName,"r");
 	if (!data) {
@@ -309,8 +325,8 @@ int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierC
 	// Zero the malloced data. 
 	int k;
 	for (k=0; k< dataPoints/2; k++){
-		fourierCoefficientsCosReturn[k]=0;
-		fourierCoefficientsSinReturn[k]=0;
+		fourierCoefficientsReturn[k]=0;
+		fourierCoefficientsErrReturn[k]=0;
 	}
 	char trash[100]; 	// We need to skip several lines in the file that aren't data
 					 	// This is a buffer to accomplish that.
@@ -335,8 +351,8 @@ int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierC
 			}else{
 				d0_L=0;
 			}
-			fourierCoefficientsCosReturn[k]+= 2 * counts * fabs(current) * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
-			fourierCoefficientsSinReturn[k]+= 2 * counts * fabs(current) * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			fourierCoefficientsReturn[COS+k] += 2 * counts * fabs(current) * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			fourierCoefficientsReturn[SIN+k]+= 2 * counts * fabs(current) * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 		}
 		//printf("Lines Read: %d\n",i);
 	}
@@ -344,15 +360,15 @@ int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierC
 	return 0;
 }
 
-int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, float* stokesReturn){
+int calculateStokesParameters(float* fourierCoefficients, float* stokesReturn){
 	float delta=2*PI*(DELTA)/360.0;
 	float alpha=2*PI*(ALPHA)/360.0;
 	float beta_0=2*PI*(BETA)/360.0;
-	float c0=fourierCoefficientsCos[0];
-	float c2=fourierCoefficientsCos[2];
-	float c4=fourierCoefficientsCos[4];
-	float s2=fourierCoefficientsSin[2];
-	float s4=fourierCoefficientsSin[4];
+	float c0=fourierCoefficients[COS+0];
+	float c2=fourierCoefficients[COS+2];
+	float c4=fourierCoefficients[COS+4];
+	float s2=fourierCoefficients[SIN+2];
+	float s4=fourierCoefficients[SIN+4];
 	stokesReturn[0]=c0-(1+cos(delta))/(1-cos(delta))*(c4*cos(4*alpha+4*beta_0)+s4*sin(4*alpha+4*beta_0));
 	stokesReturn[1]=2.0/(1-cos(delta))*(c4*cos(2*alpha+4*beta_0)+s4*sin(2*alpha+4*beta_0))/stokesReturn[0];
 	stokesReturn[2]=2.0/(1-cos(delta))*(s4*cos(2*alpha+4*beta_0)-c4*sin(2*alpha+4*beta_0))/stokesReturn[0];
@@ -360,19 +376,32 @@ int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoeffi
 	return 0;
 }
 
-int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int kmax){
+int printOutFC(float* fourierCoefficients, float* fcError){
 	printf("Cos Coefficients:\n");
-	printOutFloatArray(fourierCoefficientsCos,5);
+	printf("Cos 0: %f\n",fourierCoefficients[COS+0]);
+	printf("Cos 1: %f\n",fourierCoefficients[COS+1]);
+	printf("Cos 2: %f\n",fourierCoefficients[COS+2]);
+	printf("Cos 3: %f\n",fourierCoefficients[COS+3]);
+	printf("Cos 4: %f\n",fourierCoefficients[COS+4]);
 	printf("Sin Coefficients:\n");
-	printOutFloatArray(fourierCoefficientsSin,5);
-	return 0;
+	printf("Sin 1: %f\n",fourierCoefficients[SIN+1]);
+	printf("Sin 2: %f\n",fourierCoefficients[SIN+2]);
+	printf("Sin 3: %f\n",fourierCoefficients[SIN+3]);
+	printf("Sin 4: %f\n",fourierCoefficients[SIN+4]);
 }
-
 
 int printOutFloatArray(float* array, int n){
 	int i;
 	for(i=0;i<n;i++){
 		printf("Element[%d]:%f\n",i,array[i]);
+	}
+	return 0;
+}
+
+int printOutFloatArrayWithError(float* array, float* errorArray, int n){
+	int i;
+	for(i=0;i<n;i++){
+		printf("Element[%d]:%f\tError:%f\n",i,array[i],errorArray[i]);
 	}
 	return 0;
 }
