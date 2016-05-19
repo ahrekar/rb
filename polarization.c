@@ -103,7 +103,7 @@ int main (int argc, char **argv)
 	calculateFourierCoefficients(tmp,REVOLUTIONS*DATAPOINTS,fourierCoefficients,fcErr);
 
 	printf("====Raw Data Fourier Coefficients====\n");
-	printFC(fourierCoefficients,fcErr);
+	printOutFC(fourierCoefficients,fcErr);
 	printf("\n");
 
 	// Calculate fourier coefficients from BG data, if provided
@@ -114,7 +114,7 @@ int main (int argc, char **argv)
 		calculateFourierCoefficients(backgroundFile,REVOLUTIONS*DATAPOINTS,fcBg,fcBgErr);
 
 		printf("====Background Fourier Coefficients====\n");
-		printFC(fcBg,fcBgErr);
+		printOutFC(fcBg,fcBgErr);
 		printf("\n");
 
 		int k;
@@ -123,8 +123,11 @@ int main (int argc, char **argv)
 		}
 
 		printf("====Signal Fourier Coefficients====\n");
-		printFC(fourierCoefficients,fcErr);
+		printOutFC(fourierCoefficients,fcErr);
 		printf("\n");
+
+		free(fcBg);
+		free(fcBgErr);
 	}
 	
 	// Calculate Stokes Parameters from Fourier Coefficients.
@@ -164,9 +167,7 @@ int main (int argc, char **argv)
 	fprintf(dataSummary,"#p4,%f\n",stokesParameters[3]);
 
 	free(fourierCoefficients);
-	free(fcerr);
-	free(fcBg);
-	free(fcBgerr);
+	free(fcErr);
 	
 	fclose(dataSummary);
 
@@ -388,6 +389,7 @@ int printOutFC(float* fourierCoefficients, float* fcError){
 	printf("Sin 2: %f\n",fourierCoefficients[SIN+2]);
 	printf("Sin 3: %f\n",fourierCoefficients[SIN+3]);
 	printf("Sin 4: %f\n",fourierCoefficients[SIN+4]);
+	return 0;
 }
 
 int printOutFloatArray(float* array, int n){
