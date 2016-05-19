@@ -24,15 +24,13 @@ int main (int argc, char *argv[]){
 
 	if (argc==2){
 		motor = atoi(argv[1]); // which steper motor
+		homeMotor(motor);
 	} else {
-
-	printf("Usage:  ~$sudo ./homemotor2 <motor(0,1,2)> \n");
-		motor = 3;// not part of the switch statment, so nothing happens
+		printf("Usage:  ~$sudo ./homemotor2 <motor(0,1,2)> \n");
+		motor=3;
 		steps=0;
 		dir=0;
 	}
-
-	homeMotor(motor);
 
 return 0;
 }

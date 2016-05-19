@@ -23,7 +23,7 @@
 #define CLK 3
 #define DIR 4
 #define STEPSPERREV 1200
-#define DATAPOINTS 120
+#define DATAPOINTS 40
 #define PI 3.14159265358979
 #define REVOLUTIONS 2
 #define DWELL 1
@@ -31,8 +31,8 @@
 #define BETA 0
 #define DELTA 90
 
-int getPolarizationData(FILE* filePointerReturn, char* fileName, int aout);
-int calculateFourierCoefficients(FILE* data, int dataPoints, float* fcCReturn, float* fcSReturn);
+int getPolarizationData(char* fileName, int aout);
+int calculateFourierCoefficients(char* fileName, int dataPoints, float* fcCReturn, float* fcSReturn);
 int calculateStokesParameters(float* fourierCoefficientsCos,float* fourierCoefficientsSin, float* stokesReturn);
 int printOutFC(float* fourierCoefficientsCos, float* fourierCoefficientsSin, int kmax);
 int printOutFloatArray(float* array, int n);
@@ -45,7 +45,6 @@ int main (int argc, char **argv)
 	
 	char fileName[80], comments[80],backgroundFile[80]; //INCLUDE
 	float HPcal;
-	FILE* data;
 	FILE* dataSummary;
 
 	// Variables for getting time information to identify
@@ -82,45 +81,48 @@ int main (int argc, char **argv)
 	printf("\n%s\n",fileName);
 
 	// Collect raw data
-	getPolarizationData(data, tmp, aout); //INCLUDE
+	getPolarizationData(tmp, aout); //INCLUDE
 	
 	kmax=DATAPOINTS/2;
 	float* fourierCoefficientsSin = malloc(kmax*sizeof(float));
 	float* fourierCoefficientsCos = malloc(kmax*sizeof(float));
 
 	// Find fourier coefficients from raw data.
-	calculateFourierCoefficients(data,DATAPOINTS,fourierCoefficientsCos,fourierCoefficientsSin);
+	calculateFourierCoefficients(tmp,REVOLUTIONS*DATAPOINTS,fourierCoefficientsCos,fourierCoefficientsSin);
+
+	printf("====Raw Data Fourier Coefficients====\n");
 	printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,kmax);
+	printf("\n");
 
 	// Calculate fourier coefficients from BG data, if provided
 	if(argc==5){
-		// Begin File setup
-		FILE* background = fopen(backgroundFile,"r");
-		if (!background) {
-			printf("Unable to open file %s\n",backgroundFile);
-			exit(1);
-		}
-		// End File setup
 		
 		float* fcSinBg = malloc(kmax*sizeof(float));
 		float* fcCosBg = malloc(kmax*sizeof(float));
-		calculateFourierCoefficients(background,DATAPOINTS,fcCosBg,fcSinBg);
+		calculateFourierCoefficients(backgroundFile,DATAPOINTS,fcCosBg,fcSinBg);
 
+		printf("====Background Fourier Coefficients====\n");
 		printOutFC(fcCosBg,fcSinBg,kmax);
+		printf("\n");
 
 		int k;
 		for (k=0; k < kmax; k++){
-			fourierCoefficientsCos[k]=fourierCoefficientsCos[k]-fcCosBg[k];
-			fourierCoefficientsSin[k]=fourierCoefficientsSin[k]-fcSinBg[k];
+			fourierCoefficientsCos[k]-=fcCosBg[k];
+			fourierCoefficientsSin[k]-=fcSinBg[k];
 		}
+
+		printf("====Signal Fourier Coefficients====\n");
+		printOutFC(fourierCoefficientsCos,fourierCoefficientsSin,kmax);
+		printf("\n");
 	}
 	
 	// Calculate Stokes Parameters from Fourier Coefficients.
 	float* stokesParameters = malloc(4*sizeof(float));
 	calculateStokesParameters(fourierCoefficientsCos,fourierCoefficientsSin,stokesParameters);
 
-	printf("Stokes Parameters:\n");
+	printf("====Stokes Parameters====\n");
 	printOutFloatArray(stokesParameters,4);
+	printf("\n");
 
 	dataSummary=fopen(fileName,"w");
 	if (!dataSummary) {
@@ -151,14 +153,13 @@ int main (int argc, char **argv)
 	fprintf(dataSummary,"#p4,%f\n",stokesParameters[3]);
 
 	fclose(dataSummary);
-	fclose(data);
 
 	append(fileName,tmp);
 
 	return 0;
 }
 // INCLUDE
-int getPolarizationData(FILE* rawData, char* fileName, int aout){
+int getPolarizationData(char* fileName, int aout){
 	// Variables for interfacing with the USB1208
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
@@ -194,7 +195,7 @@ int getPolarizationData(FILE* rawData, char* fileName, int aout){
 		fprintf(stderr, "USB 1208LS not found.\n");
 		exit(1);
 	} else {
-		printf("USB 208LS Device is found! interface = %d\n", interface);
+		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
 
 
@@ -214,9 +215,14 @@ int getPolarizationData(FILE* rawData, char* fileName, int aout){
 	// Setup for AnalogUSB
 	gain=BP_10_00V;
 	channel = 0;
+	// Write Aout for He traget here
+	usbAOut_USB1208LS(hid,1,aout);
+	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
+	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
+
 
 	// Begin File setup
-	rawData=fopen(fileName,"w");
+	FILE* rawData=fopen(fileName,"w");
 	if (!rawData) {
 		printf("Unable to open file: %s\n",fileName);
 		exit(1);
@@ -257,9 +263,8 @@ int getPolarizationData(FILE* rawData, char* fileName, int aout){
 
 		current=0.0;
 		for (i=0;i<8;i++){
-
-		svalue = usbAIn_USB1208LS(hid,channel,gain);
-		current = current+volts_LS(gain,svalue);
+			svalue = usbAIn_USB1208LS(hid,channel,gain);
+			current = current+volts_LS(gain,svalue);
 		}
 		current = current/8.0;
 
@@ -269,8 +274,7 @@ int getPolarizationData(FILE* rawData, char* fileName, int aout){
 
 		printf("current %f\n",current);
 		fflush(stdout);
-		fprintf(rawData,"%f \n",current);
-
+		fprintf(rawData,"%f\n",current);
 	}
 
 
@@ -292,7 +296,14 @@ int getPolarizationData(FILE* rawData, char* fileName, int aout){
 }
 
 
-int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoefficientsCosReturn,float* fourierCoefficientsSinReturn){	
+int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierCoefficientsCosReturn,float* fourierCoefficientsSinReturn){	
+	// Begin File setup
+	FILE* data = fopen(fileName,"r");
+	if (!data) {
+		printf("Unable to open file %s\n",fileName);
+		exit(1);
+	}
+	// End File setup
 	// TODO: implement the FFT version of this. 
 	int i;
 	// Zero the malloced data. 
@@ -315,7 +326,7 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 		}
 		trash[0]='a';
 		fscanf(data,"%d,%d,%f\n",&steps,&counts,&current);
-		printf("%d,%d,%f\n",steps,counts,current);
+		//printf("%d,%d,%f\n",steps,counts,current);
 		int d0_L=0;	// d0_L represents two delta functions. See Berry for
 					// more info.
 		for (k=0; k < dataPoints/2; k++){
@@ -324,11 +335,12 @@ int calculateFourierCoefficients(FILE* data, int dataPoints, float* fourierCoeff
 			}else{
 				d0_L=0;
 			}
-			fourierCoefficientsCosReturn[k]+= 2 * counts * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
-			fourierCoefficientsSinReturn[k]+= 2 * counts * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			fourierCoefficientsCosReturn[k]+= 2 * counts * fabs(current) * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			fourierCoefficientsSinReturn[k]+= 2 * counts * fabs(current) * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 		}
-		printf("Lines Read: %d\n",i);
+		//printf("Lines Read: %d\n",i);
 	}
+	fclose(data);
 	return 0;
 }
 
