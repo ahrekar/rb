@@ -15,9 +15,9 @@ float stdDeviation(float* value, int numValues){
 	// Then calculate the Standard Deviation
 	sum = 0.0;
 	for(i=0; i < numValues;i++){
-		sum += pow(avg-value[i],2);
+		sum += pow(avg - value[i],2);
 	}
-	stdDev = sqrt(sum/(numValues-1));
+	stdDev = sqrt(sum/numValues(numValues-1));
 
 	return stdDev;
 }

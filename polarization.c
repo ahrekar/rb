@@ -18,6 +18,7 @@
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#include "mathTools.h"
 #include "fileTools.h"
 
 #define CLK 3
@@ -194,8 +195,11 @@ int getPolarizationData(char* fileName, int aout){
 	int nsteps,steps,ninc,i;
 
 	// Variables for data collections.
-	int counts,numMeasurements;
+	int counts;
 	float current;
+	float currentErr;
+	int nSamples = 8;
+	float* measurement = calloc(nSamples,sizeof(float));
 
 	// TODO Can we relegate USB setup into its own function?
 	// we don't change Aout at all during data collection, so 
@@ -243,7 +247,6 @@ int getPolarizationData(char* fileName, int aout){
 	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
 
-
 	// Begin File setup
 	FILE* rawData=fopen(fileName,"w");
 	if (!rawData) {
@@ -260,8 +263,9 @@ int getPolarizationData(char* fileName, int aout){
 	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTS; // The number of steps to take between readings.
 
-	fprintf(rawData,"#steps,count,current\n");
+	fprintf(rawData,"#Steps,Count,Current,Current Error\n");
 	fprintf(rawData,"\n"); // This extra newline is vital for being able to quickly process data. DON'T REMOVE
+
 	for (steps=0;steps<nsteps;steps+=ninc){
 
 		//200 steps per revoluion
@@ -274,9 +278,6 @@ int getPolarizationData(char* fileName, int aout){
 			delayMicrosecondsHard(2300);
 		}
 
-		printf("steps %d,",(steps));
-		fprintf(rawData,"%d,",(steps));
-
 		counts=0;
 		for (i=0;i<DWELL;i++){
 			usbInitCounter_USB1208LS(hid);
@@ -285,19 +286,16 @@ int getPolarizationData(char* fileName, int aout){
 		}
 
 		current=0.0;
-		for (i=0;i<8;i++){
-			svalue = usbAIn_USB1208LS(hid,channel,gain);
-			current = current+volts_LS(gain,svalue);
+		for (i=0;i<nSamples;i++){
+			measurement[i] = volts_LS(gain,usbAIn_USB1208LS(hid,channel,gain));
+			current += measurement[i];
 		}
-		current = current/8.0;
 
-		printf("Counts %d,",counts);
-		fflush(stdout);
-		fprintf(rawData,"%d,",counts);
+		current = current/(float)nSamples;
+		currentErr = stdDeviation(measurement,nSamples);
 
-		printf("current %f\n",current);
-		fflush(stdout);
-		fprintf(rawData,"%f\n",current);
+		printf("Steps %d,Counts %d,Current %f\n",steps,counts,current);
+		fprintf(rawData,"%d,%d,%f,%f\n",steps,counts,current,currentErr);
 	}
 
 
@@ -340,14 +338,18 @@ int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierC
 				 	// outside of the while loop.
 	for (i=0; i< dataPoints; i++){
 		int steps, counts;
-		float current;
+		float current, currentErr;
 		int j=0;
 		while(trash[0]=='#'){ // Skip over all lines that have a # at the beginning. 
 			fgets(trash,100,data);
 			j++;
 		}
 		trash[0]='a';
-		fscanf(data,"%d,%d,%f\n",&steps,&counts,&current);
+		fscanf(data,"%d,%d,%f,%f\n",&steps,&counts,&current,&currentErr);
+		//fscanf(data,"%d,%d,%f\n",&steps,&counts,&current); 	// Because I think I might want to pull
+																// this out quickly at some point
+																// I'm going to keep it hanging 
+																// around commented out for a while.
 		//printf("%d,%d,%f\n",steps,counts,current);
 		int d0_L=0;	// d0_L represents two delta functions. See Berry for
 					// more info.
@@ -358,7 +360,7 @@ int calculateFourierCoefficients(char* fileName, int dataPoints, float* fourierC
 				d0_L=0;
 			}
 			fourierCoefficientsReturn[COS+k] += 2 * counts/fabs(current) * cos(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
-			fourierCoefficientsReturn[SIN+k]+= 2 * counts/fabs(current) * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
+			fourierCoefficientsReturn[SIN+k] += 2 * counts/fabs(current) * sin(k*2*PI*i/dataPoints)/(dataPoints*(1+d0_L));
 		}
 		//printf("Lines Read: %d\n",i);
 	}

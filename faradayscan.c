@@ -82,7 +82,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "USB 1208LS not found.\n");
 		exit(1);
 	} else {
-		printf("USB 208LS Device is found! interface = %d\n", interface);
+		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
 
 
