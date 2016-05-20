@@ -28,9 +28,12 @@
 #define PI 3.14159265358979
 #define REVOLUTIONS 2
 #define DWELL 1
-#define ALPHA 0
-#define BETA 0
-#define DELTA 90
+#define ALPHA 0		// The constant Alpha (location of transmission axis), measured in degrees.
+#define DALPHA 3 	// The uncertainty in ALPHA
+#define BETA 0		// The constant Beta_0 (beginning position of QWP relative to LP) measured in degrees.
+#define DBETA 3		// The uncertainty in BETA
+#define DELTA 90	// The constant Delta (wave plate retardance) in degrees.
+#define DDELTA .1	// The uncertainty in DELTA
 #define COS 0
 #define SIN (DATAPOINTS/2)
 
