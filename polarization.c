@@ -30,12 +30,13 @@
 #define PI 3.14159265358979
 #define DWELL 1
 #define ALPHA 0		// The constant Alpha (location of transmission axis), measured in degrees.
-#define DALPHA 3 	// The uncertainty in ALPHA
+#define DALPHA 0 	// The uncertainty in ALPHA
 #define BETA 0		// The constant Beta_0 (beginning position of QWP relative to LP) measured in degrees.
-#define DBETA 3		// The uncertainty in BETA
+#define DBETA 0		// The uncertainty in BETA
 #define DELTA 90	// The constant Delta (wave plate retardance) in degrees.
-#define DDELTA .1	// The uncertainty in DELTA
-#define DSTEP 0.01	// The uncertainty in the step size 
+#define DDELTA 0	// The uncertainty in DELTA
+#define DSTEP 0	// The uncertainty in the step size 
+#define NUMSTOKES 4
 #define COS 0
 #define SIN (DATAPOINTS/2)
 #define POS 0
@@ -43,11 +44,15 @@
 
 int processFiles(char* backgroundFile, char* dataFile);
 int getPolarizationData(char* fileName, int aout);
+
 int calculateFourierCoefficients(char* fileName, int dataPoints, float* fcReturn, float* fcErrReturn);
 float calculateOneSumTerm(int trigFunc, float intensity, float i,int k);
 float calculateOneSumTermError(int trigFunc, int posOrNeg, float intensity,float intensityErr, float i, float iErr, int k);
-int calculateStokesParameters(float* fourierCoefficientsCos, float* stokesReturn);
-float calculateI(float alpha, float beta, float delta, float c0, float c4, float s4);
+
+int calculateStokesParameters(float* fourierCoefficients, float* fcErr, float* stokesReturn, float* stokesErrReturn);
+float calculateStokes(int i, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4);
+float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4, float* fcErrors);
+
 int printOutFC(float* fourierCoefficients, float* fcErr);
 int printOutFloatArray(float* array, int n);
 int printOutFloatArrayWithError(float* array, float* error, int n);
@@ -155,7 +160,8 @@ int main (int argc, char **argv)
 	
 	// Calculate Stokes Parameters from Fourier Coefficients.
 	float* stokesParameters = malloc(4*sizeof(float));
-	calculateStokesParameters(fourierCoefficients,stokesParameters);
+	float* spErr = malloc(8*sizeof(float));
+	calculateStokesParameters(fourierCoefficients,fcErr,stokesParameters,spErr);
 
 	printf("====Stokes Parameters====\n");
 	printOutFloatArray(stokesParameters,4);
@@ -427,7 +433,7 @@ float calculateOneSumTermError(int trigFunc, int posOrNeg, float intensity,float
 	return sqrt(pow(sI,2)+pow(sStep,2));
 }
 
-int calculateStokesParameters(float* fourierCoefficients, float* stokesReturn){
+int calculateStokesParameters(float* fourierCoefficients, float* fcErrors, float* stokesReturn, float* stokesErrorReturn){
 	float delta=2*PI*(DELTA)/360.0;
 	float alpha=2*PI*(ALPHA)/360.0;
 	float beta_0=2*PI*(BETA)/360.0;
@@ -436,15 +442,59 @@ int calculateStokesParameters(float* fourierCoefficients, float* stokesReturn){
 	float c4=fourierCoefficients[COS+4];
 	float s2=fourierCoefficients[SIN+2];
 	float s4=fourierCoefficients[SIN+4];
-	stokesReturn[0]=c0-(1+cos(delta))/(1-cos(delta))*(c4*cos(4*alpha+4*beta_0)+s4*sin(4*alpha+4*beta_0));
-	stokesReturn[1]=2.0/(1-cos(delta))*(c4*cos(2*alpha+4*beta_0)+s4*sin(2*alpha+4*beta_0))/stokesReturn[0];
-	stokesReturn[2]=2.0/(1-cos(delta))*(s4*cos(2*alpha+4*beta_0)-c4*sin(2*alpha+4*beta_0))/stokesReturn[0];
-	stokesReturn[3]=sqrt(pow(c2,2)+pow(s2,2))/pow(sin(delta),2)/stokesReturn[0];
+	int pos=0;
+	int neg=4;
+	int i;
+	for(i=0;i<NUMSTOKES;i++){
+		stokesReturn[i]=calculateStokes(i,alpha,beta_0,delta,c0,c2,c4,s2,s4);
+		stokesErrorReturn[pos+i]=calculateStokesErr(i,pos,alpha,beta_0,delta,c0,c2,c4,s2,s4,fcErrors);
+		stokesErrorReturn[neg+i]=calculateStokesErr(i,neg,alpha,beta_0,delta,c0,c2,c4,s2,s4,fcErrors);
+	}	
 	return 0;
 }
 
-float calculateI(float alpha, float beta, float delta, float c0, float c4, float s4){
-	return alpha;
+float calculateStokes(int i, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4){
+	if(i==0)
+		return c0-(1+cos(delta))/(1-cos(delta))*(c4*cos(4*alpha+4*beta)+s4*sin(4*alpha+4*beta));
+	else if(i==1)
+		return 2.0/(1-cos(delta))*(c4*cos(2*alpha+4*beta)+s4*sin(2*alpha+4*beta)) / \
+			calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4);
+	else if(i==2)
+		return 2.0/(1-cos(delta))*(s4*cos(2*alpha+4*beta)-c4*sin(2*alpha+4*beta)) / \
+			calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4);
+	else
+		return c2/(sin(delta)*sin(2*alpha+2*beta)) / \
+			calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4);
+}
+
+float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4, float* fcErrors){
+	int numVars = 8;
+	float* temp = calloc(numVars,sizeof(float));
+	float totalError=0;
+	int sgn=1;
+	int sign=POS;
+
+	if(signOfError == 4){
+		sign=NEG;
+		sgn=-1;
+	}
+
+	float k;
+	      k=calculateStokes(i, alpha , beta, delta, c0, c2, c4, s2, s4);
+	temp[0]=calculateStokes(i,   alpha+sgn*(DALPHA)     , beta, delta, c0, c2, c4, s2, s4)-k;
+	temp[1]=calculateStokes(i,alpha,    beta+sgn*(DBETA)      , delta, c0, c2, c4, s2, s4)-k;
+	temp[2]=calculateStokes(i,alpha, beta,     delta+sgn*DDELTA      , c0, c2, c4, s2, s4)-k;
+	temp[3]=calculateStokes(i,alpha, beta, delta, c0+fcErrors[COS+sign+0], c2, c4, s2, s4)-k;
+	temp[4]=calculateStokes(i,alpha, beta, delta, c0, c2+fcErrors[COS+sign+2], c4, s2, s4)-k;
+	temp[5]=calculateStokes(i,alpha, beta, delta, c0, c2, c4+fcErrors[COS+sign+4], s2, s4)-k;
+	temp[6]=calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2+fcErrors[SIN+sign+2], s4)-k;
+	temp[7]=calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4+fcErrors[SIN+sign+4])-k;
+
+	int j;
+	for(j=0;j<numVars;j++)
+		totalError+=pow(temp[j],2);
+
+	return sqrt(totalError);
 }
 
 int printOutFC(float* fourierCoefficients, float* fcError){
@@ -500,8 +550,11 @@ int processFiles(char* backgroundFile, char* dataFile){
 		printOutFC(fcBg,fcErr);
 		printf("\n");
 	}
+
 	float* stokesParameters = malloc(4*sizeof(float));
-	calculateStokesParameters(fcBg,stokesParameters);
+	float* spErr = malloc(8*sizeof(float));
+
+	calculateStokesParameters(fcBg,fcBgErr,stokesParameters, spErr);
 
 	printf("====Background Stokes Parameters====\n");
 	printOutFloatArray(stokesParameters,4);
@@ -519,7 +572,7 @@ int processFiles(char* backgroundFile, char* dataFile){
 	}
 
 	// Calculate Stokes Parameters from Fourier Coefficients.
-	calculateStokesParameters(fourierCoefficients,stokesParameters);
+	calculateStokesParameters(fourierCoefficients,fcErr,stokesParameters,spErr);
 
 	printf("====Stokes Parameters====\n");
 	printOutFloatArray(stokesParameters,4);
