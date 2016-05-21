@@ -25,16 +25,16 @@
 #define DIR 4
 #define REVOLUTIONS 2
 #define STEPSPERREV 1200
-#define DATAPOINTSPERREV 75
+#define DATAPOINTSPERREV 40
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
 #define DWELL 1
 #define ALPHA 0		// The constant Alpha (location of transmission axis), measured in degrees.
-#define DALPHA 0 	// The uncertainty in ALPHA
+#define DALPHA 3 	// The uncertainty in ALPHA
 #define BETA 0		// The constant Beta_0 (beginning position of QWP relative to LP) measured in degrees.
-#define DBETA 0		// The uncertainty in BETA
+#define DBETA 3		// The uncertainty in BETA
 #define DELTA 90	// The constant Delta (wave plate retardance) in degrees.
-#define DDELTA 0	// The uncertainty in DELTA
+#define DDELTA 3	// The uncertainty in DELTA
 #define DSTEP 0	// The uncertainty in the step size 
 #define NUMSTOKES 4
 #define COS 0
@@ -54,6 +54,7 @@ float calculateStokes(int i, float alpha, float beta, float delta, float c0, flo
 float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4, float* fcErrors);
 
 int printOutFC(float* fourierCoefficients, float* fcErr);
+int printOutSP(float* sp, float* spError);
 int printOutFloatArray(float* array, int n);
 int printOutFloatArrayWithError(float* array, float* error, int n);
 
@@ -148,6 +149,10 @@ int main (int argc, char **argv)
 		int k;
 		for (k=0; k < DATAPOINTS; k++){
 			fourierCoefficients[k]-=fcBg[k];
+			fcErr[COS+POS+k]=sqrt(pow(fcErr[COS+POS+k],2)+pow(fcBgErr[COS+POS+k],2));
+			fcErr[COS+NEG+k]=sqrt(pow(fcErr[COS+NEG+k],2)+pow(fcBgErr[COS+NEG+k],2));
+			fcErr[SIN+POS+k]=sqrt(pow(fcErr[SIN+POS+k],2)+pow(fcBgErr[SIN+POS+k],2));
+			fcErr[SIN+NEG+k]=sqrt(pow(fcErr[SIN+NEG+k],2)+pow(fcBgErr[SIN+NEG+k],2));
 		}
 
 		printf("====Signal Fourier Coefficients====\n");
@@ -457,14 +462,13 @@ float calculateStokes(int i, float alpha, float beta, float delta, float c0, flo
 	if(i==0)
 		return c0-(1+cos(delta))/(1-cos(delta))*(c4*cos(4*alpha+4*beta)+s4*sin(4*alpha+4*beta));
 	else if(i==1)
-		return 2.0/(1-cos(delta))*(c4*cos(2*alpha+4*beta)+s4*sin(2*alpha+4*beta)) / \
-			calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4);
+		return 2.0/(1-cos(delta))*(c4*cos(2*alpha+4*beta)+s4*sin(2*alpha+4*beta)) / calculateStokes(0,alpha, beta, delta, c0, c2, c4, s2, s4);
 	else if(i==2)
 		return 2.0/(1-cos(delta))*(s4*cos(2*alpha+4*beta)-c4*sin(2*alpha+4*beta)) / \
-			calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4);
+			calculateStokes(0,alpha, beta, delta, c0, c2, c4, s2, s4);
 	else
-		return c2/(sin(delta)*sin(2*alpha+2*beta)) / \
-			calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4);
+		return -s2/(sin(delta)*cos(2*alpha+2*beta)) / \
+			calculateStokes(0,alpha, beta, delta, c0, c2, c4, s2, s4);
 }
 
 float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4, float* fcErrors){
@@ -512,6 +516,15 @@ int printOutFC(float* fourierCoefficients, float* fcError){
 	return 0;
 }
 
+int printOutSP(float* sp, float* spError){
+	printf("Stokes Parameters:\n");
+	printf("  I: %010.3f +%0.4f -%0.4f\n",sp[0],spError[0+0],spError[4+0]);
+	printf("M/I: %010.3f +%0.4f -%0.4f\n",sp[1],spError[0+1],spError[4+1]);
+	printf("C/I: %010.3f +%0.4f -%0.4f\n",sp[2],spError[0+2],spError[4+2]);
+	printf("S/I: %010.3f +%0.4f -%0.4f\n",sp[3],spError[0+3],spError[4+3]);
+	return 0;
+}
+
 int printOutFloatArray(float* array, int n){
 	int i;
 	for(i=0;i<n;i++){
@@ -532,9 +545,8 @@ int processFiles(char* backgroundFile, char* dataFile){
 	float* fourierCoefficients = malloc(DATAPOINTS*sizeof(float));
 	float* fcErr = malloc(DATAPOINTS*2*sizeof(float));
 
-	int _switch = 1;
+	int _switch = 0;
 
-	// Find fourier coefficients from raw data.
 	calculateFourierCoefficients(dataFile,DATAPOINTS,fourierCoefficients,fcErr);
 	if (_switch == 1){
 		printf("====Data Fourier Coefficients====\n");
@@ -557,12 +569,16 @@ int processFiles(char* backgroundFile, char* dataFile){
 	calculateStokesParameters(fcBg,fcBgErr,stokesParameters, spErr);
 
 	printf("====Background Stokes Parameters====\n");
-	printOutFloatArray(stokesParameters,4);
+	printOutSP(stokesParameters,spErr);
 	printf("\n");
 
 	int k;
 	for (k=0; k < DATAPOINTS; k++){
 		fourierCoefficients[k]-=fcBg[k];
+		fcErr[COS+POS+k]=sqrt(pow(fcErr[COS+POS+k],2)+pow(fcBgErr[COS+POS+k],2));
+		fcErr[COS+NEG+k]=sqrt(pow(fcErr[COS+NEG+k],2)+pow(fcBgErr[COS+NEG+k],2));
+		fcErr[SIN+POS+k]=sqrt(pow(fcErr[SIN+POS+k],2)+pow(fcBgErr[SIN+POS+k],2));
+		fcErr[SIN+NEG+k]=sqrt(pow(fcErr[SIN+NEG+k],2)+pow(fcBgErr[SIN+NEG+k],2));
 	}
 
 	if (_switch==1){
@@ -575,7 +591,7 @@ int processFiles(char* backgroundFile, char* dataFile){
 	calculateStokesParameters(fourierCoefficients,fcErr,stokesParameters,spErr);
 
 	printf("====Stokes Parameters====\n");
-	printOutFloatArray(stokesParameters,4);
+	printOutSP(stokesParameters,spErr);
 	printf("\n");
 	
 	free(fourierCoefficients);
