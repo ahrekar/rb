@@ -18,4 +18,3 @@ sudo ./faradayscan2 "$1" "$2" "$3" "$4 s+ pump"
 # set QWP for s- light
 sudo ./setWavePlate 105
 sudo ./faradayscan2 "$1" "$2" "$3" "$4 s- pump"
-
