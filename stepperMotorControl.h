@@ -16,35 +16,39 @@ void setMotor(int motor, int location);
 void stepMotor(int dir, int steps);
 void writeMotorPosition();
 
-int p_clock, p_dir, p_home, p_stepsPerRevolution, p_motorPosition;
+int p_clock, p_dir, p_home, p_stepsPerRevolution, p_motorPosition, p_motor;
 char motorPositionFileName[80];
 char baseDir[80]="/home/pi/RbControl";
 
 void setupMotorVariables(int motor){
     if(motor==0){
+		p_motor=0;
         p_dir=4;
         p_clock=3;
         p_home=5;
         p_stepsPerRevolution=1200;
     } else if(motor==1){
+		p_motor=1;
         p_dir=26;
         p_clock=21;
         p_home=22;
         p_stepsPerRevolution=350;
     } else if(motor==2){
+		p_motor=2;
         p_dir=0;
         p_clock=1;
         p_home=2;
         p_stepsPerRevolution=350;
     } else {
-        printf("Invalid Motor Number\m");
+        printf("Invalid Motor Number\n");
+		fflush(stdout);
         exit(1);
     }
 
     // Read in the current position of the stepperMotor
     FILE *motorPositionFile;
-    sprintf(fileName,"%s/.motor%dposition",baseDir,motor);
-    motorPositionFile = fopen(motorPositionFileName,"w");
+    sprintf(motorPositionFileName,"%s/.motor%dposition",baseDir,motor);
+    motorPositionFile = fopen(motorPositionFileName,"r");
 
     if(!motorPositionFile) {
         printf("Error: Unable to open position file.\n");
@@ -56,7 +60,7 @@ void setupMotorVariables(int motor){
 
 void homeMotor(int motor)
 {
-    int i;
+    int i=0;
 	wiringPiSetup();
     setupMotorVariables(motor);
 
@@ -101,27 +105,37 @@ void moveMotor(int motor, int dir, int steps)
                                     // calculation of the new
                                     // position.
     if (dir==1) // Convert from number to be subtracted to a 
-        steps=350-steps // number to be added.
+        steps=p_stepsPerRevolution-steps; // number to be added.
         
     p_motorPosition+=steps;
-    p_motorPosition%p_stepsPerRevolution; 
+    p_motorPosition%=p_stepsPerRevolution; 
     writeMotorPosition();
 }
 
-void setMotor(int motor, int location){
+void setMotor(int motor, int newlocation){
     setupMotorVariables(motor);
-    if(location>p_stepsPerRevolution){
+    if(newlocation>=p_stepsPerRevolution){
         printf("Error: Location should be less than steps per revolution of motor\n");
         exit(1);
     }
     int direction,steps;
-    if (location >= p_motorPosition){
-        direction = 0;
-        steps=location-p_motorPosition;
+	steps=newlocation-p_motorPosition;
+    if (steps>0){
+		if (steps<p_stepsPerRevolution/2)
+			direction = 0;
+		else{
+			direction = 1;
+			steps=p_stepsPerRevolution-steps;
+		}
     } else {
-        direction = 1;
-        steps=p_motorPosition-location;
-    }
+		steps=-steps;
+		if (steps<p_stepsPerRevolution/2)
+			direction = 1;
+		else{
+			direction = 0;
+        	steps=p_stepsPerRevolution-steps;
+		}
+	}
 
     moveMotor(motor,direction,steps);
 }
@@ -148,9 +162,9 @@ void stepMotor(int dir, int steps){
 	}
 }
 
-void writeMotorPosition(){
+void writeMotorPosition(int motor){
     FILE *motorPositionFile;
-    sprintf(fileName,"%s/.motor%dposition",baseDir,motor);
+    sprintf(motorPositionFileName,"%s/.motor%dposition",baseDir,p_motor);
     motorPositionFile = fopen(motorPositionFileName,"w");
 
     fprintf(motorPositionFile,"%d",p_motorPosition);
