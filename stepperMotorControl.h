@@ -152,6 +152,7 @@ void stepMotor(int dir, int steps){
 	pinMode(p_clock,OUTPUT);
 	digitalWrite(p_dir,dir);
 	digitalWrite(p_clock,LOW);
+	delayMicrosecondsHard(DEL);
 	
 	int i;
 	for (i=0;i<steps;i++){
