@@ -89,7 +89,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "USB 1208LS not found.\n");
 		exit(1);
 	} else {
-		printf("USB 208LS Device is found! interface = %d\n", interface);
+		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
 
 
@@ -105,21 +105,14 @@ int main (int argc, char **argv)
 
 	wiringPiSetup();
 	mcp3004Setup(BASE,SPI_CHAN);
-	pinMode(CLK,OUTPUT);
-	pinMode(DIR,OUTPUT);
-	digitalWrite(DIR,1);
-
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	strftime(fileName,80,"/home/pi/RbData/FDayScan2%F_%H%M%S.dat",timeinfo);
 
-	printf("\n");
-	printf(fileName);
-	printf("\n");
-	printf(comments);
-
+	printf("%s\n",fileName);
+	printf("%s\n",comments);
 
 	fp=fopen(fileName,"w");
 	if (!fp) {
@@ -127,10 +120,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	fprintf(fp,fileName);
-	fprintf(fp,"\n");
-	fprintf(fp,comments);
-	fprintf(fp,"\n");
+	fprintf(fp,"%s\n%s\n",fileName,comments);
 
 	chan = 1; // IonGauge
 	x=analogRead(BASE + chan);
@@ -147,11 +137,6 @@ int main (int argc, char **argv)
 	fprintf(fp,"CVGauge %2.2E Torr\n", CVGauge);
 
 
-	digitalWrite(CLK,LOW);  //Karl - it is important that a  program which uses the steppermotor begins and ends with the clock signal in the same state
-							//and keep up with how many High -> low transistions as "steps"
-							//Ken - Duly noted.
-		
-	delayMicrosecondsHard(2000);
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;
 
@@ -202,13 +187,7 @@ int main (int argc, char **argv)
 				printf("PhotoI %f\t",involts);
 				fflush(stdout);
 
-				for (i=0;i<STEPSIZE;i++){
-					// increment steppermotor by ninc steps
-					digitalWrite(CLK,HIGH);
-					delayMicrosecondsHard(DEL);
-					digitalWrite(CLK,LOW);
-					delayMicrosecondsHard(DEL);
-				}
+				moveMotor(1,1,STEPSIZE);
 
 			}
 			sumI=sumI/count;
@@ -226,9 +205,6 @@ int main (int argc, char **argv)
 			stderrangle=(1/(1+pow(f4/f3,2)))*sqrt(pow(f3,-2))*(sqrt(pow(df4,2) + stderrangle*pow(df3,2))/2.0);
 
 			stderrangle = stderrangle*180.0/PI;
-
-			// WOULD BE NICE.  atan always returns a number between -45 and 45.  
-			// once this is done, then return angle in mRad.
 
 			printf("f0 = %f\t",sumI);
 			printf("f3 = %f\t",f3);
@@ -255,6 +231,3 @@ int main (int argc, char **argv)
 	}
 	return 0;
 }
-
-
-
