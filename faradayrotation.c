@@ -33,6 +33,7 @@ Note: Comments must be enclosed in quotes.
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#include "stepperMotorControl.h"
 
 #define CLK 21		// We will control the clock with pin 0 on the RPi
 #define DIR 26		// We will control the direction with pin 1 on the RPi
@@ -107,8 +108,6 @@ int main (int argc, char **argv)
 
 	// set up for stepmotor
 	wiringPiSetup();
-	pinMode(CLK,OUTPUT);
-	pinMode(DIR,OUTPUT);
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -149,8 +148,6 @@ int main (int argc, char **argv)
 	fprintf(fp,"#");
 	fprintf(fp,"Steps\tPhotoDiode\n");
 
-	digitalWrite(CLK,LOW);
-	delayMicrosecondsHard(2000);
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;
 
@@ -183,16 +180,8 @@ int main (int argc, char **argv)
 		fprintf(fp,"%f \n",involts);
 
 		// increment steppermotor by ninc steps
-		moveStepperMotor(CCWISE,ninc);
+		moveMotor(1,CCWISE,ninc);
 	}
-
-	// reverse motor to bring back to same starting point.  This would not be needed
-	// but there is a small mis-match with the belt-pulley size. 
-	
-	/* Fixed need for reversing stepper motor?
-	printf("moving stepper back\n");
-	moveStepperMotor(CWISE,nsteps);
-	*/
 
 	sumsin2b=sumsin2b/count;
 	sumcos2b=sumcos2b/count;
@@ -202,7 +191,6 @@ int main (int argc, char **argv)
 	printf("f4 = %f\n",sumcos2b);
 	printf("angle = %f\n",angle);
 
-
 	// Close the data file
 	fclose(fp);
 
@@ -210,29 +198,6 @@ int main (int argc, char **argv)
 	returnValue = closeUSB(hid);
 
 	return returnValue;
-}
-
-
-void moveStepperMotorSingleStep(){
-	digitalWrite(CLK,HIGH);
-	delayMicrosecondsHard(DEL);
-	digitalWrite(CLK,LOW);
-	delayMicrosecondsHard(DEL);
-}
-
-void moveStepperMotorSingleStepWithDirection(int dir){
-	digitalWrite(DIR,dir);
-
-	moveStepperMotorSingleStep();
-}
-
-void moveStepperMotor(int dir, int steps){
-	digitalWrite(DIR,dir);
-	
-	int i;
-	for (i=0;i<steps;i++){
-		moveStepperMotorSingleStep();
-	}
 }
 
 int closeUSB(HIDInterface* hid){

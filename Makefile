@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c analogout.c getadc.c getcounts.c polarization.c setHP3617.c stepmotor.c diagnoseCounts.c faradayrotation.c homemotor2.c homemotor.c setProbeLaser.c faradayscan.c RbAbsorbScan.c gnutest.c faradayscan2.c homeWavePlate.c setWavePlate.c
+SOURCES=excitationfn.c analogout.c getadc.c getcounts.c polarization.c setHP3617.c stepmotor.c diagnoseCounts.c faradayrotation.c homemotor.c setProbeLaser.c faradayscan.c RbAbsorbScan.c gnutest.c faradayscan2.c homeWavePlate.c setWavePlate.c
 
 # BINARIES are the names of the executable files that we are compiling
 # This particular command substitutes a blank string for ".c" in the
@@ -52,10 +52,13 @@ ${BINARIES}: % : %.c
 stepmotor: stepmotor.c stepperMotorControl.h
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
 
-homemotor2: homemotor2.c stepperMotorControl.h
+homemotor: homemotor.c stepperMotorControl.h
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
 
 faradayscan: faradayscan.c stepperMotorControl.h
+	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+
+faradayscan2: faradayscan2.c stepperMotorControl.h
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
 
 polarization: polarization.c fileTools.h

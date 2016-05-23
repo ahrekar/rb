@@ -27,6 +27,7 @@
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#include "stepperMotorControl.h"
 #include "mathTools.h" //includes stdDeviation
 
 #define CLK 21

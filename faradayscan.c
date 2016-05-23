@@ -156,34 +156,7 @@ int main (int argc, char **argv)
 			printf("PhotoI %f\t",involts);
 			fflush(stdout);
 			moveMotor(1,1,STEPSIZE);
-/*
-			for (i=0;i<STEPSIZE;i++){
-increment steppermotor by ninc steps
-				digitalWrite(CLK,HIGH);
-				delayMicrosecondsHard(DEL);
-				digitalWrite(CLK,LOW);
-				delayMicrosecondsHard(DEL);
-			}
-*/
-
 		} // end increment num steps
-
-		// reverse motor to bring back to same starting point.  This would not be needed
-		// but there is a small mis-match with the belt-pulley size. 
-/*
-		digitalWrite(DIR,0);
-
-		printf("Reset steppermotor\n");
-		for (steps=0;steps<NUMSTEPS;steps++){
-			 increment steppermotor by ninc steps
-			digitalWrite(CLK,HIGH);
-			delayMicrosecondsHard(DEL);
-			digitalWrite(CLK,LOW);
-			delayMicrosecondsHard(DEL);
-		}
-
-		digitalWrite(DIR,1);
-*/
 
 		sumI=sumI/count;
 		sumsin2b=sumsin2b/count;

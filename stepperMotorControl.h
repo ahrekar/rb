@@ -21,6 +21,9 @@ char motorPositionFileName[80];
 char baseDir[80]="/home/pi/RbControl";
 
 void setupMotorVariables(int motor){
+	// These are the GPIO ports for the clock and direction 
+	// signals. As well as other relevant variables to the
+	// motors. 
     if(motor==0){
 		p_motor=0;
         p_dir=4;
