@@ -20,6 +20,7 @@
 #include "usb-1208LS.h"
 #include "mathTools.h"
 #include "fileTools.h"
+#include "stepperMotorControl.h"
 
 #define CLK 3
 #define DIR 4
@@ -265,9 +266,6 @@ int getPolarizationData(char* fileName, int aout){
 
 	// set up for stepmotor
 	wiringPiSetup();
-	pinMode(CLK,OUTPUT);
-	pinMode(DIR,OUTPUT);
-	digitalWrite(DIR,1);
 
 	// Setup for AnalogUSB
 	gain=BP_10_00V;
@@ -285,11 +283,6 @@ int getPolarizationData(char* fileName, int aout){
 	}
 	// End File setup
 
-
-	// Give a small delay so that we can be sure
-	// the stepperMotor has settled into its state.
-	delayMicrosecondsHard(2000); 
-
 	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTSPERREV; // The number of steps to take between readings.
 
@@ -299,14 +292,7 @@ int getPolarizationData(char* fileName, int aout){
 	for (steps=0;steps<nsteps;steps+=ninc){
 
 		//200 steps per revoluion
-
-		for (i=0;i<ninc;i++){
-			// increment steppermotor by ninc steps
-			digitalWrite(CLK,HIGH);
-			delayMicrosecondsHard(2300); 
-			digitalWrite(CLK,LOW);
-			delayMicrosecondsHard(2300);
-		}
+		moveMotor(2,1,ninc);
 
 		counts=0;
 		for (i=0;i<DWELL;i++){
