@@ -102,7 +102,7 @@ int main (int argc, char **argv)
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime); //INCLUDE
 	timeinfo=localtime(&rawtime); //INCLUDE
-	strftime(fileName,80,"/home/pi/RbData/%F/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
+	strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
 	printf("\n%s\n",fileName);
 
 	// Collect raw data
@@ -489,21 +489,21 @@ int printOutFC(float* fourierCoefficients, float* fcError){
 	int numCoefficients = 10;
 	int i;
 	for(i=0;i<numCoefficients;i++){
-		printf("%s %d: %010.3f +%0.4f -%0.4f\n","Cos",i,fourierCoefficients[COS+i],fcError[COS+POS+i],fcError[COS+NEG+i]);
+		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Cos",i,fourierCoefficients[COS+i],fourierCoefficients[COS+i]+fcError[COS+POS+i],fourierCoefficients[COS+i]-fcError[COS+NEG+i]);
 	}
 	printf("Sin Coefficients:\n");
 	for(i=0;i<numCoefficients;i++){
-		printf("%s %d: %010.3f +%0.4f -%0.4f\n","Sin",i,fourierCoefficients[SIN+i],fcError[SIN+POS+i],fcError[SIN+NEG+i]);
+		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Sin",i,fourierCoefficients[SIN+i],fourierCoefficients[SIN+i]+fcError[SIN+POS+i],fourierCoefficients[SIN+i]-fcError[SIN+NEG+i]);
 	}
 	return 0;
 }
 
 int printOutSP(float* sp, float* spError){
 	printf("Stokes Parameters:\n");
-	printf("  I: %010.3f +%0.4f -%0.4f\n",sp[0],spError[0+0],spError[4+0]);
-	printf("M/I: %010.3f +%0.4f -%0.4f\n",sp[1],spError[0+1],spError[4+1]);
-	printf("C/I: %010.3f +%0.4f -%0.4f\n",sp[2],spError[0+2],spError[4+2]);
-	printf("S/I: %010.3f +%0.4f -%0.4f\n",sp[3],spError[0+3],spError[4+3]);
+	printf("  I:\t%10.3f\t%10.3f\t%10.3f\n",sp[0],spError[0+0],spError[4+0]);
+	printf("M/I:\t%10.3f\t%10.3f\t%10.3f\n",sp[1],spError[0+1],spError[4+1]);
+	printf("C/I:\t%10.3f\t%10.3f\t%10.3f\n",sp[2],spError[0+2],spError[4+2]);
+	printf("S/I:\t%10.3f\t%10.3f\t%10.3f\n",sp[3],spError[0+3],spError[4+3]);
 	return 0;
 }
 
@@ -527,7 +527,7 @@ int processFiles(char* backgroundFile, char* dataFile){
 	float* fourierCoefficients = malloc(DATAPOINTS*sizeof(float));
 	float* fcErr = malloc(DATAPOINTS*2*sizeof(float));
 
-	int _switch = 1;
+	int _switch = 0;
 
 	calculateFourierCoefficients(dataFile,DATAPOINTS,fourierCoefficients,fcErr);
 	if (_switch == 1){
