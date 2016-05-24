@@ -20,7 +20,9 @@ BINARIES=${subst .c,,${SOURCES}}
 # -Wall says to produce a larger number of warning messages
 # -I. says to include the current directory (.) in the
 #  search for header files. 
-CFLAGS= -g -Wall -I.
+# -O3 says to optimize the code, sacrificing debugging
+#  abilities.
+CFLAGS= -O3 -g -Wall -I.
 
 # PIFLAGS are flags that are needed for the raspberryPi
 # code.
