@@ -112,7 +112,7 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(buffer,80,"/home/pi/RbData/FDayRot%F_%H%M%S.dat",timeinfo);
+	strftime(buffer,80,"/home/pi/RbData/%F/FDayRot%F_%H%M%S.dat",timeinfo);
 	
 	// Print filename to screen
 	printf("\n");

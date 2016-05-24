@@ -119,7 +119,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(fileString,80,"/home/pi/RbData/EX%F_%H%M%S",timeinfo);
+	strftime(fileString,80,"/home/pi/RbData/%F/EX%F_%H%M%S",timeinfo);
 
 	sprintf(buffer,"%s.dat",fileString);
 	printf("\n%s\n",buffer);

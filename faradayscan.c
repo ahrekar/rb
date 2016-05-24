@@ -98,7 +98,7 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(fileName,80,"/home/pi/RbData/FDayScan%F_%H%M%S.dat",timeinfo);
+	strftime(fileName,80,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo);
 
 	printf("\n");
 	printf(fileName);

@@ -105,7 +105,7 @@ int main (int argc, char **argv)
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime); //INCLUDE
 	timeinfo=localtime(&rawtime); //INCLUDE
-	strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
+	strftime(fileName,80,"/home/pi/RbData/%F/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
 	printf("\n%s\n",fileName);
 
 	// Collect raw data
