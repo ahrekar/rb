@@ -25,6 +25,7 @@ that
 fileTools
 homeWavePlate
 setWavePlate
+.motor?position
 
 *.data
 *~
