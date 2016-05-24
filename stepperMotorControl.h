@@ -11,6 +11,7 @@ void setupMotorVariables(int motor);
 
 void homeMotor(int motor);
 void moveMotor(int motor,int dir, int steps);
+void _moveMotor(int motor,int dir, int steps);
 void setMotor(int motor, int location);
 
 void stepMotor(int dir, int steps);
@@ -78,10 +79,10 @@ void homeMotor(int motor)
 		// to re-find it.
 		printf("Already in home, reversing 100 steps...\n");
 		fflush(stdout);
-		moveMotor(motor,0,100);
+		_moveMotor(motor,0,100);
 	}
 	while(!digitalRead(p_home)){
-		moveMotor(motor,1,1);
+		_moveMotor(motor,1,1);
         i++;
 	}
     p_motorPosition=0;
@@ -91,11 +92,16 @@ void homeMotor(int motor)
 
 void moveMotor(int motor, int dir, int steps)
 {
+    setupMotorVariables(motor);
+	_moveMotor(motor,dir,steps);
+}
+
+void _moveMotor(int motor, int dir, int steps)
+{
     if(!(dir==0 || dir==1)){ // Input error checking
         printf("Invalid direction provided\n");
         exit(1);
     }
-    setupMotorVariables(motor);
 
 	stepMotor(dir, steps);
 
@@ -140,12 +146,10 @@ void setMotor(int motor, int newlocation){
 		}
 	}
 
-    moveMotor(motor,direction,steps);
+    _moveMotor(motor,direction,steps);
 }
 
 void stepMotor(int dir, int steps){
-	wiringPiSetup();
-       
     if(p_dir==0 && p_clock==0 && p_home==0){
         printf("Error: Motor variables not initialized\n");
         exit(1);
