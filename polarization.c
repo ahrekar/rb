@@ -22,26 +22,24 @@
 #include "fileTools.h"
 #include "stepperMotorControl.h"
 
-#define CLK 3
-#define DIR 4
 #define REVOLUTIONS 2
 #define STEPSPERREV 1200
 #define DATAPOINTSPERREV 40
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
-#define DWELL 1
+#define DWELL 1		// The number of seconds to pause, letting electronics settle
 #define ALPHA 0		// The constant Alpha (location of transmission axis), measured in degrees.
-#define DALPHA 3 	// The uncertainty in ALPHA
+#define DALPHA 0 	// The uncertainty in ALPHA
 #define BETA 0		// The constant Beta_0 (beginning position of QWP relative to LP) measured in degrees.
-#define DBETA 3		// The uncertainty in BETA
+#define DBETA 0		// The uncertainty in BETA
 #define DELTA 90	// The constant Delta (wave plate retardance) in degrees.
-#define DDELTA 3	// The uncertainty in DELTA
+#define DDELTA 0	// The uncertainty in DELTA
 #define DSTEP 0	// The uncertainty in the step size 
 #define NUMSTOKES 4
-#define COS 0
-#define SIN (DATAPOINTS/2)
-#define POS 0
-#define NEG (DATAPOINTS)
+#define COS 0			// Used for my fourier coefficient array. Cos stored first.
+#define SIN (DATAPOINTS/2)	// Sin stored second
+#define POS 0			// Used for my error array positive values are stored first.
+#define NEG (DATAPOINTS)// Then negative values. 
 
 int processFiles(char* backgroundFile, char* dataFile);
 int getPolarizationData(char* fileName, int aout);
@@ -88,13 +86,12 @@ int main (int argc, char **argv)
 	} else if(argc==3){
 		strcpy(backgroundFile,argv[1]);
 		strcpy(fileName,argv[2]);
-		printf("%d\n",DATAPOINTS);
 		processFiles(backgroundFile,fileName);
 		return 0;
 	}else {
 		printf("usage '~$ sudo ./polarization <aout_for_target> <Pump Laser Flag> <comments_in_double_quotes>'\n");
 		printf("usage '~$ sudo ./polarization <aout_for_target> <Pump Laser Flag> <background file> <comments_in_double_quotes>'\n");
-		printf("usage '~$ sudo ./polarization <dataFile> <background file>'\n");
+		printf("usage '~$ sudo ./polarization <background file> <data file>'\n");
 		return 1;
 	}
 
@@ -408,9 +405,9 @@ float calculateOneSumTerm(int trigFunc, float intensity, float i,int k){
 		d0_L=0;
 	}
 	if (trigFunc==COS)
-		return 2 * intensity * cos(k*2*PI*i/totalDataPoints)/(totalDataPoints*(1+d0_L));
+		return 2 * intensity * cos(k*(2*PI*REVOLUTIONS)*i/totalDataPoints)/(totalDataPoints*(1+d0_L));
 	else
-		return 2 * intensity * sin(k*2*PI*i/totalDataPoints)/(totalDataPoints*(1+d0_L));
+		return 2 * intensity * sin(k*(2*PI*REVOLUTIONS)*i/totalDataPoints)/(totalDataPoints*(1+d0_L));
 }
 
 float calculateOneSumTermError(int trigFunc, int posOrNeg, float intensity,float intensityErr, float i, float iErr, int k){
@@ -489,16 +486,15 @@ float calculateStokesErr(int i, int signOfError, float alpha, float beta, float 
 
 int printOutFC(float* fourierCoefficients, float* fcError){
 	printf("Cos Coefficients:\n");
-	printf("Cos 0: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[COS+0],fcError[COS+POS+0],fcError[COS+NEG+0]);
-	printf("Cos 1: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[COS+1],fcError[COS+POS+1],fcError[COS+NEG+1]);
-	printf("Cos 2: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[COS+2],fcError[COS+POS+2],fcError[COS+NEG+2]);
-	printf("Cos 3: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[COS+3],fcError[COS+POS+3],fcError[COS+NEG+3]);
-	printf("Cos 4: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[COS+4],fcError[COS+POS+4],fcError[COS+NEG+4]);
+	int numCoefficients = 10;
+	int i;
+	for(i=0;i<numCoefficients;i++){
+		printf("%s %d: %010.3f +%0.4f -%0.4f\n","Cos",i,fourierCoefficients[COS+i],fcError[COS+POS+i],fcError[COS+NEG+i]);
+	}
 	printf("Sin Coefficients:\n");
-	printf("Sin 1: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[SIN+1],fcError[SIN+POS+1],fcError[SIN+NEG+1]);
-	printf("Sin 2: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[SIN+2],fcError[SIN+POS+2],fcError[SIN+NEG+2]);
-	printf("Sin 3: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[SIN+3],fcError[SIN+POS+3],fcError[SIN+NEG+3]);
-	printf("Sin 4: %010.3f +%0.4f -%0.4f\n",fourierCoefficients[SIN+4],fcError[SIN+POS+4],fcError[SIN+NEG+4]);
+	for(i=0;i<numCoefficients;i++){
+		printf("%s %d: %010.3f +%0.4f -%0.4f\n","Sin",i,fourierCoefficients[SIN+i],fcError[SIN+POS+i],fcError[SIN+NEG+i]);
+	}
 	return 0;
 }
 
@@ -531,7 +527,7 @@ int processFiles(char* backgroundFile, char* dataFile){
 	float* fourierCoefficients = malloc(DATAPOINTS*sizeof(float));
 	float* fcErr = malloc(DATAPOINTS*2*sizeof(float));
 
-	int _switch = 0;
+	int _switch = 1;
 
 	calculateFourierCoefficients(dataFile,DATAPOINTS,fourierCoefficients,fcErr);
 	if (_switch == 1){
@@ -585,5 +581,6 @@ int processFiles(char* backgroundFile, char* dataFile){
 	free(fcBg);
 	free(fcBgErr);
 	free(stokesParameters);
+
 	return 0;
 }
