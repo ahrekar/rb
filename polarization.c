@@ -289,7 +289,7 @@ int getPolarizationData(char* fileName, int aout){
 	for (steps=0;steps<nsteps;steps+=ninc){
 
 		//200 steps per revoluion
-		moveMotor(2,1,ninc);
+		moveMotor(0,1,ninc);
 
 		counts=0;
 		for (i=0;i<DWELL;i++){
@@ -313,6 +313,10 @@ int getPolarizationData(char* fileName, int aout){
 
 
 	fclose(rawData);
+
+	// Reset Aout back to zero
+	usbAOut_USB1208LS(hid,1,0);
+
 	//cleanly close USB
 	ret = hid_close(hid);
 	if (ret != HID_RET_SUCCESS) {

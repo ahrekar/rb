@@ -112,7 +112,8 @@ void moveMotor(int motor, int dir, int steps)
         
     p_motorPosition+=steps;
     p_motorPosition%=p_stepsPerRevolution; 
-    writeMotorPosition();
+	if(!(motor==1))
+		writeMotorPosition();
 }
 
 void setMotor(int motor, int newlocation){
