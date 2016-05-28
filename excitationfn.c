@@ -103,7 +103,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "USB 1208LS not found.\n");
 		exit(1);
 	} else {
-		printf("USB 208LS Device is found! interface = %d\n", interface);
+		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
 
 mcp3004Setup(BASE,SPI_CHAN);
@@ -119,7 +119,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(fileString,80,"/home/pi/RbData/%F/EX%F_%H%M%S",timeinfo);
+	strftime(fileString,80,"/home/pi/RbData/EX%F_%H%M%S",timeinfo);
 
 	sprintf(buffer,"%s.dat",fileString);
 	printf("\n%s\n",buffer);
@@ -134,7 +134,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 	fprintf(fp,"%s\n",buffer);
 
 	HPcal=28.1/960.0;
-	fprintf(fp,"#Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+	fprintf(fp,"# Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
 
 	steprange = 1+(int)(scanrange/HPcal);
 	if (steprange>1023) steprange = 1023;
@@ -151,9 +151,9 @@ mcp3004Setup(BASE,SPI_CHAN);
 		stepsize=maxstepsize;
 	}
 
-	fprintf(fp,"#");
-	fprintf(fp,comments);
-	fprintf(fp,"\n");
+	fprintf(fp,"# Bias: %f\n",bias);
+	fprintf(fp,"# Number of seconds per count measurement: %d\n",dwell);
+	fprintf(fp,"# %s\n",comments);
 
 	// Print the header for the information in the datafile
 	fprintf(fp,"Aout\tEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
