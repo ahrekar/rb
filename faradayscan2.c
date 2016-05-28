@@ -142,7 +142,7 @@ int main (int argc, char **argv)
 	gain=BP_5_00V;
 
 	// Write the header for the data to the file.
-	fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\n");
+	fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
 		//for (j=0;j<2;j++){
@@ -211,7 +211,7 @@ int main (int argc, char **argv)
 			printf("f3 = %f\t",f3);
 			printf("f4 = %f\t",f4);
 			printf("angle = %f (%f)\n",angle,stderrangle);
-			// As a reminder, these are the headers: fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\n");
+			// As a reminder, these are the headers: fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
 			fprintf(fp,"%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",j,Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
 		//}//end j
 	}//end for Aout
