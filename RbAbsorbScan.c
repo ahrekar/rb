@@ -71,7 +71,7 @@ int main (int argc, char **argv)
 		strcpy(comments,argv[4]);
 	} else {
 		printf("Usage:\n$ sudo ./RbAbsorbScan <begin> <end> <step> <comments>\n");
-		printf("                              (  0 - 1023 )                  \n");
+		printf("                              ( 0 - 1023 )                   \n");
 		return 0;
 	}
 	if (endvalue>1024) endvalue=1024;
