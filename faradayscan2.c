@@ -49,7 +49,7 @@ int main (int argc, char **argv)
 	float sumI, sumSin, sumCos;
 	float f4,f3,df4,df3,angle,stderrangle,count;
 	struct tm * timeinfo;
-	char fileName[80], buffer[80], comments[80];
+	char fileName[80], buffer[80], comments[1024];
 	float involts; 	// The amount of light that is entering into the sensor. 
 	float stderrinvolts;
 	FILE *fp;
@@ -110,7 +110,11 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(fileName,80,"/home/pi/RbData/FDayScan2%F_%H%M%S.dat",timeinfo);
+	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	if (stat(fileName, &st) == -1){
+		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	}
+	strftime(fileName,80,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo); //INCLUDE
 
 	printf("%s\n",fileName);
 	printf("%s\n",comments);
