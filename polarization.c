@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <asm/types.h>
 #include <wiringPi.h>
 #include "pmd.h"
@@ -27,6 +28,8 @@
 #define DATAPOINTSPERREV 40
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
+#define HPCAL 28.1/960.0
+#define NORMCURR 0 	// Set this to 1 to normalize the intensity with the current
 #define DWELL 1		// The number of seconds to pause, letting electronics settle
 #define ALPHA 0		// The constant Alpha (location of transmission axis), measured in degrees.
 #define DALPHA 0 	// The uncertainty in ALPHA
@@ -41,7 +44,8 @@
 #define POS 0			// Used for my error array positive values are stored first.
 #define NEG (DATAPOINTS)// Then negative values. 
 
-int processFiles(char* backgroundFile, char* dataFile);
+int processFile(char* backgroundFileName, char* comments);
+int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, char* comments);
 int getPolarizationData(char* fileName, int aout);
 
 int calculateFourierCoefficients(char* fileName, int dataPoints, float* fcReturn, float* fcErrReturn);
@@ -52,6 +56,11 @@ int calculateStokesParameters(float* fourierCoefficients, float* fcErr, float* s
 float calculateStokes(int i, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4);
 float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4, float* fcErrors);
 
+int writeDataSummaryToFile(char* rawDataFileName, char* analysisFileName, char* backgroundFileName, 
+							char* comments,
+							float* fourierCoefficients, float* fcError, 
+							float* stokesParameters, float* spError);
+
 int printOutFC(float* fourierCoefficients, float* fcErr);
 int printOutSP(float* sp, float* spError);
 int printOutFloatArray(float* array, int n);
@@ -61,37 +70,49 @@ int main (int argc, char **argv)
 {
 	int aout;
 	int flag;
-	char* tmp="/home/pi/RbData/tmp.dat"; //INCLUDE
 	
-	char fileName[80], comments[80],backgroundFile[80]; //INCLUDE
-	float HPcal;
-	FILE* dataSummary;
+	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; //INCLUDE
 
 	// Variables for getting time information to identify
 	// when we recorded the data
 	time_t rawtime;
 	struct tm * timeinfo;
 	float bias, offset,energy, current;
+	
+	// Setup time variables
+	time(&rawtime); //INCLUDE
+	timeinfo=localtime(&rawtime); //INCLUDE
+	struct stat st = {0};
 
 	// Get parameters.
-	if (argc==4){
+	if (argc==3){
 		aout=atoi(argv[1]);
-		flag=atoi(argv[2]); 
-		strcpy(comments,argv[3]);
-	} else if(argc==5){
+		strcpy(comments,argv[2]);
+		*backgroundFileName=NULL;
+	} else if(argc==4){
 		aout=atoi(argv[1]);
-		flag=atoi(argv[2]); 
-		strcpy(backgroundFile,argv[3]);
-		strcpy(comments,argv[4]);
-	} else if(argc==3){
-		strcpy(backgroundFile,argv[1]);
-		strcpy(fileName,argv[2]);
-		processFiles(backgroundFile,fileName);
-		return 0;
+		strcpy(backgroundFileName,argv[1]);
+		if(aout==0 && strcmp(backgroundFileName,"0")!=0){//If the second argument is not "0" (is a fileName)
+			// It should be a fileName, process the two files. TODO: Put analysis in a separate program.
+			strcpy(rawDataFileName,argv[2]);
+			strcpy(comments,argv[3]);
+			strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+			if (stat(analysisFileName, &st) == -1){
+				mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
+			}
+			strftime(analysisFileName,80,"/home/pi/RbData/%F/POLanalysis%F_%H%M%S.dat",timeinfo); //INCLUDE
+			printf("\n%s\n",analysisFileName);
+			processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,comments);
+			return 0;
+		}else{
+			strcpy(backgroundFileName,argv[2]);
+			strcpy(comments,argv[3]);
+		}
 	}else {
-		printf("usage '~$ sudo ./polarization <aout_for_target> <Pump Laser Flag> <comments_in_double_quotes>'\n");
-		printf("usage '~$ sudo ./polarization <aout_for_target> <Pump Laser Flag> <background file> <comments_in_double_quotes>'\n");
-		printf("usage '~$ sudo ./polarization <background file> <data file>'\n");
+		printf("There are three options for using this program: \n\n");
+		printf("usage '~$ sudo ./polarization <aout_for_target> <comments_in_double_quotes>'\n");
+		printf("usage '~$ sudo ./polarization <aout_for_target> <background file> <comments_in_double_quotes>'\n");
+		printf("usage '~$ sudo ./polarization <background file> <data file> <comments_in_double_quotes'\n");
 		return 1;
 	}
 
@@ -100,116 +121,42 @@ int main (int argc, char **argv)
 	if (aout>1023) aout=1023;
 
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
-	time(&rawtime); //INCLUDE
-	timeinfo=localtime(&rawtime); //INCLUDE
-	strftime(fileName,80,"/home/pi/RbData/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
-	printf("\n%s\n",fileName);
-
-	// Collect raw data
-	getPolarizationData(tmp, aout); //INCLUDE
-	
-					 	// TODO idea: don't have separate array for sin and 
-						// cos, but just a single array twice the size of 
-						// my current arrays. Then, cos values will be
-						// assigned to the first half of the array, and 
-						// sin values will be assigned to the second half of
-						// the array. To aid in readability, I will  
-						// define variables Cos and Sin somewhere
-						// to be 0 and kmax. So to access the Cos coefficients
-						// I would write:
-						//     fourierCoefficients(Cos+i)
-	float* fourierCoefficients = malloc(DATAPOINTS*sizeof(float));
-	float* fcErr = malloc(DATAPOINTS*2*sizeof(float)); 	// We need twice as many datapoints for the 
-														// error because I'm doing the upper error and
-														// lower error separately. I'll access the upper
-														// and lower error in a similarly convoluted way
-														// to how I access the fourier coefficients.
-
-	// Find fourier coefficients from raw data.
-	calculateFourierCoefficients(tmp,DATAPOINTS,fourierCoefficients,fcErr);
-
-	printf("====Raw Data Fourier Coefficients====\n");
-	printOutFC(fourierCoefficients,fcErr);
-	printf("\n");
-
-	// Calculate fourier coefficients from BG data, if provided, and
-	// remove background from data
-	if(argc==5){
-		
-		float* fcBg = malloc(DATAPOINTS*sizeof(float));
-		float* fcBgErr = malloc(DATAPOINTS*2*sizeof(float));
-		calculateFourierCoefficients(backgroundFile,DATAPOINTS,fcBg,fcBgErr);
-
-		printf("====Background Fourier Coefficients====\n");
-		printOutFC(fcBg,fcBgErr);
-		printf("\n");
-
-		int k;
-		for (k=0; k < DATAPOINTS; k++){
-			fourierCoefficients[k]-=fcBg[k];
-			fcErr[COS+POS+k]=sqrt(pow(fcErr[COS+POS+k],2)+pow(fcBgErr[COS+POS+k],2));
-			fcErr[COS+NEG+k]=sqrt(pow(fcErr[COS+NEG+k],2)+pow(fcBgErr[COS+NEG+k],2));
-			fcErr[SIN+POS+k]=sqrt(pow(fcErr[SIN+POS+k],2)+pow(fcBgErr[SIN+POS+k],2));
-			fcErr[SIN+NEG+k]=sqrt(pow(fcErr[SIN+NEG+k],2)+pow(fcBgErr[SIN+NEG+k],2));
-		}
-
-		printf("====Signal Fourier Coefficients====\n");
-		printOutFC(fourierCoefficients,fcErr);
-		printf("\n");
-
-		free(fcBg);
-		free(fcBgErr);
+	strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	if (stat(analysisFileName, &st) == -1){
+		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
-	
-	// Calculate Stokes Parameters from Fourier Coefficients.
-	float* stokesParameters = malloc(4*sizeof(float));
-	float* spErr = malloc(8*sizeof(float));
-	calculateStokesParameters(fourierCoefficients,fcErr,stokesParameters,spErr);
-
-	printf("====Stokes Parameters====\n");
-	printOutFloatArray(stokesParameters,4);
-	printf("\n");
-
+	strftime(rawDataFileName,80,"/home/pi/RbData/%F/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
+	strftime(analysisFileName,80,"/home/pi/RbData/%F/POLanalysis%F_%H%M%S.dat",timeinfo); //INCLUDE
+	printf("\n%s\n",analysisFileName);
+	FILE* rawData;
 	// Record the results along with the raw data in a file.
-	dataSummary=fopen(fileName,"w");
-	if (!dataSummary) {
-		printf("Unable to open file: %s\n", fileName);
+	rawData=fopen(rawDataFileName,"w");
+	if (!rawData) {
+		printf("Unable to open file: %s\n", rawDataFileName);
 		exit(1);
 	}
-	
-	HPcal=28.1/960.0;
-	fprintf(dataSummary,"#File,%s\n",fileName);
-	if(argc==5){fprintf(dataSummary,"#BackgroundFile,%s\n",backgroundFile);}
-	fprintf(dataSummary,"#Aout,%d\n",aout);
-	fprintf(dataSummary,"#Assumed USB1208->HP3617A conversion,%2.6f\n",HPcal);
-	fprintf(dataSummary,"#REVOLUTIONS,%d\n",REVOLUTIONS);
-	fprintf(dataSummary,"#DataPointsPerRev,%d\n",DATAPOINTSPERREV);
-	fprintf(dataSummary,"#StepsPerRev,%d\n",STEPSPERREV);
-	fprintf(dataSummary,"#Datapoints,%d\n",DATAPOINTS);
-	fprintf(dataSummary,"#PMT dwell time (s),%d\n",DWELL);
-	fprintf(dataSummary,"#Comments,%s\n",comments);
-	fprintf(dataSummary,"#ALPHA,%d\n",ALPHA);
-	fprintf(dataSummary,"#BETA,%d\n",BETA);
-	fprintf(dataSummary,"#DELTA,%d\n",DELTA);
-	fprintf(dataSummary,"#f0,%f\n",fourierCoefficients[COS+0]);
-	fprintf(dataSummary,"#f1,%f\n",fourierCoefficients[COS+4]);
-	fprintf(dataSummary,"#f2,%f\n",fourierCoefficients[SIN+4]);
-	fprintf(dataSummary,"#f3,%f\n",fourierCoefficients[SIN+2]);
-	fprintf(dataSummary,"#f4,%f\n",fourierCoefficients[COS+2]);
-	fprintf(dataSummary,"#p0,%f\n",stokesParameters[0]);
-	fprintf(dataSummary,"#p1,%f\n",stokesParameters[1]);
-	fprintf(dataSummary,"#p2,%f\n",stokesParameters[2]);
-	fprintf(dataSummary,"#p3,%f\n",stokesParameters[3]);
 
-	free(fourierCoefficients);
-	free(fcErr);
-	
-	fclose(dataSummary);
+	fprintf(rawData,"#File\t%s\n",rawDataFileName);
+	fprintf(rawData,"#Comments\t%s\n",comments);
+	fprintf(rawData,"#Aout\t%d\n",aout);
+	fprintf(rawData,"#Assumed USB1208->HP3617A conversion\t%2.6f\n",HPCAL);
+	fprintf(rawData,"#REVOLUTIONS\t%d\n",REVOLUTIONS);
+	fprintf(rawData,"#DataPointsPerRev\t%d\n",DATAPOINTSPERREV);
+	fprintf(rawData,"#StepsPerRev\t%d\n",STEPSPERREV);
+	fprintf(rawData,"#Datapoints\t%d\n",DATAPOINTS);
+	fprintf(rawData,"#PMT dwell time (s)\t%d\n",DWELL);
 
-	append(fileName,tmp);
+	fclose(rawData);
 
+	// Collect raw data
+	getPolarizationData(rawDataFileName, aout); //INCLUDE
+
+	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, comments); //TODO: Move all processesing of files
+															//	    to find stokes Parameters to 
+															//		a separate funtion.
 	return 0;
 }
+
 // INCLUDE
 int getPolarizationData(char* fileName, int aout){
 	// Variables for interfacing with the USB1208
@@ -273,7 +220,7 @@ int getPolarizationData(char* fileName, int aout){
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
 
 	// Begin File setup
-	FILE* rawData=fopen(fileName,"w");
+	FILE* rawData=fopen(fileName,"a");
 	if (!rawData) {
 		printf("Unable to open file: %s\n",fileName);
 		exit(1);
@@ -283,8 +230,7 @@ int getPolarizationData(char* fileName, int aout){
 	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTSPERREV; // The number of steps to take between readings.
 
-	fprintf(rawData,"#Steps,Count,Current,Current Error\n");
-	fprintf(rawData,"\n"); // This extra newline is vital for being able to quickly process data. DON'T REMOVE
+	fprintf(rawData,"Steps\tCount\tCurrent\tCurrent Error\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
 
 	for (steps=0;steps<nsteps;steps+=ninc){
 
@@ -307,8 +253,8 @@ int getPolarizationData(char* fileName, int aout){
 		current = current/(float)nSamples;
 		currentErr = stdDeviation(measurement,nSamples);
 
-		printf("Steps %d,Counts %d,Current %f\n",steps,counts,current);
-		fprintf(rawData,"%d,%d,%f,%f\n",steps,counts,current,currentErr);
+		printf("Steps %d\tCounts %d\tCurrent %f\n",steps,counts,current);
+		fprintf(rawData,"%d\t%d\t%f\t%f\n",steps,counts,current,currentErr);
 	}
 
 
@@ -335,6 +281,7 @@ int getPolarizationData(char* fileName, int aout){
 
 
 int calculateFourierCoefficients(char* fileName, int totalDataPoints, float* fcReturn,float* fcErrReturn){	
+	// normalizeWithCurrent should be set to 1 if it is desired
 	// Begin File setup
 	FILE* data = fopen(fileName,"r");
 	if (!data) {
@@ -353,7 +300,7 @@ int calculateFourierCoefficients(char* fileName, int totalDataPoints, float* fcR
 	}
 	// TODO: implement the FFT version of this. 
 	int i;
-	char trash[100]; 	// We need to skip several lines in the file that aren't data
+	char trash[1024]; 	// We need to skip several lines in the file that aren't data
 					 	// This is a buffer to accomplish that.
 	trash[0]='#'; 	// This is a quickly thrown together hack to avoid having an fgets statement 
 				 	// outside of the while loop.
@@ -363,9 +310,10 @@ int calculateFourierCoefficients(char* fileName, int totalDataPoints, float* fcR
 		int j=0;
 		while(trash[0]=='#'){ // Skip over all lines that have a # at the beginning. 
 			
-			fgets(trash,100,data);
+			fgets(trash,1024,data);
 			j++;
 		}
+		//printf("Lines skipped=%d\n",j);
 		trash[0]='a';
 		fscanf(data,"%d,%d,%f,%f\n",&steps,&counts,&current,&currentErr);
 		//fscanf(data,"%d,%d,%f\n",&steps,&counts,&current); 	// Because I think I might want to revert 
@@ -374,20 +322,25 @@ int calculateFourierCoefficients(char* fileName, int totalDataPoints, float* fcR
 																// I'm going to keep it hanging 
 																// around commented out for a while.
 		//printf("%d,%d,%f,%f\n",steps,counts,current,currentErr);
+		float intensity;
 		float intensityErr;
 		for (k=0; k < totalDataPoints/2; k++){
-			intensityErr=counts/fabs(current)*sqrt(pu2(counts,sqrt(counts))+pu2(current,currentErr));
+			intensity=counts;
+			intensityErr=sqrt((float)counts);
+			if(NORMCURR==1){
+				intensity=intensity/fabs(current);
+				intensityErr=counts/fabs(current)*sqrt(pu2(counts,sqrt(counts))+pu2(current,currentErr));
+			}
 
-			fcReturn[COS+k] += calculateOneSumTerm(COS,counts/fabs(current), (float)i, k);
-			fcReturn[SIN+k] += calculateOneSumTerm(SIN,counts/fabs(current), (float)i, k);
+			fcReturn[COS+k] += calculateOneSumTerm(COS,intensity, (float)i, k);
+			fcReturn[SIN+k] += calculateOneSumTerm(SIN,intensity, (float)i, k);
 
-			fcErrReturn[COS+POS+k] += pow(calculateOneSumTermError(COS,POS,counts/fabs(current),intensityErr,(float)i,DSTEP,k),2);
-			fcErrReturn[COS+NEG+k] += pow(calculateOneSumTermError(COS,NEG,counts/fabs(current),intensityErr,(float)i,DSTEP,k),2);
-			fcErrReturn[SIN+POS+k] += pow(calculateOneSumTermError(SIN,POS,counts/fabs(current),intensityErr,(float)i,DSTEP,k),2);
-			fcErrReturn[SIN+NEG+k] += pow(calculateOneSumTermError(SIN,NEG,counts/fabs(current),intensityErr,(float)i,DSTEP,k),2);
+			fcErrReturn[COS+POS+k] += pow(calculateOneSumTermError(COS,POS,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcErrReturn[COS+NEG+k] += pow(calculateOneSumTermError(COS,NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcErrReturn[SIN+POS+k] += pow(calculateOneSumTermError(SIN,POS,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcErrReturn[SIN+NEG+k] += pow(calculateOneSumTermError(SIN,NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
 		}
 		//printf("%f\t%f\n",fcErrReturn[COS+POS+0],fcErrReturn[COS+POS+1]);
-		//printf("Lines Read: %d\n",i);
 	}
 	for (k=0; k < totalDataPoints/2; k++){
 		fcErrReturn[COS+POS+k]=sqrt(fcErrReturn[COS+POS+k]);
@@ -395,6 +348,7 @@ int calculateFourierCoefficients(char* fileName, int totalDataPoints, float* fcR
 		fcErrReturn[SIN+POS+k]=sqrt(fcErrReturn[SIN+POS+k]);
 		fcErrReturn[SIN+NEG+k]=sqrt(fcErrReturn[SIN+NEG+k]);
 	}
+	//printf("Lines Read: %d\n",i);
 	fclose(data);
 	return 0;
 }
@@ -435,7 +389,7 @@ int calculateStokesParameters(float* fourierCoefficients, float* fcErrors, float
 	float s2=fourierCoefficients[SIN+2];
 	float s4=fourierCoefficients[SIN+4];
 	int pos=0;
-	int neg=4;
+	int neg=NUMSTOKES;
 	int i;
 	for(i=0;i<NUMSTOKES;i++){
 		stokesReturn[i]=calculateStokes(i,alpha,beta_0,delta,c0,c2,c4,s2,s4);
@@ -473,7 +427,7 @@ float calculateStokesErr(int i, int signOfError, float alpha, float beta, float 
 	float k;
 	      k=calculateStokes(i, alpha , beta, delta, c0, c2, c4, s2, s4);
 	temp[0]=calculateStokes(i,   alpha+sgn*(DALPHA)     , beta, delta, c0, c2, c4, s2, s4)-k;
-	temp[1]=calculateStokes(i,alpha,    beta+sgn*(DBETA)      , delta, c0, c2, c4, s2, s4)-k;
+	temp[1]=calculateStokes(i,alpha, beta  +  sgn*DBETA       , delta, c0, c2, c4, s2, s4)-k;
 	temp[2]=calculateStokes(i,alpha, beta,     delta+sgn*DDELTA      , c0, c2, c4, s2, s4)-k;
 	temp[3]=calculateStokes(i,alpha, beta, delta, c0+fcErrors[COS+sign+0], c2, c4, s2, s4)-k;
 	temp[4]=calculateStokes(i,alpha, beta, delta, c0, c2+fcErrors[COS+sign+2], c4, s2, s4)-k;
@@ -484,6 +438,8 @@ float calculateStokesErr(int i, int signOfError, float alpha, float beta, float 
 	int j;
 	for(j=0;j<numVars;j++)
 		totalError+=pow(temp[j],2);
+	
+	free(temp);
 
 	return sqrt(totalError);
 }
@@ -493,11 +449,11 @@ int printOutFC(float* fourierCoefficients, float* fcError){
 	int numCoefficients = 10;
 	int i;
 	for(i=0;i<numCoefficients;i++){
-		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Cos",i,fourierCoefficients[COS+i],fourierCoefficients[COS+i]+fcError[COS+POS+i],fourierCoefficients[COS+i]-fcError[COS+NEG+i]);
+		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Cos",i,fourierCoefficients[COS+i],fcError[COS+POS+i],fcError[COS+NEG+i]);
 	}
 	printf("Sin Coefficients:\n");
 	for(i=0;i<numCoefficients;i++){
-		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Sin",i,fourierCoefficients[SIN+i],fourierCoefficients[SIN+i]+fcError[SIN+POS+i],fourierCoefficients[SIN+i]-fcError[SIN+NEG+i]);
+		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Sin",i,fourierCoefficients[SIN+i],fcError[SIN+POS+i],fcError[SIN+NEG+i]);
 	}
 	return 0;
 }
@@ -527,64 +483,106 @@ int printOutFloatArrayWithError(float* array, float* errorArray, int n){
 	return 0;
 }
 
-int processFiles(char* backgroundFile, char* dataFile){
+int processFile(char* backgroundFileName, char* comments){
+	return 0;
+}
+
+int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFileName, char* comments){
+
 	float* fourierCoefficients = malloc(DATAPOINTS*sizeof(float));
-	float* fcErr = malloc(DATAPOINTS*2*sizeof(float));
+	float* fcErr = malloc(DATAPOINTS*2*sizeof(float)); 	// We need twice as many datapoints for the 
+														// error because I'm doing the upper error and
+														// lower error separately. I'll access the upper
+														// and lower error in a similarly convoluted way
+														// to how I access the fourier coefficients.
 
-	int _switch = 0;
+	// Find fourier coefficients from raw data.
+	calculateFourierCoefficients(dataFileName,DATAPOINTS,fourierCoefficients,fcErr);
 
-	calculateFourierCoefficients(dataFile,DATAPOINTS,fourierCoefficients,fcErr);
-	if (_switch == 1){
-		printf("====Data Fourier Coefficients====\n");
-		printOutFC(fourierCoefficients,fcErr);
-		printf("\n");
-	}
-
-	float* fcBg = malloc(DATAPOINTS*sizeof(float));
-	float* fcBgErr = malloc(DATAPOINTS*2*sizeof(float));
-	calculateFourierCoefficients(backgroundFile,DATAPOINTS,fcBg,fcBgErr);
-	if (_switch == 1){
-		printf("====Background Fourier Coefficients====\n");
-		printOutFC(fcBg,fcErr);
-		printf("\n");
-	}
-
-	float* stokesParameters = malloc(4*sizeof(float));
-	float* spErr = malloc(8*sizeof(float));
-
-	calculateStokesParameters(fcBg,fcBgErr,stokesParameters, spErr);
-
-	printf("====Background Stokes Parameters====\n");
-	printOutSP(stokesParameters,spErr);
+	printf("====Raw Data Fourier Coefficients====\n");
+	printOutFC(fourierCoefficients,fcErr);
 	printf("\n");
 
-	int k;
-	for (k=0; k < DATAPOINTS; k++){
-		fourierCoefficients[k]-=fcBg[k];
-		fcErr[COS+POS+k]=sqrt(pow(fcErr[COS+POS+k],2)+pow(fcBgErr[COS+POS+k],2));
-		fcErr[COS+NEG+k]=sqrt(pow(fcErr[COS+NEG+k],2)+pow(fcBgErr[COS+NEG+k],2));
-		fcErr[SIN+POS+k]=sqrt(pow(fcErr[SIN+POS+k],2)+pow(fcBgErr[SIN+POS+k],2));
-		fcErr[SIN+NEG+k]=sqrt(pow(fcErr[SIN+NEG+k],2)+pow(fcBgErr[SIN+NEG+k],2));
-	}
+	// Calculate fourier coefficients from BG data, if provided, and
+	// remove background from data
+	if(*backgroundFileName != NULL){
+		
+		float* fcBg = malloc(DATAPOINTS*sizeof(float));
+		float* fcBgErr = malloc(DATAPOINTS*2*sizeof(float));
+		calculateFourierCoefficients(backgroundFileName,DATAPOINTS,fcBg,fcBgErr);
 
-	if (_switch==1){
+		printf("====Background Fourier Coefficients====\n");
+		printOutFC(fcBg,fcBgErr);
+		printf("\n");
+
+		int k;
+		for (k=0; k < DATAPOINTS; k++){
+			fourierCoefficients[k]-=fcBg[k];
+			fcErr[POS+k]=sqrt(pow(fcErr[POS+k],2)+pow(fcBgErr[POS+k],2));
+			fcErr[NEG+k]=sqrt(pow(fcErr[NEG+k],2)+pow(fcBgErr[NEG+k],2));
+		}
+
 		printf("====Signal Fourier Coefficients====\n");
 		printOutFC(fourierCoefficients,fcErr);
 		printf("\n");
-	}
 
+		free(fcBg);
+		free(fcBgErr);
+	}
 	// Calculate Stokes Parameters from Fourier Coefficients.
+	float* stokesParameters = malloc(NUMSTOKES*sizeof(float));
+	float* spErr = malloc(NUMSTOKES*2*sizeof(float));
 	calculateStokesParameters(fourierCoefficients,fcErr,stokesParameters,spErr);
 
 	printf("====Stokes Parameters====\n");
-	printOutSP(stokesParameters,spErr);
+	printOutFloatArray(stokesParameters,4);
 	printf("\n");
-	
+
+	writeDataSummaryToFile(analysisFileName,backgroundFileName,dataFileName,
+							comments,
+							fourierCoefficients,fcErr,
+							stokesParameters,spErr);
+
 	free(fourierCoefficients);
 	free(fcErr);
-	free(fcBg);
-	free(fcBgErr);
 	free(stokesParameters);
+	free(spErr);
+	return 0;
+}
+
+int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, char* dataFileName, 
+							char* comments,
+							float* fourierCoefficients, float* fcErr, 
+							float* stokesParameters, float* spErr){
+	FILE* dataSummary;
+	// Record the results along with the raw data in a file.
+	dataSummary=fopen(analysisFileName,"w");
+	if (!dataSummary) {
+		printf("Unable to open file: %s\n", analysisFileName);
+		exit(1);
+	}
+	
+	fprintf(dataSummary,"#File\t%s\n",analysisFileName);
+	fprintf(dataSummary,"#DataFile\t%s\n",dataFileName);
+	fprintf(dataSummary,"#BackgroundFile\t%s\n",(*backgroundFileName!=NULL)? backgroundFileName:"NONE");//This is the ternary operator ()?:
+	fprintf(dataSummary,"#Comments\t%s\n",comments);
+	fprintf(dataSummary,"#ALPHA\t%d\t%d\n",ALPHA,DALPHA);
+	fprintf(dataSummary,"#BETA\t%d\t%d\n",BETA,DBETA);
+	fprintf(dataSummary,"#DELTA\t%d\t%d\n",DELTA,DDELTA);
+	fprintf(dataSummary,"#Current Adj. Intensity\t%s\n",(NORMCURR==1)?"Yes":"No");
+	fprintf(dataSummary,"#f0\t%f\t%f\t%f\n",fourierCoefficients[COS+0],fcErr[POS+COS+0],fcErr[NEG+COS+0]);
+	fprintf(dataSummary,"#f1\t%f\t%f\t%f\n",fourierCoefficients[COS+4],fcErr[POS+COS+4],fcErr[NEG+COS+4]);
+	fprintf(dataSummary,"#f2\t%f\t%f\t%f\n",fourierCoefficients[SIN+4],fcErr[POS+COS+4],fcErr[NEG+COS+4]);
+	fprintf(dataSummary,"#f3\t%f\t%f\t%f\n",fourierCoefficients[SIN+2],fcErr[POS+COS+2],fcErr[NEG+COS+2]);
+	fprintf(dataSummary,"#f4\t%f\t%f\t%f\n",fourierCoefficients[COS+2],fcErr[POS+COS+2],fcErr[NEG+COS+2]);
+	fprintf(dataSummary,"Stokes Parameter\tValue\tUpper Error\tLower Error\n");
+	fprintf(dataSummary,"p0\t%f\t%f\t%f\n",stokesParameters[0],spErr[0+0],spErr[4+0]);
+	fprintf(dataSummary,"p1\t%f\t%f\t%f\n",stokesParameters[1],spErr[0+1],spErr[4+1]);
+	fprintf(dataSummary,"p2\t%f\t%f\t%f\n",stokesParameters[2],spErr[0+2],spErr[4+2]);
+	fprintf(dataSummary,"p3\t%f\t%f\t%f\n",stokesParameters[3],spErr[0+3],spErr[4+3]);
+	
+	fflush(dataSummary);
+	fclose(dataSummary);
 
 	return 0;
 }

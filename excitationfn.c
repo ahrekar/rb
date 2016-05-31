@@ -44,7 +44,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer[80],fileString[80],comments[1024];
+	char buffer[80],fileName[80],comments[1024];
 	float bias, offset, HPcal,energy,scanrange, involts;
 	FILE *fp;
 	/** These are not used in this program, but might
@@ -103,7 +103,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "USB 1208LS not found.\n");
 		exit(1);
 	} else {
-		printf("USB 208LS Device is found! interface = %d\n", interface);
+		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
 
 mcp3004Setup(BASE,SPI_CHAN);
@@ -119,9 +119,13 @@ mcp3004Setup(BASE,SPI_CHAN);
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(fileString,80,"/home/pi/RbData/%F/EX%F_%H%M%S",timeinfo);
+	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	if (stat(fileName, &st) == -1){
+		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	}
+	strftime(fileName,80,"/home/pi/RbData/%F/EX%F_%H%M%S",timeinfo);
 
-	sprintf(buffer,"%s.dat",fileString);
+	sprintf(buffer,"%s.dat",fileName);
 	printf("\n%s\n",buffer);
 
 	fp=fopen(buffer,"w");
@@ -134,7 +138,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 	fprintf(fp,"%s\n",buffer);
 
 	HPcal=28.1/960.0;
-	fprintf(fp,"#Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+	fprintf(fp,"# Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
 
 	steprange = 1+(int)(scanrange/HPcal);
 	if (steprange>1023) steprange = 1023;
@@ -151,9 +155,9 @@ mcp3004Setup(BASE,SPI_CHAN);
 		stepsize=maxstepsize;
 	}
 
-	fprintf(fp,"#");
-	fprintf(fp,comments);
-	fprintf(fp,"\n");
+	fprintf(fp,"# Bias: %f\n",bias);
+	fprintf(fp,"# Number of seconds per count measurement: %d\n",dwell);
+	fprintf(fp,"# %s\n",comments);
 
 	// Print the header for the information in the datafile
 	fprintf(fp,"Aout\tEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
@@ -251,24 +255,24 @@ mcp3004Setup(BASE,SPI_CHAN);
 		fprintf(gnuplot, "set key autotitle columnheader\n");			
 
 		// Set up the axis for the first plot
-		sprintf(buffer, "set title '%s'\n", fileString);
+		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "set xlabel 'Energy'\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 
 		// Set up the axis for the second plot x axis stays the same
-		sprintf(buffer, "set title '%s'\n", fileString);
+		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		fprintf(gnuplot, "set yrange [*:1]\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 		// End printing to screen
 
@@ -280,30 +284,30 @@ mcp3004Setup(BASE,SPI_CHAN);
 		
 		// Set up the output.
 		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s_counts.png'\n", fileString);
+		sprintf(buffer, "set output '%s_counts.png'\n", fileName);
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set key autotitle columnhead\n");			
 		// Set up the axis labels
-		sprintf(buffer, "set title '%s'\n", fileString);
+		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		// Print the plot
-		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "unset output\n"); 
 
-		sprintf(buffer, "set output '%s_current.png'\n", fileString);
+		sprintf(buffer, "set output '%s_current.png'\n", fileName);
 		fprintf(gnuplot, buffer);
 		// Set up the axis labels, x stays the same
-		sprintf(buffer, "set title '%s'\n", fileString);
+		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "set yrange [*:.1]\n");			
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
-		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);

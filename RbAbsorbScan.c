@@ -30,7 +30,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer[80],fileString[80],comments[1024];
+	char buffer[80],fileName[80],comments[1024];
 	float involts2,involts3;
 	FILE *fp, *gnuplot;
 	/** Unused RasbPi things.
@@ -71,7 +71,7 @@ int main (int argc, char **argv)
 		strcpy(comments,argv[4]);
 	} else {
 		printf("Usage:\n$ sudo ./RbAbsorbScan <begin> <end> <step> <comments>\n");
-		printf("                              (  0 - 1023 )                  \n");
+		printf("                              ( 0 - 1023 )                   \n");
 		return 0;
 	}
 	if (endvalue>1024) endvalue=1024;
@@ -94,21 +94,25 @@ int main (int argc, char **argv)
 	// get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(fileString,80,"/home/pi/RbData/RbAbs%F_%H%M%S.dat",timeinfo);
+	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	if (stat(fileName, &st) == -1){ // Create the directory for the Day's data 
+		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	}
+	strftime(fileName,80,"/home/pi/RbData/%F/RbAbs%F_%H%M%S.dat",timeinfo);
 
 	printf("\n");
-	printf(fileString);
+	printf(fileName);
 	printf("\n");
 
 
-	fp=fopen(fileString,"w");
+	fp=fopen(fileName,"w");
 	if (!fp) {
 		printf("unable to open file \n");
 		exit(1);
 	}
 
 	fprintf(fp,"#");			//gnuplot needs non-data lines commented out.
-	fprintf(fp,fileString);
+	fprintf(fp,fileName);
 	fprintf(fp,"\n");
 
 	//TODO Scanf terminates read after hitting a space?!?!?!?!?
@@ -191,20 +195,20 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, "set terminal dumb size 160,32\n");
 		fprintf(gnuplot, "set output\n");			
 		
-		sprintf(buffer, "set title '%s'\n", fileString);
+		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
 		fprintf(gnuplot, "set yrange [*:.1]\n");			
-		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s.png'\n", fileString);
+		sprintf(buffer, "set output '%s.png'\n", fileName);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileString);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);

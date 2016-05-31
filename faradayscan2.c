@@ -49,7 +49,7 @@ int main (int argc, char **argv)
 	float sumI, sumSin, sumCos;
 	float f4,f3,df4,df3,angle,stderrangle,count;
 	struct tm * timeinfo;
-	char fileName[80], buffer[80], comments[80];
+	char fileName[80], buffer[80], comments[1024];
 	float involts; 	// The amount of light that is entering into the sensor. 
 	float stderrinvolts;
 	FILE *fp;
@@ -110,7 +110,11 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(fileName,80,"/home/pi/RbData/FDayScan2%F_%H%M%S.dat",timeinfo);
+	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	if (stat(fileName, &st) == -1){
+		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	}
+	strftime(fileName,80,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo); //INCLUDE
 
 	printf("%s\n",fileName);
 	printf("%s\n",comments);
@@ -142,7 +146,7 @@ int main (int argc, char **argv)
 	gain=BP_5_00V;
 
 	// Write the header for the data to the file.
-	fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\n");
+	fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
 		//for (j=0;j<2;j++){
@@ -211,7 +215,7 @@ int main (int argc, char **argv)
 			printf("f3 = %f\t",f3);
 			printf("f4 = %f\t",f4);
 			printf("angle = %f (%f)\n",angle,stderrangle);
-			// As a reminder, these are the headers: fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\n");
+			// As a reminder, these are the headers: fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
 			fprintf(fp,"%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",j,Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
 		//}//end j
 	}//end for Aout

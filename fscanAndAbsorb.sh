@@ -17,9 +17,13 @@
 # at an Aout of about 800±50. This saves time vs. doing the full
 # scan.
 
-sudo ./RbAbsorbScan 600 1000 5 "$1"
+if [ "$#" -ne 1 ]; then
+	echo "usage: sudo ./fscanAndAbsorb.sh <comments>"
+else
+	sudo ./RbAbsorbScan 600 1000 5 "$1"
 
-# faraday rotation is supposed to be taken at large detunings.
-# this is at the other extreme of Aout.
+	# faraday rotation is supposed to be taken at large detunings.
+	# this is at the other extreme of Aout.
 
-sudo ./faradayscan2 100 601 100 "$1"
+	sudo ./faradayscan2 100 601 100 "$1"
+fi

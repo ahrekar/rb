@@ -48,11 +48,17 @@ IonGauge = 0.0107 * (float)x;
 IonGauge = pow(10,(IonGauge-9.97));
 printf("IonGauge %2.2E Torr \n",IonGauge);
 
-chan = 3; //pressure
+chan = 3; //Nitrogen CV pressure
 x=analogRead(BASE + chan);
 CVGauge = (float)x;
 CVGauge = pow(10,(0.00499*CVGauge - 4.05));
-printf("CVGauge %2.2E Torr\n", CVGauge);
+printf("N2 CVGauge %2.2E Torr\n", CVGauge);
+
+chan = 4; //Helium CV pressure
+x=analogRead(BASE + chan);
+CVGauge = (float)x;
+CVGauge = pow(10,(0.00499*CVGauge - 4.05));
+printf("HE CVGauge %2.2E Torr\n", CVGauge);
 
 
 
