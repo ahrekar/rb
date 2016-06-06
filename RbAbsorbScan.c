@@ -16,11 +16,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <asm/types.h>
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#include "tempControl.h"
 
 float stdDeviation(float* values, int numValues);
 
@@ -94,6 +96,7 @@ int main (int argc, char **argv)
 	// get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
+	struct stat st = {0};
 	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
 	if (stat(fileName, &st) == -1){ // Create the directory for the Day's data 
 		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
@@ -116,9 +119,10 @@ int main (int argc, char **argv)
 	fprintf(fp,"\n");
 
 	//TODO Scanf terminates read after hitting a space?!?!?!?!?
-	fprintf(fp,"#");			//gnuplot needs non-data lines commented out.
-	fprintf(fp,comments);
-	fprintf(fp,"\nAout\tPROBE\tStdDev\tREF\tStdDev\n");
+	fprintf(fp,"#%s\n",comments);			//gnuplot needs non-data lines commented out.
+	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
+	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
+	fprintf(fp,"Aout\tPROBE\tStdDev\tREF\tStdDev\n");
 
 	gain = BP_5_00V;
 

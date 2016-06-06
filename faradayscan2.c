@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <asm/types.h>
 #include <wiringPi.h>
@@ -29,6 +30,7 @@
 #include "usb-1208LS.h"
 #include "stepperMotorControl.h"
 #include "mathTools.h" //includes stdDeviation
+#include "tempControl.h"
 
 #define CLK 21
 #define DIR 26
@@ -110,6 +112,7 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
+	struct stat st = {0};
 	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
 	if (stat(fileName, &st) == -1){
 		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
@@ -125,21 +128,24 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	fprintf(fp,"%s\n%s\n",fileName,comments);
+	fprintf(fp,"# %s\n# %s\n",fileName,comments);
 
 	chan = 1; // IonGauge
 	x=analogRead(BASE + chan);
 	IonGauge = 0.0107 * (float)x;
 	IonGauge = pow(10,(IonGauge-9.97));
 	printf("IonGauge %2.2E Torr \n",IonGauge);
-	fprintf(fp,"IonGauge %2.2E Torr \n",IonGauge);
+	fprintf(fp,"# IonGauge %2.2E Torr \n",IonGauge);
 
 	chan = 3; //pressure
 	x=analogRead(BASE + chan);
 	CVGauge = (float)x;
 	CVGauge = pow(10,(0.00499*CVGauge - 4.05));
 	printf("CVGauge %2.2E Torr\n", CVGauge);
-	fprintf(fp,"CVGauge %2.2E Torr\n", CVGauge);
+	fprintf(fp,"# CVGauge %2.2E Torr\n", CVGauge);
+
+	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
+	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
 
 
 	channel = 2;// analog input for photodiode

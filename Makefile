@@ -36,6 +36,7 @@ PIFLAGS= -l wiringPi -l mcchid -L. -lm -L/usr/local/lib -lhid -lusb
 # using $(VARIABLE)
 #
 # Additionally, the "$@" character refers to the target.
+# 				the "$^" refers to the dependencies
 
 # Everything depends on the binaries. If any of the 
 # binaries are edited, we should do stuff. I don't really
@@ -49,23 +50,26 @@ all: ${BINARIES}
 ${BINARIES}: % : %.c
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
 
-stepmotor: stepmotor.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+RbAbsorbScan: RbAbsorbScan.c tempControl.c rs485.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-homemotor: homemotor.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+stepmotor: stepmotor.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-faradayscan: faradayscan.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+homemotor: homemotor.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-faradayscan2: faradayscan2.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+faradayscan: faradayscan.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-polarization: polarization.c fileTools.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+faradayscan2: faradayscan2.c tempControl.c rs485.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-homeWavePlate: homeWavePlate.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+polarization: polarization.c tempControl.c rs485.c fileTools.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-setWavePlate: setWavePlate.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+homeWavePlate: homeWavePlate.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+
+setWavePlate: setWavePlate.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)

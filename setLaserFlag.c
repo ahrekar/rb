@@ -13,20 +13,20 @@ in a different program that you write.
 
 int main (int argc, char *argv[])
 {
-unsigned short value;
+	unsigned short value;
 
-if (argc==2) {
-	value = atoi(argv[1]);
-	}else{
-	value = 0;
-	}
+	if (argc==2) {
+		value = atoi(argv[1]);
+		}else{
+		value = 0;
+		}
 
-wiringPiSetup();
+	wiringPiSetup();
 
-pinMode(AA,OUTPUT);
-pinMode(BB,OUTPUT);
+	pinMode(AA,OUTPUT);
+	pinMode(BB,OUTPUT);
 
-digitalWrite(AA, (value & 0b0001));
-digitalWrite(BB, ((value & 0b0010) >> 1) );
+	digitalWrite(AA, (value & 0b0001));
+	digitalWrite(BB, ((value & 0b0010) >> 1) );
 
 }

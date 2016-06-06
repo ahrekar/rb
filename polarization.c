@@ -13,14 +13,15 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <asm/types.h>
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
 #include "mathTools.h"
 #include "fileTools.h"
+#include "tempControl.h"
 #include "stepperMotorControl.h"
 
 #define REVOLUTIONS 2
@@ -138,6 +139,8 @@ int main (int argc, char **argv)
 
 	fprintf(rawData,"#File\t%s\n",rawDataFileName);
 	fprintf(rawData,"#Comments\t%s\n",comments);
+	fprintf(rawData,"#Cell Temp 1:\t%f\n",getTemperature(3));
+	fprintf(rawData,"#Cell Temp 2:\t%f\n",getTemperature(5));
 	fprintf(rawData,"#Aout\t%d\n",aout);
 	fprintf(rawData,"#Assumed USB1208->HP3617A conversion\t%2.6f\n",HPCAL);
 	fprintf(rawData,"#REVOLUTIONS\t%d\n",REVOLUTIONS);
