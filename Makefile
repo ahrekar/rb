@@ -19,12 +19,13 @@ BINARIES=${subst .c,,${SOURCES}}
 # -g produces debugging information 
 # -Wall says to produce a larger number of warning messages
 # -I. says to include the current directory (.) in the
+# -lm says to include the math library
 #  search for header files. 
-CFLAGS= -g -Wall -I.
+CFLAGS= -g -Wall -I. -lm
 
 # PIFLAGS are flags that are needed for the raspberryPi
 # code.
-PIFLAGS= -l wiringPi -l mcchid -L. -lm -L/usr/local/lib -lhid -lusb
+PIFLAGS= -l wiringPi -l mcchid -L. -L/usr/local/lib -lhid -lusb
 
 # What follows is the code to actually compile the code.
 # it is always of the form

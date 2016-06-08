@@ -26,6 +26,7 @@ fileTools
 homeWavePlate
 setWavePlate
 .motor?position
+setOmega
 
 *.data
 *~
