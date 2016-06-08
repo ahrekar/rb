@@ -24,6 +24,8 @@
 #include "usb-1208LS.h"
 #include "tempControl.h"
 
+#define BUFSIZE 1024
+
 float stdDeviation(float* values, int numValues);
 
 int main (int argc, char **argv)
@@ -32,7 +34,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer[80],fileName[80],comments[1024];
+	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	float involts2,involts3;
 	FILE *fp, *gnuplot;
 	/** Unused RasbPi things.
@@ -97,11 +99,11 @@ int main (int argc, char **argv)
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
-	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F",timeinfo); //INCLUDE
 	if (stat(fileName, &st) == -1){ // Create the directory for the Day's data 
 		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
-	strftime(fileName,80,"/home/pi/RbData/%F/RbAbs%F_%H%M%S.dat",timeinfo);
+	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/RbAbs%F_%H%M%S.dat",timeinfo);
 
 	printf("\n");
 	printf(fileName);
@@ -206,13 +208,15 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
 		fprintf(gnuplot, "set yrange [*:.1]\n");			
-		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileName);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars,\
+						 	  '%s' using 1:4:5 with errorbars\n", fileName,fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileName);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileName);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars,\
+						 	  '%s' using 1:4:5 with errorbars\n", fileName,fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
