@@ -602,7 +602,6 @@ Tim Seufert 7-94 */
 #include <stdlib.h>
 #include <math.h>
 #define maxnpts 50      /* Maximum data pairs - increase if desired */
-#define NUMITERATIONS 30
 
 /*Change nterms to the number of parameters to be fit in your equation*/
 /***********************************************************/ 
@@ -634,18 +633,30 @@ void curvefit(int npoints),     display(void);
 void uncertainties(void),       jackknifedata(char *filename, int k);
 void print_data(void);
 
-int fitToWu(char* fileName){/* The main routine */
-	int i;
-	readdata(fileName);
-	a[0]=50;
-	a[1]=1E14;
-	a[2]=600;
-	flambda = 0.001; iteration = 0; cycle = 0;
-	for(i=0; i < NUMITERATIONS; i++){
-		curvefit(npts);
-	}
-	uncertainties(); 
-	return 0;
+int fitToWu(FILE* fileName){              /* The main routine */
+
+ int i;
+ printf("Least Squares Curve Fitting. You must modify the constant\n"); 
+ printf("'nterms' and the fuction 'Func' for new problems.\n"); 
+ readdata();
+ printf("\nEnter initial guesses for parameters:\n"); 
+ printf("\t(Note: Parameters cannot be exactly zero.)\n"); 
+ for (i=0; i<nterms; i++)
+   do {
+     printf("Parameter #96d = ", i+1); gets(answer);
+   } while ( (a [i] = atof (answer)) -= 0.0 );
+
+ flambda = 0.001;    iteration = 0; cycle = 0;
+ do{
+   curvefit(npts);
+   iteration++; 
+   display();
+   printf("\n\tAnother iteration (Y/N)? "); gets(answer);
+  } while (answer[0] != 'N' && answer[0] != 'n');
+  printf("\nDo you want to calculate uncertainty in parameters (Y/N)?"); 
+  gets(answer);
+  if (answer [0] == 'Y' 11 answer[0] == 'y') uncertainties(); 
+  return 0;
 }
 
                                /*******************************/
@@ -671,30 +682,74 @@ long double func(int i)     /* The function you are fitting*/
 }
 
 
-void readdata(char* fileName)
+void readdata(void)
 {
   int n = 0;
-  fp = fopen(filename, "rb");
-  if (fp == NULL) {
-	  printf("Fatal error: could not open file %s\n", filename); 
-	  exit(1);
-  }
-//TODO Add in code to skip over comments.
-  for(n=0; !feof(fp); n++) {
-	  fread(&x[n], sizeof(long double), 1, fp); 
-	  fread(&y[n], sizeof (long double), 1, fp); 
-	  fread(&sigmay[n], sizeof (long double), 1, fp); 
-	  if (errorchoice == '1')  sigmay[n] = 1.0;
-  }
-  fclose(fp);
-  npts = n - 1;
+  do {
+    printf("\nDo you want to enter x,y values or read them from a 
+file?\n");
+    printf("\tType E for enter and F for File: "); gets(answer);
+    answer[0] = toupper(answer[0]);
+  } while (answer[0] != 'E' && answer[0] != 'F');
+  if (answer[0]    'F') {
+    do {
+      printf("\nPlease enter the name of the data file: "); 
+      gets(filename);
+      printf("\n");
+      fp = fopen(filename, "rb");
+      if (fp == NULL) {
+        printf("Fatal error: could not open file 96-s\n", filename); 
+        exit(1);
+	  }
+
+      for(n=0; !feof(fp); n++) {
+        fread(&x[n], sizeof(long double), 1, fP); 
+        fread(&y[n], sizeof (long double), 1, fP); 
+        fread(&sigmay[n], sizeof (long double), 1, fp); 
+        if (errorchoice == '1')  sigmay[n] = 1.0;
+	  }
+      fclose(fp);
+      npts = n - 1;
+      print_data();
+      printf("\nIs this data correct (Y/N)? "); gets(answer);
+    } while (answer[0] != 'Y' && answer [0] != 'y');
+  } else {
+    do {
+      printf("\nChoices for error analysis:\n");
+      printf("\tl. Let the program weight all points equally\n"); 
+      printf("\t2. Enter estimated uncertainty for each point\n\n"); 
+      printf("Choose option 1 or 2 now: "); gets(answer);
+    } while (answer[0] != '1' && answer[0] != '2');
+    errorchoice = answer[0];
+    do (
+      if (errorchoice == '1')  unweightedinput();
+      if (errorchoice == '2')  weightedinput();
+      print_data();
+      printf("Is this data correct (Y/N)? ");
+      gets(answer);
+    } while (answer[0] != 'y' && answer[0] != 'Y');
+    printf("Enter name of file to save the data in: ");
+    gets(filename); 
+    fp=fopen(filename, "wb");
+    if (fp == NULL) {
+      printf("Fatal error: could not open file %-s\n", filename);
+      exit(1);
+
+    for(n=0; n<npts; n++) {
+      fwrite(&x[n], sizeof(long double), 1, fp); 
+      fwrite(&y[n], sizeof(long double), 1, fp); 
+      fwrite(&sigmay[n], sizeof(long double), 1, fp);
+    }
+    fclose(fp);
+    printf("Data saved in file %-s\n", filename);
+	}
 }
 
 void print_data(void)        /* Displays the data entered */
 {
   int i;
   for (i=0; i<npts; i++){
-    printf("%d\tx = o #12.8Lf\ty =  #12.8Lf\t", i+1, x[i], y[i]);
+    printf("96d\tx = o #12.8Lf\ty =  #12.8Lf\t", i+1, x[i], y[i]);
     printf("Sigmay = %- #12.8Lf\n", sigmay[i]);
     weight[i] = 1 / ( sigmay[i] * sigmay[i] );
   }
@@ -713,7 +768,7 @@ void unweightedinput(void)   /* Enter equal weighted data */
   printf("Type END to end input\n");
   for (n=0; ;n++) {
     gets(answer);
-    if (answer[0]=='E' || answer[0]=='e') break;
+    if (answer[0]=='E' 11 answer[0]=='e') break;
     x[n] = atof(answer);  i = 0;
     while (answer[i] != ' ' && answer[i] != '\0') i++;
     y[n] = atof(answer+i);  sigmay[n]=1;
@@ -745,7 +800,7 @@ void chisquare(void) /* Sum of squares of differences between */
 {
       int i;
       fchisq = 0;
-      for (i=0; i<npts; i++) {
+      for (1=0; i<npts; i++) {
           fchisq += weight[i] * ( y[i] - yfit[i] ) * ( y[i] - yfit[i] );
 	  }
       fchisq /= nfree;
