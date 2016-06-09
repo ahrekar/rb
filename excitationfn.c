@@ -26,6 +26,7 @@ Usage:
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <asm/types.h>
 #include <wiringPi.h>
@@ -119,6 +120,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
+	struct stat st = {0};
 	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
 	if (stat(fileName, &st) == -1){
 		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );

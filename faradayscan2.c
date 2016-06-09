@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <asm/types.h>
 #include <wiringPi.h>
@@ -29,6 +30,7 @@
 #include "usb-1208LS.h"
 #include "stepperMotorControl.h"
 #include "mathTools.h" //includes stdDeviation
+#include "tempControl.h"
 
 #define CLK 21
 #define DIR 26
@@ -40,16 +42,19 @@
 
 #define BASE 100
 #define SPI_CHAN 0
+#define BUFSIZE 1024
+
+int plotData(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples,j;
+	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
 	time_t rawtime;
 	signed short svalue;
 	float sumI, sumSin, sumCos;
 	float f4,f3,df4,df3,angle,stderrangle,count;
 	struct tm * timeinfo;
-	char fileName[80], buffer[80], comments[1024];
+	char fileName[BUFSIZE], comments[BUFSIZE];
 	float involts; 	// The amount of light that is entering into the sensor. 
 	float stderrinvolts;
 	FILE *fp;
@@ -110,11 +115,12 @@ int main (int argc, char **argv)
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
-	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	struct stat st = {0};
+	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F",timeinfo); //INCLUDE
 	if (stat(fileName, &st) == -1){
 		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
-	strftime(fileName,80,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo); //INCLUDE
+	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo); //INCLUDE
 
 	printf("%s\n",fileName);
 	printf("%s\n",comments);
@@ -125,33 +131,33 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	fprintf(fp,"%s\n%s\n",fileName,comments);
+	fprintf(fp,"# %s\n# %s\n",fileName,comments);
 
 	chan = 1; // IonGauge
 	x=analogRead(BASE + chan);
 	IonGauge = 0.0107 * (float)x;
 	IonGauge = pow(10,(IonGauge-9.97));
 	printf("IonGauge %2.2E Torr \n",IonGauge);
-	fprintf(fp,"IonGauge %2.2E Torr \n",IonGauge);
+	fprintf(fp,"# IonGauge(Torr):\t%2.2E\n",IonGauge);
 
 	chan = 3; //pressure
 	x=analogRead(BASE + chan);
 	CVGauge = (float)x;
 	CVGauge = pow(10,(0.00499*CVGauge - 4.05));
 	printf("CVGauge %2.2E Torr\n", CVGauge);
-	fprintf(fp,"CVGauge %2.2E Torr\n", CVGauge);
+	fprintf(fp,"# CV Gauge(Torr):\t%2.2E\n", CVGauge);
+
+	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
+	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
 
 
 	channel = 2;// analog input for photodiode
 	gain=BP_5_00V;
 
 	// Write the header for the data to the file.
-	fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
+	fprintf(fp,"Aout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
-		//for (j=0;j<2;j++){
-
-		//	usbDOut_USB1208LS(hid, DIO_PORTA, (j*2));  // this sets the  beam flag
 
 			printf("Aout %d\n",Aout);
 			sumSin=0.0;
@@ -188,9 +194,9 @@ int main (int argc, char **argv)
 				df3+=pow(stderrinvolts,2)*pow(sin(2*angle),2);
 				df4+=pow(stderrinvolts,2)*pow(cos(2*angle),2);
 
-				printf("steps %d\t",(steps));
-				printf("PhotoI %f\t",involts);
-				fflush(stdout);
+				//printf("steps %d\t",(steps));
+				//printf("PhotoI %f\t",involts);
+				//fflush(stdout);
 
 				moveMotor(1,1,STEPSIZE);
 
@@ -215,12 +221,14 @@ int main (int argc, char **argv)
 			printf("f3 = %f\t",f3);
 			printf("f4 = %f\t",f4);
 			printf("angle = %f (%f)\n",angle,stderrangle);
-			// As a reminder, these are the headers: fprintf(fp,"\nFlag\tAout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
-			fprintf(fp,"%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",j,Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
-		//}//end j
+			// As a reminder, these are the headers: fprintf(fp,"Aout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
+			fprintf(fp,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
 	}//end for Aout
 
 	fclose(fp);
+
+	plotData(fileName);
+
 	//cleanly close USB
 	ret = hid_close(hid);
 	if (ret != HID_RET_SUCCESS) {
@@ -235,4 +243,31 @@ int main (int argc, char **argv)
 		return 1;
 	}
 	return 0;
+}
+
+int plotData(char* fileName){
+	char buffer[BUFSIZE];
+	FILE *gnuplot;
+	gnuplot = popen("gnuplot","w"); 
+
+	if (gnuplot != NULL){
+		fprintf(gnuplot, "set terminal dumb size 160,32\n");
+		fprintf(gnuplot, "set output\n");			
+		
+		sprintf(buffer, "set title '%s'\n", fileName);
+		fprintf(gnuplot, buffer);
+
+		fprintf(gnuplot, "set key autotitle columnheader\n");
+		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
+		fprintf(gnuplot, "set ylabel 'Theta'\n");			
+		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset output\n"); 
+		fprintf(gnuplot, "set terminal png\n");
+		sprintf(buffer, "set output '%s.png'\n", fileName);
+		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
+		fprintf(gnuplot, buffer);
+	}
+	return pclose(gnuplot);
 }

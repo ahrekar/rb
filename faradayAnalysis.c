@@ -16,13 +16,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <asm/types.h>
-#include <wiringPi.h>
 #include "pmd.h"
-#include "usb-1208LS.h"
 #include "mathTools.h"
 #include "fileTools.h"
-#include "tempControl.h"
-#include "stepperMotorControl.h"
 
 #define REVOLUTIONS 2
 #define STEPSPERREV 1200
@@ -66,6 +62,7 @@ int printOutFC(float* fourierCoefficients, float* fcErr);
 int printOutSP(float* sp, float* spError);
 int printOutFloatArray(float* array, int n);
 int printOutFloatArrayWithError(float* array, float* error, int n);
+
 
 int main (int argc, char **argv)
 {

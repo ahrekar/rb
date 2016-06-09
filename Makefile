@@ -20,13 +20,14 @@ BINARIES=${subst .c,,${SOURCES}}
 # -Wall says to produce a larger number of warning messages
 # -I. says to include the current directory (.) in the
 #  search for header files. 
+# -lm says to include the math library
 # -O3 says to optimize the code, sacrificing debugging
 #  abilities.
-CFLAGS= -O3 -g -Wall -I.
+CFLAGS= -O3 -g -Wall -I. -lm
 
 # PIFLAGS are flags that are needed for the raspberryPi
 # code.
-PIFLAGS= -l wiringPi -l mcchid -L. -lm -L/usr/local/lib -lhid -lusb
+PIFLAGS= -l wiringPi -l mcchid -L. -L/usr/local/lib -lhid -lusb
 
 # What follows is the code to actually compile the code.
 # it is always of the form
@@ -38,6 +39,7 @@ PIFLAGS= -l wiringPi -l mcchid -L. -lm -L/usr/local/lib -lhid -lusb
 # using $(VARIABLE)
 #
 # Additionally, the "$@" character refers to the target.
+# 				the "$^" refers to the dependencies
 
 # Everything depends on the binaries. If any of the 
 # binaries are edited, we should do stuff. I don't really
@@ -51,23 +53,26 @@ all: ${BINARIES}
 ${BINARIES}: % : %.c
 	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
 
-stepmotor: stepmotor.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+RbAbsorbScan: RbAbsorbScan.c tempControl.c rs485.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-homemotor: homemotor.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+stepmotor: stepmotor.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-faradayscan: faradayscan.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+homemotor: homemotor.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-faradayscan2: faradayscan2.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+faradayscan: faradayscan.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-polarization: polarization.c fileTools.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+faradayscan2: faradayscan2.c tempControl.c rs485.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-homeWavePlate: homeWavePlate.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+polarization: polarization.c tempControl.c rs485.c fileTools.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-setWavePlate: setWavePlate.c stepperMotorControl.h
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+homeWavePlate: homeWavePlate.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+
+setWavePlate: setWavePlate.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
