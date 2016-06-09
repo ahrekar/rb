@@ -879,15 +879,16 @@ void curvefit(int npoints)             /* Curve fitting algorthim */
   flambda /= 10;
 }
 
-void display(void)           /* Prints result of curvefit */
+void printResults(void)           /* Prints result of curvefit */
 {
   int i;
-  printf("\nIteration #%d\n", iteration); 
+  printf("\n%d\t", iteration); 
   for (i=0; i<nterms; i++) {
-    printf("A[%3d] = %- #12.8Lf\n", i, a[i]);
+    printf("%- #12.8Lf\t", a[i]);
     finala[i] = a[i];
   }
-  printf("Sum of squares of residuals = %- #12.8Lf", fchisq * nfree); 
+  //Sum of squares of residuals
+  printf("%- #12.8Lf\n", fchisq * nfree); 
   sy = sqrt(fchisq);
 }
 
@@ -898,10 +899,9 @@ void uncertainties(void) /*Calculates uncertainties by removing one*/
 
   do {
     cycle++;
-    printf("Calculating uncertainties. Let me think!\n"); 
     for (i=0; i<npts; i++) {
       jackknifedata(filename, i);
-      for (k=0; k<=iteration; k++) curvefit(npts-l);
+      for (k=0; k<=iteration; k++) curvefit(npts-1);
       printf("Now playing with data point %d\n", i+1); 
       for (k=0; k<nterms; k++) ajack[k] [i] = a[k];
 	}
