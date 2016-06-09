@@ -10,9 +10,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #define maxnpts 50      /* Maximum data pairs - increase if desired */
-#define NUMITERATIONS 30
+#define NUMITERATIONS 300
 #define NUMITERATIONSERR 30
 /*Change nterms to the number of parameters to be fit in your equation*/
 /***********************************************************/ 
@@ -44,11 +45,11 @@ char errorchoice;
 char fileName[1024], answer[100];
 FILE *fp;
 
-void readdata(void),            unweightedinput(void); 
+void readdata(char* fileName),            unweightedinput(void); 
 void weightedinput(void),       chisquare(void);
 void calcderivative(void),      matrixinvert(void);
 void curvefit(int npoints),     display(void);
-void uncertainties(void),       jackknifedata(char *filename, int k);
+void uncertainties(void),       jackknifedata(char *fileName, int k);
 void print_data(void);
 int fitToWu(char* fileName);
 
@@ -62,12 +63,14 @@ int main (int argc, char **argv)
 
 int fitToWu(char* fileName){/* The main routine */
 	int i;
+	errorchoice='2';
 	readdata(fileName);
-	a[0]=50;
-	a[1]=1E14;
-	a[2]=600;
-	flambda = 0.001; iteration = 0; cycle = 0;
+	a[0]=7;
+	a[1]=5;
+	a[2]=3;
+	flambda = 0.001; iteration = 0; cycle = 0; 
 	for(i=0; i < NUMITERATIONS; i++){
+		iteration++;
 		curvefit(npts);
 	}
 	uncertainties(); 
@@ -79,16 +82,21 @@ long double func(int i)     /* The function you are fitting*/
                                /*******************************/
 {
   int loop;     long double value;
+  long double alpha;
   if (param==1) {
     for (loop=0; loop<nterms; loop++)   c[loop] = b[loop];
   } else {
-    for (loop=0; loop‹ntelms; loop++)   c[loop] = a[loop];
+    for (loop=0; loop<nterms; loop++)   c[loop] = a[loop];
   }
+
+  alpha = 10;
 
 /********************************************/ 
 /*Enter the function to be fit:*/
 /********************************************/
-  value = c[2]/pow(x[i],4) + c[1]/pow(x[i],2) + c[0]; /*van Deemter Equation*/
+  //value = c[2]/pow(x[i],4) + c[1]/pow(x[i],2) + c[0]; //Wu Equation.
+  
+  value = c[0] + c[1]*x[i] + c[2]*pow(x[i],2);
     /* x[i] is the independent variable */
     /* Values of c[n], c[n-1], c[0] are determined by least squares */ 
     /* nterms must be set to equal n+1 */
@@ -100,75 +108,23 @@ long double func(int i)     /* The function you are fitting*/
 void readdata(char* fileName)
 {
   int n = 0;
-  fp = fopen(filename, "rb");
+  fp = fopen(fileName, "r");
   if (fp == NULL) {
-	  printf("Fatal error: could not open file %s\n", filename); 
+	  printf("Fatal error: could not open file %s\n", fileName); 
 	  exit(1);
   }
 
   char trash[1024];
   do{
 	  fgets(trash,1024,fp);
-  } while (trash[0]=='#'); 
+  } while (trash[0]=='#');
 
   for(n=0; !feof(fp); n++) {
-	  fread(&x[n], sizeof(long double), 1, fp); 
-	  fread(&y[n], sizeof (long double), 1, fp); 
-	  fread(&sigmay[n], sizeof (long double), 1, fp); 
+      fscanf(fp,"%Lf\t%Lf\t%Lf\n",&x[n],&y[n],&sigmay[n]);
 	  if (errorchoice == '1')  sigmay[n] = 1.0;
   }
   fclose(fp);
   npts = n - 1;
-}
-
-void print_data(void)        /* Displays the data entered */
-{
-  int i;
-  for (i=0; i<npts; i++){
-    printf("%d\tx = o #12.8Lf\ty =  #12.8Lf\t", i+1, x[i], y[i]);
-    printf("Sigmay = %- #12.8Lf\n", sigmay[i]);
-    weight[i] = 1 / ( sigmay[i] * sigmay[i] );
-  }
-	
-}
-
-
-
-
-
-void unweightedinput(void)   /* Enter equal weighted data */
-{
-  int i, n;
-  printf("List the data in the order: x y, with one set on each\n"); 
-  printf("line and a space (not a comma) between the numbers.\n"); 
-  printf("Type END to end input\n");
-  for (n=0; ;n++) {
-    gets(answer);
-    if (answer[0]=='E' || answer[0]=='e') break;
-    x[n] = atof(answer);  i = 0;
-    while (answer[i] != ' ' && answer[i] != '\0') i++;
-    y[n] = atof(answer+i);  sigmay[n]=1;
-  }
-  npts = n;
-}
-
-
-void weightedinput(void)           /* Enter unequal weighted data */
-{
-  int i, n;
-  printf("List the data in the order: x y sigmay, with one set on\n"); 
-  printf("each line and a space (not a comma) between the numbers.\n");
-  printf("Type END to end input\n");
-  for (n=0; ;n++) {
-	  gets(answer);
-	  if (answer[0]=='E' || answer[0]=='e') break;
-	  x[n] = atof(answer);    i = 0;
-	  while (answer[i] != ' ' && answer[i] != '\0') i++; 
-	  y[n] = atof(answer+i);    i++;
-	  while (answer[i] != ' ' && answer[i] != '\0') i++; 
-	  sigmay[n] = atof(answer+i);
-  }
-  npts = n;
 }
 
 void chisquare(void) /* Sum of squares of differences between */
@@ -177,6 +133,7 @@ void chisquare(void) /* Sum of squares of differences between */
       int i;
       fchisq = 0;
       for (i=0; i<npts; i++) {
+		  weight[i] = 1 / (sigmay[i] * sigmay[i]);
           fchisq += weight[i] * ( y[i] - yfit[i] ) * ( y[i] - yfit[i] );
 	  }
       fchisq /= nfree;
@@ -278,11 +235,11 @@ void curvefit(int npoints)             /* Curve fitting algorthim */
      for (j=0; j<nterms; j++) {
        beta[j] += weight[i] * ( y[i] - yfit[i] ) * deriv[i] [j]; 
        for (k=0; k<=j; k++)
-         alpha[j] [k] +- (weight[i] * deriv[i] [j] * deriv[i] [k]);
+         alpha[j] [k] += (weight[i] * deriv[i] [j] * deriv[i] [k]);
 	 }
    }
    for (j=0; j<nterms; j++) {
-     for (k=0; k<=j; k++)   alpha [k] [j] = aipha[j] [k];
+     for (k=0; k<=j; k++)   alpha[k][j] = alpha[j] [k];
    }
    nloops = 0; 
    do {
@@ -305,8 +262,10 @@ void curvefit(int npoints)             /* Curve fitting algorthim */
   }  while ( fchisq > chisql );
   for (j=0; j<nterms; j++) {
     a[j] = b[j];
+	printf("%Lf\t",a[j]);
     sigmaa[j] = sqrt( arry[j] [j] / alpha[j] [j] );
   }
+   printf("\n");
   flambda /= 10;
 }
 
@@ -330,7 +289,7 @@ void uncertainties(void) /*Calculates uncertainties by removing one*/
 
     cycle++;
     for (i=0; i<npts; i++) {
-      jackknifedata(filename, i);
+      jackknifedata(fileName, i);
       for (k=0; k<=NUMITERATIONSERR; k++) curvefit(npts-1);
       for (k=0; k<nterms; k++) ajack[k] [i] = a[k];
 	}
@@ -344,30 +303,34 @@ void uncertainties(void) /*Calculates uncertainties by removing one*/
 		for (i=0; i<npts; i++)
 			sigmaa[k] += (ajack[k][i]-avajack[k])*(ajack[k][i]-avajack[k]); 
 		sigmaa [k] = sqrt ( (npts-1) * sigmaa[k]/npts );
-		printf("%- 12.8Lf\t%- 12.8Lf\t",k, finala[k],sigmaa[k]); 
+		printf("%- 12.8Lf\t%- 12.8Lf\t",a[k],sigmaa[k]); 
 	}
 	printf("\n");
 }
 
-void jackknifedata(char *filename, int k)
+void jackknifedata(char *fileName, int k)
                                     /* Removes one data point */
 {
   int n = 0;
-  fp = fopen(filename, "rb"); 
+  fp = fopen(fileName, "rb"); 
 
   // First skip over the comment lines
   char trash[1024];
   do{
 	  fgets(trash,1024,fp);
-  } while (trash[0]=='#'); 
+  } while (trash[0]=='#');
 
   while (!feof(fp)){
-   fread(&x[n], sizeof(long double), 1, fp); 
-   fread(&y[n], sizeof (long double), 1, fp); 
-   fread(&sigmay[n], sizeof(long double), 1, fp); 
-   if (errorchoice == '1') sigmay[n] = 1.0; 
-   weight [n] = 1/(sigmay[n]*sigmay[n]);
-   n++;
+	  fscanf(fp,"%Lf\t%Lf\t%Lf\n",&x[n],&y[n],&sigmay[n]);
+	  printf("Data:%Lf\t%Lf\t%Lf\n",x[n],y[n],sigmay[n]);
+	  if (errorchoice == '1')  sigmay[n] = 1.0;
+	  weight [n] = 1/(sigmay[n]*sigmay[n]);
+	  n++;
+  }
+  for(n=0; !feof(fp); n++) {
+      fscanf(fp,"%Lf\t%Lf\t%Lf\n",&x[n],&y[n],&sigmay[n]);
+	  printf("Data:%Lf\t%Lf\t%Lf\n",x[n],y[n],sigmay[n]);
+	  if (errorchoice == '1')  sigmay[n] = 1.0;
   }
   npts = n-1; 
   fclose(fp); 

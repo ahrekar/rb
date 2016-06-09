@@ -68,7 +68,7 @@ faradayscan: faradayscan.c stepperMotorControl.c
 faradayscan2: faradayscan2.c tempControl.c rs485.c stepperMotorControl.c
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-polarization: polarization.c tempControl.c rs485.c fileTools.c
+polarization: polarization.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
 homeWavePlate: homeWavePlate.c stepperMotorControl.c

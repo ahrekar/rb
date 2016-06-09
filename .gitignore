@@ -27,6 +27,7 @@ homeWavePlate
 setWavePlate
 .motor?position
 setOmega
+faradayAnalysis
 
 *.data
 *~
