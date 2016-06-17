@@ -28,6 +28,9 @@ setWavePlate
 .motor?position
 setOmega
 faradayAnalysis
+logPumpAbs
+setBKamps
+waitForOmega
 
 *.data
 *~
