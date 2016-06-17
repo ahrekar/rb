@@ -137,7 +137,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
 	fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
 
-	gain = BP_10_00V;
+	gain = BP_5_00V;
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
