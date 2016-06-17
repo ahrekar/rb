@@ -25,6 +25,7 @@
 #include "tempControl.h"
 
 #define BUFSIZE 1024
+#define NUMCHANNELS 3
 
 float stdDeviation(float* values, int numValues);
 
@@ -35,7 +36,17 @@ int main (int argc, char **argv)
 	struct tm * timeinfo;
 	signed short svalue;
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
+
 	float involts2,involts3;
+	float involts[3];
+	float prevVal3;
+	float slope3;
+	float prevSlope3;
+	int lowValue[4];
+	int k=0;
+	int currentDataPoint;
+	lowValue[0]=20;
+
 	FILE *fp, *gnuplot;
 	/** Unused RasbPi things.
 	__s16 sdata[1024];
@@ -124,9 +135,9 @@ int main (int argc, char **argv)
 	fprintf(fp,"#%s\n",comments);			//gnuplot needs non-data lines commented out.
 	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
 	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
-	fprintf(fp,"Aout\tPROBE\tStdDev\tREF\tStdDev\n");
+	fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
 
-	gain = BP_5_00V;
+	gain = BP_10_00V;
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
@@ -134,39 +145,37 @@ int main (int argc, char **argv)
 	float* measurement = malloc(nSamples*sizeof(float));
 	float* reference = malloc(nSamples*sizeof(float));
 
-	for (value=startvalue;value<endvalue;value+=stepsize){
+	currentDataPoint =0;
+	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
+		currentDataPoint++;
 		usbAOut_USB1208LS(hid, 0, value);
 		printf("Aout %d \t",value);
 		fflush(stdout);
-		fprintf(fp,"%d \t",value);
+		fprintf(fp,"%d\t",value);
 
 		// delay to allow transients to settle
 		delay(100);
-		involts2 = 0.0;  // channel 2 receives analog signal from main probe
-		involts3 = 0.0; // channel 3 receives analog signal from reference cell
-
-		// grab several readings and average
-		for (i=0;i<nSamples;i++){
-			svalue = usbAIn_USB1208LS(hid,2,gain);  //channel 2 for probe
-			measurement[i] = volts_LS(gain,svalue);
-			involts2=involts2+measurement[i];
-		delay(1);
-			svalue = usbAIn_USB1208LS(hid,3,gain);
-			reference[i]=volts_LS(gain,svalue);
-			involts3=involts3+reference[i];
-
+		for(k=0;k<NUMCHANNELS;k++){
+			involts[k]=0.0;	
 		}
 
-		involts2=involts2/(float)nSamples;
-		involts3=involts3/(float)nSamples;
-
-		printf("Probe %f\tRef %f\n",involts2,involts3);
-		fprintf(fp,"%f\t%f\t",involts2,stdDeviation(measurement,nSamples));
-		fprintf(fp,"%f\t%f\n",involts3,stdDeviation(reference,nSamples));
+		// grab several readings and average
+		for(k=0;k<NUMCHANNELS;k++){
+			for (i=0;i<nSamples;i++){
+				svalue = usbAIn_USB1208LS(hid,k+1,gain);  //channels are 1-3 for pump,probe, and ref. respectively.
+				measurement[i] = volts_LS(gain,svalue);
+				involts[k]=involts[k]+measurement[i];
+				delay(1);
+			}
+			involts[k]=fabs(involts[k])/(float)nSamples;
+			fprintf(fp,"%f\t%f\t",involts[k],stdDeviation(measurement,nSamples));
+			printf("%f\t%f\t",involts[k],stdDeviation(measurement,nSamples));
+		}
+		fprintf(fp,"\n");
+		printf("\n");
 
 		fflush(stdout);
 	}
-
 
 	free(measurement);
 	free(reference);
@@ -198,7 +207,7 @@ int main (int argc, char **argv)
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 160,32\n");
+		fprintf(gnuplot, "set terminal dumb size 158,32\n");
 		fprintf(gnuplot, "set output\n");			
 		
 		sprintf(buffer, "set title '%s'\n", fileName);
@@ -207,16 +216,21 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
-		fprintf(gnuplot, "set yrange [*:.1]\n");			
-		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars,\
-						 	  '%s' using 1:4:5 with errorbars\n", fileName,fileName);
+		fprintf(gnuplot, "set yrange [-.1:*]\n");			
+		fprintf(gnuplot, "set xrange [*:*] reverse\n");			
+		sprintf(buffer, "plot '%s' using 1:6:7 with errorbars\n",fileName);
+		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s' using 1:4:5 with errorbars\n",fileName);
+		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileName);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars,\
-						 	  '%s' using 1:4:5 with errorbars\n", fileName,fileName);
+		sprintf(buffer, "plot '%s' using 1:6:7 with errorbars,\
+						 	  '%s' using 1:4:5 with errorbars,\
+						 	  '%s' using 1:2:3 with errorbars\n", fileName,fileName,fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
