@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c analogout.c getadc.c getcounts.c polarization.c setHP3617.c stepmotor.c diagnoseCounts.c faradayrotation.c homemotor.c setProbeLaser.c faradayscan.c RbAbsorbScan.c gnutest.c faradayscan2.c homeWavePlate.c setWavePlate.c faradayAnalysis.c
+SOURCES=excitationfn.c analogout.c getadc.c getcounts.c polarization.c setHP3617.c stepmotor.c diagnoseCounts.c faradayrotation.c homemotor.c setProbeLaser.c faradayscan.c RbAbsorbScan.c gnutest.c faradayscan2.c homeWavePlate.c setWavePlate.c faradayAnalysis.c logPumpAbs.c setOmega.c waitForOmega.c
 
 # BINARIES are the names of the executable files that we are compiling
 # This particular command substitutes a blank string for ".c" in the
@@ -62,6 +62,9 @@ stepmotor: stepmotor.c stepperMotorControl.c
 homemotor: homemotor.c stepperMotorControl.c
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
+excitationfn: excitationfn.c tempControl.c rs485.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+
 faradayscan: faradayscan.c stepperMotorControl.c
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
@@ -75,4 +78,10 @@ homeWavePlate: homeWavePlate.c stepperMotorControl.c
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
 setWavePlate: setWavePlate.c stepperMotorControl.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+
+setOmega: setOmega.c tempControl.c rs485.c
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+
+waitForOmega: waitForOmega.c tempControl.c rs485.c
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
