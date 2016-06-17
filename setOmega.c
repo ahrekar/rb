@@ -26,9 +26,12 @@ unsigned int returndata;
 
 
 if(argc>1){
-		myTemp=atof(argv[1]);
+	myTemp=atof(argv[1]);
+	printf("Chan 3 Temp:%f\n",getTemperature(3));
+	printf("Chan 5 Temp:%f\n",getTemperature(5));
 
 	setTargetTemperature(3,myTemp+3.0);
+
 	setTargetTemperature(5,myTemp);
 
 }else{

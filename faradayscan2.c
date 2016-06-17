@@ -260,6 +260,7 @@ int plotData(char* fileName){
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Theta'\n");			
+		fprintf(gnuplot, "set xrange [*:*] reverse\n");			
 		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 

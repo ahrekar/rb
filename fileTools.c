@@ -38,14 +38,3 @@ int appendFiles(FILE* head, FILE* tail)
 	fclose(tail);
 	exit(EXIT_SUCCESS);
 }
-
-/*
-int main(int argc, char** argv){
-	char file1[80], file2[80];
-
-	strcpy(file1,argv[1]);
-	strcpy(file2,argv[2]);
-
-	return append(file1,file2);
-}
-*/

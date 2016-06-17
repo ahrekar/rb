@@ -32,25 +32,28 @@ Usage:
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
+#include "tempControl.h"
 #define BASE 100
 #define SPI_CHAN 0
+#define BUFSIZE 1024
 
 float stdDeviation(float* values, int numValues);
 
 int main (int argc, char **argv)
 {
 	int counts,i,stepsize,steprange,chan;
+	int totalCounts;
 	int minstepsize,maxstepsize, nSamples;
 	int dwell;
 	time_t rawtime;
 	struct tm * timeinfo;
 	signed short svalue;
-	char buffer[80],fileName[80],comments[1024];
+	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	float bias, offset, HPcal,energy,scanrange, involts;
 	FILE *fp;
 	/** These are not used in this program, but might
 		be useful in the future.
-	__s16 sdata[1024];
+	__s16 sdata[BUFSIZE];
 	_u16 count;
 	_u8 gains[8];
 	_u8 options,input,pin = 0;
@@ -136,8 +139,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 		exit(1);
 	}
 
-	fprintf(fp,"#");
-	fprintf(fp,"%s\n",buffer);
+	fprintf(fp,"#%s\n",buffer);
 
 	HPcal=28.1/960.0;
 	fprintf(fp,"# Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
@@ -160,6 +162,33 @@ mcp3004Setup(BASE,SPI_CHAN);
 	fprintf(fp,"# Bias: %f\n",bias);
 	fprintf(fp,"# Number of seconds per count measurement: %d\n",dwell);
 	fprintf(fp,"# %s\n",comments);
+	
+	int x;
+	float IonGauge, CVGauge;
+	chan = 1; // IonGauge
+	x=analogRead(BASE + chan);
+	IonGauge = 0.0107 * (float)x;
+	IonGauge = pow(10,(IonGauge-9.97));
+	printf("IonGauge %2.2E Torr \n",IonGauge);
+	fprintf(fp,"# IonGauge(Torr):\t%2.2E\n",IonGauge);
+
+	chan = 3; // N2 pressure
+	x=analogRead(BASE + chan);
+	CVGauge = (float)x;
+	CVGauge = pow(10,(0.00499*CVGauge - 4.05));
+	printf("CVGauge(N2) %2.2E Torr\n", CVGauge);
+	fprintf(fp,"# CV Gauge(N2)(Torr):\t%2.2E\n", CVGauge);
+
+	chan = 4; // Helium pressure
+	x=analogRead(BASE + chan);
+	CVGauge = (float)x;
+	CVGauge = pow(10,(0.00499*CVGauge - 4.05));
+	printf("CVGauge(He) %2.2E Torr\n", CVGauge);
+	fprintf(fp,"# CV Gauge(He)(Torr):\t%2.2E\n", CVGauge);
+
+	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
+	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
+
 
 	// Print the header for the information in the datafile
 	fprintf(fp,"Aout\tEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
@@ -171,6 +200,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 	// error bars.
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
+	totalCounts=0;
 
 	for (value=0;value<steprange;value+=stepsize){
 		usbAOut_USB1208LS(hid, 1, value);
@@ -191,6 +221,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 			delayMicrosecondsHard(dwell*1000000); // wiringPi
 			counts+=usbReadCounter_USB1208LS(hid);
 		}
+		totalCounts+=counts;
 		printf("Counts %d\t",counts);
 
 		involts = 0.0;
@@ -206,7 +237,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 		printf("Current %f\t",volts_LS(gain,svalue));
 
 		fprintf(fp,"%d\t%f\t",counts,sqrt(counts));
-		fprintf(fp,"%f\t%f\t",involts,stdDeviation(measurement,nSamples));
+		fprintf(fp,"%f\t%f\t",-involts,stdDeviation(measurement,nSamples));
 
 		involts = 0.0;
 		chan = 1;
@@ -252,29 +283,31 @@ mcp3004Setup(BASE,SPI_CHAN);
 		// First print to the terminal screen.
 
 		// Set up the output for printing to terminal
-		fprintf(gnuplot, "set terminal dumb size 160,30\n");
+		fprintf(gnuplot, "set terminal dumb size 158,30\n");
 		fprintf(gnuplot, "set output\n");			
 		fprintf(gnuplot, "set key autotitle columnheader\n");			
 
-		// Set up the axis for the first plot
-		sprintf(buffer, "set title '%s'\n", fileName);
-		fprintf(gnuplot, buffer);
-		fprintf(gnuplot, "set xlabel 'Energy'\n");			
-		fprintf(gnuplot, "set ylabel 'Counts'\n");			
-		fprintf(gnuplot, "set yrange [0:*]\n");			
+		if(totalCounts !=0){
+			// Set up the axis for the first plot
+			sprintf(buffer, "set title '%s'\n", fileName);
+			fprintf(gnuplot, buffer);
+			fprintf(gnuplot, "set xlabel 'Energy'\n");			
+			fprintf(gnuplot, "set ylabel 'Counts'\n");			
+			fprintf(gnuplot, "set yrange [0:*]\n");			
 
-		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileName);
-		fprintf(gnuplot, buffer);
+			// Print the plot to the screen
+			sprintf(buffer, "plot '%s.dat' using 2:3:4 with yerrorbars\n", fileName);
+			fprintf(gnuplot, buffer);
+		}
 
 		// Set up the axis for the second plot x axis stays the same
 		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
-		fprintf(gnuplot, "set yrange [*:1]\n");			
+		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using 2:5:6 with yerrorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 		// End printing to screen
 
@@ -286,30 +319,31 @@ mcp3004Setup(BASE,SPI_CHAN);
 		
 		// Set up the output.
 		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s_counts.png'\n", fileName);
-		fprintf(gnuplot, buffer);
+		if(totalCounts != 0){
+			sprintf(buffer, "set output '%s_counts.png'\n", fileName);
+			fprintf(gnuplot, buffer);
 
-		fprintf(gnuplot, "set key autotitle columnhead\n");			
-		// Set up the axis labels
-		sprintf(buffer, "set title '%s'\n", fileName);
-		fprintf(gnuplot, buffer);
-		fprintf(gnuplot, "set yrange [0:*]\n");			
-		fprintf(gnuplot, "set ylabel 'Counts'\n");			
-		// Print the plot
-		sprintf(buffer, "plot '%s.dat' using 2:3:4 with errorbars\n", fileName);
-		fprintf(gnuplot, buffer);
-
-		fprintf(gnuplot, "unset output\n"); 
+			fprintf(gnuplot, "set key autotitle columnhead\n");			
+			// Set up the axis labels
+			sprintf(buffer, "set title '%s'\n", fileName);
+			fprintf(gnuplot, buffer);
+			fprintf(gnuplot, "set yrange [0:*]\n");			
+			fprintf(gnuplot, "set ylabel 'Counts'\n");			
+			// Print the plot
+			sprintf(buffer, "plot '%s.dat' using 2:3:4 with yerrorbars\n", fileName);
+			fprintf(gnuplot, buffer);
+			fprintf(gnuplot, "unset output\n"); 
+		}
 
 		sprintf(buffer, "set output '%s_current.png'\n", fileName);
 		fprintf(gnuplot, buffer);
 		// Set up the axis labels, x stays the same
 		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
-		fprintf(gnuplot, "set yrange [*:.1]\n");			
+		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
-		sprintf(buffer, "plot '%s.dat' using 2:5:6 with errorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using 2:5:6 with yerrorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);

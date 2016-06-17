@@ -14,6 +14,15 @@ else
 
 	# set QWP for s+ light
 	sudo ./homeWavePlate
+
+	# Take a picture of the chamber
+	DATE=$(date +'%Y-%m-%d')
+	FILENAME=$(date +'%Y-%m-%d_%H%M%S').jpg
+	mkdir -p /home/pi/RbPictures/$DATE
+	# take Picture takes the filename and a subfolder to store the 
+	# file in within the RbPicture folder
+	ssh pi@irpi "/home/pi/karlCode/takePicture.sh $FILENAME $DATE"
+
 	sudo ./setWavePlate 17
 	sudo ./faradayscan2 "$1" "$2" "$3" "$4 s+ pump"
 
@@ -28,9 +37,11 @@ else
 	#set laser flag to block the pump beam
 	sudo ./setLaserFlag 3
 	sudo ./faradayscan2 "$1" "$2" "$3" "$4 no beam"
-	# Absorption Scan
-	sudo ./RbAbsorbScan 600 1000 10 "$4"
 
 	# set s laser flag to pass the beam
 	sudo ./setLaserFlag 0
+
+	# Absorption Scan
+	sudo ./RbAbsorbScan 575 975 2 "$4"
+
 fi
