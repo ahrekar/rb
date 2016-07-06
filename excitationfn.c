@@ -5,7 +5,7 @@
 
    RasPi connected to USB 1208LS.
 
-   Target energy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
+   Target primaryEnergy: USB1208LS Analog out Ch1 controls HP3617A. See pg 31 my lab book
 
    PMT Counts: data received from CTR in USB1208
 
@@ -16,7 +16,7 @@ Usage:
 
 ./excitationfn.c <filament bias> <target offset> <scan range (0-30)> <step size> <comments>
 
-*/
+ */
 
 #include <stdlib.h>
 #include <math.h>
@@ -49,15 +49,16 @@ int main (int argc, char **argv)
 	struct tm * timeinfo;
 	signed short svalue;
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
-	float bias, offset, HPcal,energy,scanrange, involts;
-	FILE *fp;
+	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+	float bias, HeOffset, N2Offset,HPcal,primaryEnergy, secondaryEnergy, scanrange, involts;
+	FILE *fp,*dataCollectionFlagFile;
 	/** These are not used in this program, but might
-		be useful in the future.
-	__s16 sdata[BUFSIZE];
-	_u16 count;
-	_u8 gains[8];
-	_u8 options,input,pin = 0;
-	**/
+	  be useful in the future.
+	  __s16 sdata[BUFSIZE];
+	  _u16 count;
+	  _u8 gains[8];
+	  _u8 options,input,pin = 0;
+	 **/
 	__u16 value;
 	__u8 channel,gain;
 
@@ -67,21 +68,22 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
-	if (argc == 7){
+	if (argc == 8){
 		bias = atof(argv[1]);
-		offset = atof(argv[2]);
-		scanrange =atof(argv[3]);
-		stepsize = atoi(argv[4]);
-		dwell= atoi(argv[5]);
-		strcpy(comments,argv[6]);
+		N2Offset = atof(argv[2]);
+		HeOffset = atof(argv[3]);
+		scanrange =atof(argv[4]);
+		stepsize = atoi(argv[5]);
+		dwell= atoi(argv[6]);
+		strcpy(comments,argv[7]);
 	} else{
 		printf("Hey, DUMBASS. you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
 		printf("...dumbass\n");
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
-		printf("           sudo ./excitationfn <filament bias> <target offset> <scan range> <step size> <dwell time> <comments>\n");
-		printf("                                                               (   0-30   ) (  1-24   )    (1-5)s       \n");
+		printf("           sudo ./excitationfn <filament bias> <N2 Offset> <He offset> <scan range> <step size> <dwell time> <comments>\n");
+		printf("                                                               		   (   0-30   ) (  1-24   )    (1-5)s       \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
 		printf("               1: 0.029V    9: 0.263V   17: 0.497V                                             \n");
@@ -95,7 +97,14 @@ int main (int argc, char **argv)
 		printf("                                                                                               \n");
 		return 1;
 	}
-	
+
+	// Indicate that data is being collected.
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("Unable to open file \n");
+		exit(1);
+	}
+
 	// set up USB interface
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
@@ -110,14 +119,14 @@ int main (int argc, char **argv)
 		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
 
-mcp3004Setup(BASE,SPI_CHAN);
+	mcp3004Setup(BASE,SPI_CHAN);
 
 
 	// config mask 0x01 means all inputs
 	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
 	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
-//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+	//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
+	//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
 
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
@@ -159,10 +168,10 @@ mcp3004Setup(BASE,SPI_CHAN);
 		stepsize=maxstepsize;
 	}
 
-	fprintf(fp,"# Bias: %f\n",bias);
+	fprintf(fp,"# Filament Bias: %f\n",-bias);
 	fprintf(fp,"# Number of seconds per count measurement: %d\n",dwell);
 	fprintf(fp,"# %s\n",comments);
-	
+
 	int x;
 	float IonGauge, CVGauge;
 	chan = 1; // IonGauge
@@ -191,7 +200,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Aout\tEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
+	fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
 	channel = 0; //analog input  for Keithly K617
 	gain = BP_10_00V;
 
@@ -206,11 +215,19 @@ mcp3004Setup(BASE,SPI_CHAN);
 		usbAOut_USB1208LS(hid, 1, value);
 		printf("Aout %d \t",value);
 		fflush(stdout);
-		fprintf(fp,"%d \t",value);
+		fprintf(fp,"%d\t",value);
 
-		energy = bias - (offset + HPcal*(float)value);
-		printf("eV %4.2f\t",energy);
-		fprintf(fp,"%4.4f\t",energy);
+		fprintf(fp,"%4.4f\t",-bias);
+		fprintf(fp,"%4.4f\t",N2Offset);
+		fprintf(fp,"%4.4f\t",HeOffset + HPcal*(float)value);
+
+		primaryEnergy = bias - (HeOffset + HPcal*(float)value);
+		printf("eV %4.2f\t",primaryEnergy);
+		fprintf(fp,"%4.4f\t",primaryEnergy);
+
+		secondaryEnergy =  bias - N2Offset - (HeOffset + HPcal*(float)value);
+		printf("eV %4.2f\t",secondaryEnergy);
+		fprintf(fp,"%4.4f\t",secondaryEnergy);
 
 		// delay to allow transients to settle
 		delay(500);
@@ -283,7 +300,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 		// First print to the terminal screen.
 
 		// Set up the output for printing to terminal
-		fprintf(gnuplot, "set terminal dumb size 158,30\n");
+		fprintf(gnuplot, "set terminal dumb size 100,28\n");
 		fprintf(gnuplot, "set output\n");			
 		fprintf(gnuplot, "set key autotitle columnheader\n");			
 
@@ -296,7 +313,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 			fprintf(gnuplot, "set yrange [0:*]\n");			
 
 			// Print the plot to the screen
-			sprintf(buffer, "plot '%s.dat' using 2:3:4 with yerrorbars\n", fileName);
+			sprintf(buffer, "plot '%s.dat' using 5:7:8 with yerrorbars\n", fileName);
 			fprintf(gnuplot, buffer);
 		}
 
@@ -307,7 +324,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 2:5:6 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using 5:9:10 with yerrorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 		// End printing to screen
 
@@ -316,7 +333,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 		fprintf(gnuplot, "unset output\n"); 
 
 		// Then print to an image file.
-		
+
 		// Set up the output.
 		fprintf(gnuplot, "set terminal png\n");
 		if(totalCounts != 0){
@@ -330,7 +347,7 @@ mcp3004Setup(BASE,SPI_CHAN);
 			fprintf(gnuplot, "set yrange [0:*]\n");			
 			fprintf(gnuplot, "set ylabel 'Counts'\n");			
 			// Print the plot
-			sprintf(buffer, "plot '%s.dat' using 2:3:4 with yerrorbars\n", fileName);
+			sprintf(buffer, "plot '%s.dat' using 5:7:8 with yerrorbars\n", fileName);
 			fprintf(gnuplot, buffer);
 			fprintf(gnuplot, "unset output\n"); 
 		}
@@ -343,12 +360,17 @@ mcp3004Setup(BASE,SPI_CHAN);
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
-		sprintf(buffer, "plot '%s.dat' using 2:5:6 with yerrorbars\n", fileName);
+	fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
+		sprintf(buffer, "plot '%s.dat' using 5:9:10 with yerrorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
 
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
+
 	return 0;
+
 }
 
 float stdDeviation(float* value, int numValues){

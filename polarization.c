@@ -26,12 +26,15 @@
 
 #define REVOLUTIONS 2
 #define STEPSPERREV 1200
-#define DATAPOINTSPERREV 40
+#define DATAPOINTSPERREV 75 //Options: 2,4,6,8,10,12,15,16,20,24,25,30,40,75,120,200,600
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
 #define HPCAL 28.1/960.0
+#define POLMOTOR 0	// The integer that represents the polarization stepper motor is zero.
+#define CCLOCKWISE 0	// 0 spins the motor counterclockwise
+#define CLOCKWISE 1	// 1 spins it clockwise
 #define NORMCURR 0 	// Set this to 1 to normalize the intensity with the current
-#define DWELL 1		// The number of seconds to pause, letting electronics settle
+#define DWELL 2		// The number of seconds to pause, letting electronics settle
 #define ALPHA 0		// The constant Alpha (location of transmission axis), measured in degrees.
 #define DALPHA 0 	// The uncertainty in ALPHA
 #define BETA 0		// The constant Beta_0 (beginning position of QWP relative to LP) measured in degrees.
@@ -73,12 +76,15 @@ int main (int argc, char **argv)
 	int flag;
 	
 	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; //INCLUDE
+	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+
 
 	// Variables for getting time information to identify
 	// when we recorded the data
 	time_t rawtime;
 	struct tm * timeinfo;
 	float bias, offset,energy, current;
+	char* extension;
 	
 	// Setup time variables
 	time(&rawtime); //INCLUDE
@@ -96,12 +102,11 @@ int main (int argc, char **argv)
 		if(aout==0 && strcmp(backgroundFileName,"0")!=0){//If the second argument is not "0" (is a fileName)
 			// It should be a fileName, process the two files. TODO: Put analysis in a separate program.
 			strcpy(rawDataFileName,argv[2]);
+			extension = strstr(rawDataFileName,".dat");
+			strcpy(extension,"analysis.dat");
+
 			strcpy(comments,argv[3]);
-			strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
-			if (stat(analysisFileName, &st) == -1){
-				mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
-			}
-			strftime(analysisFileName,80,"/home/pi/RbData/%F/POLanalysis%F_%H%M%S.dat",timeinfo); //INCLUDE
+
 			printf("\n%s\n",analysisFileName);
 			processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,comments);
 			return 0;
@@ -111,10 +116,18 @@ int main (int argc, char **argv)
 		}
 	}else {
 		printf("There are three options for using this program: \n\n");
-		printf("usage '~$ sudo ./polarization <aout_for_target> <comments_in_double_quotes>'\n");
-		printf("usage '~$ sudo ./polarization <aout_for_target> <background file> <comments_in_double_quotes>'\n");
+		printf("usage '~$ sudo ./polarization <aout_for_HeTarget> <comments_in_double_quotes>'\n");
+		printf("usage '~$ sudo ./polarization <aout_for_HeTarget> <background file> <comments_in_double_quotes>'\n");
 		printf("usage '~$ sudo ./polarization <background file> <data file> <comments_in_double_quotes'\n");
 		return 1;
+	}
+
+	// Indicate that data is being collected.
+	FILE* dataCollectionFlagFile;
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("unable to open file \n");
+		exit(1);
 	}
 
 	// RUDAMENTARIY ERROR CHECKING
@@ -127,10 +140,13 @@ int main (int argc, char **argv)
 		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
 	strftime(rawDataFileName,80,"/home/pi/RbData/%F/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
-	strftime(analysisFileName,80,"/home/pi/RbData/%F/POLanalysis%F_%H%M%S.dat",timeinfo); //INCLUDE
+	strcpy(analysisFileName,rawDataFileName);
+	extension = strstr(analysisFileName,".dat");
+	strcpy(extension,"analysis.dat");
+
 	printf("\n%s\n",analysisFileName);
 	FILE* rawData;
-	// Record the results along with the raw data in a file.
+	// Write the header for the raw data file.
 	rawData=fopen(rawDataFileName,"w");
 	if (!rawData) {
 		printf("Unable to open file: %s\n", rawDataFileName);
@@ -157,11 +173,19 @@ int main (int argc, char **argv)
 	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, comments); //TODO: Move all processesing of files
 															//	    to find stokes Parameters to 
 															//		a separate funtion.
+
+	// Remove the file indicating that we are taking data.
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
+
 	return 0;
 }
 
 // INCLUDE
 int getPolarizationData(char* fileName, int aout){
+
+	FILE* gnuplot;
+	char buffer[1024];
 	// Variables for interfacing with the USB1208
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
@@ -230,6 +254,8 @@ int getPolarizationData(char* fileName, int aout){
 	}
 	// End File setup
 
+	homeMotor(POLMOTOR);
+
 	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTSPERREV; // The number of steps to take between readings.
 
@@ -238,7 +264,7 @@ int getPolarizationData(char* fileName, int aout){
 	for (steps=0;steps<nsteps;steps+=ninc){
 
 		//200 steps per revoluion
-		moveMotor(0,1,ninc);
+		moveMotor(POLMOTOR,CLOCKWISE,ninc);
 
 		counts=0;
 		for (i=0;i<DWELL;i++){
@@ -262,6 +288,32 @@ int getPolarizationData(char* fileName, int aout){
 
 
 	fclose(rawData);
+
+	// Create graphs for data see gnutest.c for an explanation of 
+	// how this process works.
+	gnuplot = popen("gnuplot","w"); 
+
+	if (gnuplot != NULL){
+		fprintf(gnuplot, "set terminal dumb size 158,32\n");
+		fprintf(gnuplot, "set output\n");			
+		
+		sprintf(buffer, "set title '%s'\n", fileName);
+		fprintf(gnuplot, buffer);
+
+		fprintf(gnuplot, "set key autotitle columnheader\n");
+		fprintf(gnuplot, "set xlabel 'Step'\n");			
+		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		fprintf(gnuplot, "set yrange [0:*]\n");			
+		sprintf(buffer, "plot '%s' using 1:2\n",fileName);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset output\n"); 
+		fprintf(gnuplot, "set terminal png\n");
+		sprintf(buffer, "set output '%s.png'\n", fileName);
+		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s' using 1:2\n",fileName);
+		fprintf(gnuplot, buffer);
+	}
+	pclose(gnuplot);
 
 	// Reset Aout back to zero
 	usbAOut_USB1208LS(hid,1,0);
