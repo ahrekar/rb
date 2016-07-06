@@ -36,6 +36,7 @@ int main (int argc, char **argv)
 	struct tm * timeinfo;
 	signed short svalue;
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
+	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
 	float involts2,involts3;
 	float involts[3];
@@ -47,7 +48,7 @@ int main (int argc, char **argv)
 	int currentDataPoint;
 	lowValue[0]=20;
 
-	FILE *fp, *gnuplot;
+	FILE *fp, *gnuplot, *dataCollectionFlagFile;
 	/** Unused RasbPi things.
 	__s16 sdata[1024];
 	__u16 count;
@@ -61,6 +62,13 @@ int main (int argc, char **argv)
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
 	int interface;
+
+	// Indicate that data is being collected.
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("unable to open file \n");
+		exit(1);
+	}
 
 	// set up USB interface
 
@@ -234,6 +242,9 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
+
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
 
 	return 0;
 }

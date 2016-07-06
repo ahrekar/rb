@@ -15,7 +15,7 @@
 
    $ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>
 
-*/
+ */
 
 #include <stdlib.h>
 #include <math.h>
@@ -47,8 +47,10 @@ int main (int argc, char **argv)
 	float sumI,sumsin2b,sumcos2b,angle,count;
 	struct tm * timeinfo;
 	char fileName[80], buffer[80],comments[80];
+	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+
 	float involts;
-	FILE *fp;
+	FILE *fp,*dataCollectionFlagFile;
 	__s16 sdata[1024];
 	__u16 value;
 	//	__u16 count;
@@ -70,6 +72,13 @@ int main (int argc, char **argv)
 	} else { 
 		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> < comments in quotes>'\n");
 		return 1;
+	}
+
+	// Indicate that data is being collected.
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("unable to open file \n");
+		exit(1);
 	}
 
 	ret = hid_init();
@@ -192,9 +201,10 @@ int main (int argc, char **argv)
 		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
 		return 1;
 	}
+
+	// Remove the file indicating that we are taking data.
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
+
 	return 0;
 }
-
-
-
-
