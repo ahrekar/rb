@@ -22,6 +22,7 @@ where steps is integer number of steps and dir is 0 or 1
 
 int main (int argc, char *argv[]) {
 
+	wiringPiSetup();
 	int newpos;
 
 	if (argc ==2) {

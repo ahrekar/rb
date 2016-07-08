@@ -62,7 +62,6 @@ int main (int argc, char **argv)
 	hid_return ret;
 	int interface;
 
-	// set up USB interface
 
 	if (argc==5){
 		AoutStart= atoi(argv[1]);
@@ -81,6 +80,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
+	// set up USB interface
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_init failed with return code %d\n", ret);
@@ -93,6 +93,9 @@ int main (int argc, char **argv)
 	} else {
 		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
+
+	// WiringPi Setup
+	wiringPiSetup();
 
 
 	// config mask 0x01 means all inputs

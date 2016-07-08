@@ -155,6 +155,8 @@ int main (int argc, char **argv)
 
 	fprintf(rawData,"#File\t%s\n",rawDataFileName);
 	fprintf(rawData,"#Comments\t%s\n",comments);
+	fprintf(rawData,"#Cell Target Temp 1:\t%f\n",getTargetTemperature(3));
+	fprintf(rawData,"#Cell Target Temp 2:\t%f\n",getTargetTemperature(5));
 	fprintf(rawData,"#Cell Temp 1:\t%f\n",getTemperature(3));
 	fprintf(rawData,"#Cell Temp 2:\t%f\n",getTemperature(5));
 	fprintf(rawData,"#Aout\t%d\n",aout);
@@ -289,8 +291,7 @@ int getPolarizationData(char* fileName, int aout){
 
 	fclose(rawData);
 
-	// Create graphs for data see gnutest.c for an explanation of 
-	// how this process works.
+	// Create rough graphs of data.
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
@@ -370,7 +371,7 @@ int calculateFourierCoefficients(char* fileName, int totalDataPoints, float* fcR
 		}
 		//printf("Lines skipped=%d\n",j);
 		trash[0]='a';
-		fscanf(data,"%d,%d,%f,%f\n",&steps,&counts,&current,&currentErr);
+		fscanf(data,"%d\t%d\t%f\t%f\n",&steps,&counts,&current,&currentErr);
 		//fscanf(data,"%d,%d,%f\n",&steps,&counts,&current); 	// Because I think I might want to revert 
 																// to non-error calculations 
 																// quickly at some point

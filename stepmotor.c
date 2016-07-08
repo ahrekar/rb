@@ -33,6 +33,8 @@ int main (int argc, char *argv[]){
 	int i, steps, dir;
 	int motor;
 
+	wiringPiSetup();
+
 	if (argc==4){
 		motor = atoi(argv[1]); // which steper motor
 		steps = atoi(argv[2]); // get steps from command line

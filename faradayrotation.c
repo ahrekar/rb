@@ -71,6 +71,9 @@ int main (int argc, char **argv)
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
 	int interface;
+	
+	//Setup for wiring Pi
+	wiringPiSetup();
 
 	if (argc==5){ // Note that first argument (argv[0]) is the name of the command.
 		Aout= atoi(argv[1]);

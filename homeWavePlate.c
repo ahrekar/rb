@@ -17,6 +17,7 @@
 
 
 int main (int argc, char *argv[]) {
+	wiringPiSetup();
 	homeMotor(2);
 	return 0;
 }

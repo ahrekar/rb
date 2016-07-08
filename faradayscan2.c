@@ -75,7 +75,6 @@ int main (int argc, char **argv)
 	hid_return ret;
 	int interface;
 
-	// set up USB interface
 
 	if (argc==5){
 		AoutStart= atoi(argv[1]);
@@ -94,6 +93,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
+	// set up USB interface
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_init failed with return code %d\n", ret);
@@ -106,6 +106,9 @@ int main (int argc, char **argv)
 	} else {
 		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
+
+	// Setup wiringPi
+	wiringPiSetup();
 
 
 	// config mask 0x01 means all inputs
@@ -265,7 +268,7 @@ int plotData(char* fileName){
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 160,32\n");
+		fprintf(gnuplot, "set terminal dumb size 100,28\n");
 		fprintf(gnuplot, "set output\n");			
 
 		sprintf(buffer, "set title '%s'\n", fileName);
@@ -274,7 +277,7 @@ int plotData(char* fileName){
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Theta'\n");			
-		fprintf(gnuplot, "set xrange [*:*] reverse\n");			
+		fprintf(gnuplot, "set xrange [0:1024] reverse\n");			
 		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
