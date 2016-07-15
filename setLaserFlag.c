@@ -13,12 +13,19 @@ in a different program that you write.
 
 int main (int argc, char *argv[])
 {
-	unsigned short value;
+	unsigned short value,device;
 
-	if (argc==2) {
-		value = atoi(argv[1]);
+	if (argc==3) {
+		device = atoi(argv[1]);
+		value = atoi(argv[2]);
 		}else{
-		value = 0;
+
+		printf("Usage ./setLaserFlag <device 0,1> <Orientation 0,1>\n");
+		printf("Device\t\t\tOrientation\n");
+		printf("======\t\t\t===========\n");
+		printf("Probe = 0\t\tUnblocked = 0\n");
+		printf("Pump = 1\t\tBlocked = 1\n");
+		return 1;
 		}
 
 	wiringPiSetup();
@@ -26,7 +33,19 @@ int main (int argc, char *argv[])
 	pinMode(AA,OUTPUT);
 	pinMode(BB,OUTPUT);
 
-	digitalWrite(AA, (value & 0b0001));
-	digitalWrite(BB, ((value & 0b0010) >> 1) );
+	switch (device) {
+	case 1:
+		digitalWrite(AA, (value & 0b0001));
+		break;
+	case 0:
+		digitalWrite(BB, (value & 0b0001));
+		break;
+	default:
+		printf("invalid device number\n");
+		break;
+	}
+
+
+	//digitalWrite(BB, ((value & 0b0010) >> 1) );
 
 }
