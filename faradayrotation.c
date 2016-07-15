@@ -18,7 +18,7 @@
 
 Note: Comments must be enclosed in quotes.
 
-*/
+ */
 
 #include <stdlib.h>
 #include <math.h>
@@ -56,8 +56,10 @@ int main (int argc, char **argv)
 	float sumsin2b,sumcos2b,angle,count;
 	struct tm * timeinfo;
 	char buffer[80],comments[80];
+	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+
 	float involts;
-	FILE *fp;
+	FILE *fp,*dataCollectionFlagFile;
 	__s16 sdata[1024];
 	__u16 value;
 	//	__u16 count;
@@ -69,6 +71,9 @@ int main (int argc, char **argv)
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
 	int interface;
+	
+	//Setup for wiring Pi
+	wiringPiSetup();
 
 	if (argc==5){ // Note that first argument (argv[0]) is the name of the command.
 		Aout= atoi(argv[1]);
@@ -78,6 +83,13 @@ int main (int argc, char **argv)
 	} else { 
 		printf("usage '~$ sudo ./faradayrotation <aout> <numsteps> <stepsize> <comments_no_spaces>'\n");
 		return 1;
+	}
+
+	// Indicate that data is being collected.
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("unable to open file \n");
+		exit(1);
 	}
 
 	sumsin2b=0.0;
@@ -113,7 +125,7 @@ int main (int argc, char **argv)
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	strftime(buffer,80,"/home/pi/RbData/%F/FDayRot%F_%H%M%S.dat",timeinfo);
-	
+
 	// Print filename to screen
 	printf("\n");
 	printf(buffer);
@@ -196,6 +208,10 @@ int main (int argc, char **argv)
 
 	//cleanly close USB
 	returnValue = closeUSB(hid);
+
+	// Remove the file indicating that we are taking data.
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
 
 	return returnValue;
 }

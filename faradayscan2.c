@@ -55,9 +55,11 @@ int main (int argc, char **argv)
 	float f4,f3,df4,df3,angle,stderrangle,count;
 	struct tm * timeinfo;
 	char fileName[BUFSIZE], comments[BUFSIZE];
+	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+
 	float involts; 	// The amount of light that is entering into the sensor. 
 	float stderrinvolts;
-	FILE *fp;
+	FILE *fp,*dataCollectionFlagFile;
 	__s16 sdata[1024];
 	__u16 value;
 	//	__u16 count;
@@ -73,7 +75,6 @@ int main (int argc, char **argv)
 	hid_return ret;
 	int interface;
 
-	// set up USB interface
 
 	if (argc==5){
 		AoutStart= atoi(argv[1]);
@@ -85,6 +86,14 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
+	// Indicate that data is being collected.
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("unable to open file \n");
+		exit(1);
+	}
+
+	// set up USB interface
 	ret = hid_init();
 	if (ret != HID_RET_SUCCESS) {
 		fprintf(stderr, "hid_init failed with return code %d\n", ret);
@@ -97,6 +106,9 @@ int main (int argc, char **argv)
 	} else {
 		printf("USB 1208LS Device is found! interface = %d\n", interface);
 	}
+
+	// Setup wiringPi
+	wiringPiSetup();
 
 
 	// config mask 0x01 means all inputs
@@ -159,70 +171,70 @@ int main (int argc, char **argv)
 
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
 
-			printf("Aout %d\n",Aout);
-			sumSin=0.0;
-			sumCos=0.0;
-			df4=0.0;
-			df3=0.0;
-			angle=0.0;
-			count=0.0;
-			sumI=0.0;
+		printf("Aout %d\n",Aout);
+		sumSin=0.0;
+		sumCos=0.0;
+		df4=0.0;
+		df3=0.0;
+		angle=0.0;
+		count=0.0;
+		sumI=0.0;
 
-			usbAOut_USB1208LS(hid,0,Aout);
+		usbAOut_USB1208LS(hid,0,Aout);
 
-			for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
-				// (NUMSTEPS) in increments of STEPSIZE
+		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
+			// (NUMSTEPS) in increments of STEPSIZE
 
-				delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
-				//get samples and average
-				involts=0.0;	
-				for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
-					svalue=usbAIn_USB1208LS(hid,channel,gain);
-					measurement[i]=volts_LS(gain,svalue);
-					involts=involts+measurement[i];
-					delay(2);
-				}
-				involts=involts/(float)nsamples; 
-
-				stderrinvolts = stdDeviation(measurement,nsamples);
-
-				angle=2.0*PI*(float)(steps)/STEPSPERREV; // Calculate the angle in radians of the axis of the LP
-				count=count+1.0;
-				sumSin+=involts*sin(2*angle);
-				sumCos+=involts*cos(2*angle);
-				sumI+=involts;
-				df3+=pow(stderrinvolts,2)*pow(sin(2*angle),2);
-				df4+=pow(stderrinvolts,2)*pow(cos(2*angle),2);
-
-				//printf("steps %d\t",(steps));
-				//printf("PhotoI %f\t",involts);
-				//fflush(stdout);
-
-				moveMotor(1,1,STEPSIZE);
-
+			delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
+			//get samples and average
+			involts=0.0;	
+			for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
+				svalue=usbAIn_USB1208LS(hid,channel,gain);
+				measurement[i]=volts_LS(gain,svalue);
+				involts=involts+measurement[i];
+				delay(2);
 			}
-			sumI=sumI/count;
-			f3=sumSin/count;
-			f4=sumCos/count;
-			df3=sqrt(df3)/count;
-			df4=sqrt(df4)/count;
+			involts=involts/(float)nsamples; 
 
-			// NEEDED there needs to be a check?? for atan.  what if sumcos2b is zero?
-			//     CHANGED: Implemented atan2, which handles when f3 is zero.
-			angle = 0.5*atan2(f4,f3);
-			angle = angle*180.0/PI;
+			stderrinvolts = stdDeviation(measurement,nsamples);
 
-			//		stderrangle=pow(f4/f3,2);
-			stderrangle=(1/(1+pow(f4/f3,2)))*sqrt(pow(f3,-2))*(sqrt(pow(df4,2) + stderrangle*pow(df3,2))/2.0);
+			angle=2.0*PI*(float)(steps)/STEPSPERREV; // Calculate the angle in radians of the axis of the LP
+			count=count+1.0;
+			sumSin+=involts*sin(2*angle);
+			sumCos+=involts*cos(2*angle);
+			sumI+=involts;
+			df3+=pow(stderrinvolts,2)*pow(sin(2*angle),2);
+			df4+=pow(stderrinvolts,2)*pow(cos(2*angle),2);
 
-			stderrangle = stderrangle*180.0/PI;
+			//printf("steps %d\t",(steps));
+			//printf("PhotoI %f\t",involts);
+			//fflush(stdout);
 
-			printf("f0 = %f\t",sumI);
-			printf("f3 = %f\t",f3);
-			printf("f4 = %f\t",f4);
-			printf("angle = %f (%f)\n",angle,stderrangle);
-			// As a reminder, these are the headers: fprintf(fp,"Aout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
-			fprintf(fp,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
+			moveMotor(1,1,STEPSIZE);
+
+		}
+		sumI=sumI/count;
+		f3=sumSin/count;
+		f4=sumCos/count;
+		df3=sqrt(df3)/count;
+		df4=sqrt(df4)/count;
+
+		// NEEDED there needs to be a check?? for atan.  what if sumcos2b is zero?
+		//     CHANGED: Implemented atan2, which handles when f3 is zero.
+		angle = 0.5*atan2(f4,f3);
+		angle = angle*180.0/PI;
+
+		//		stderrangle=pow(f4/f3,2);
+		stderrangle=(1/(1+pow(f4/f3,2)))*sqrt(pow(f3,-2))*(sqrt(pow(df4,2) + stderrangle*pow(df3,2))/2.0);
+
+		stderrangle = stderrangle*180.0/PI;
+
+		printf("f0 = %f\t",sumI);
+		printf("f3 = %f\t",f3);
+		printf("f4 = %f\t",f4);
+		printf("angle = %f (%f)\n",angle,stderrangle);
+		// As a reminder, these are the headers: fprintf(fp,"Aout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
+		fprintf(fp,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
 	}//end for Aout
 
 	fclose(fp);
@@ -242,6 +254,11 @@ int main (int argc, char **argv)
 		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
 		return 1;
 	}
+
+	// Remove the file indicating that we are taking data.
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
+
 	return 0;
 }
 
@@ -251,16 +268,16 @@ int plotData(char* fileName){
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 160,32\n");
+		fprintf(gnuplot, "set terminal dumb size 100,28\n");
 		fprintf(gnuplot, "set output\n");			
-		
+
 		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Theta'\n");			
-		fprintf(gnuplot, "set xrange [*:*] reverse\n");			
+		fprintf(gnuplot, "set xrange [0:1024] reverse\n");			
 		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 

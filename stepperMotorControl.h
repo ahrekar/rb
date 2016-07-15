@@ -8,7 +8,7 @@
 // Motor 2 -> QWP
 void setupMotorVariables(int motor);
 
-void homeMotor(int motor);
+int homeMotor(int motor); // Returns the number of steps used to return to home.
 void moveMotor(int motor,int dir, int steps);
 void _moveMotor(int motor,int dir, int steps);
 void setMotor(int motor, int location);

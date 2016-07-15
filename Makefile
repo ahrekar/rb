@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c analogout.c getadc.c getcounts.c polarization.c setHP3617.c stepmotor.c diagnoseCounts.c faradayrotation.c homemotor.c setProbeLaser.c faradayscan.c RbAbsorbScan.c gnutest.c faradayscan2.c homeWavePlate.c setWavePlate.c faradayAnalysis.c logPumpAbs.c setOmega.c waitForOmega.c
+SOURCES=excitationfn.c getadc.c getcounts.c polarization.c stepmotor.c faradayrotation.c homemotor.c setProbeLaser.c faradayscan.c RbAbsorbScan.c faradayscan2.c homeWavePlate.c setWavePlate.c faradayAnalysis.c logPumpAbs.c setOmega.c waitForOmega.c polarizationAnalysis.c stepperMotorDiagnose.c
 
 # BINARIES are the names of the executable files that we are compiling
 # This particular command substitutes a blank string for ".c" in the
@@ -50,38 +50,20 @@ all: ${BINARIES}
 # file in the BINARIES list is selected by the % symbol.
 # The percent symbol from that point forward then 
 # represents the binary file's name. 
+
 ${BINARIES}: % : %.c
-	$(CC) -o $@ $@.c $(CFLAGS) $(PIFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
 RbAbsorbScan: RbAbsorbScan.c tempControl.c rs485.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
 stepmotor: stepmotor.c stepperMotorControl.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
 homemotor: homemotor.c stepperMotorControl.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
 excitationfn: excitationfn.c tempControl.c rs485.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
 faradayscan: faradayscan.c stepperMotorControl.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
+faradayrotation: faradayrotation.c stepperMotorControl.c
 faradayscan2: faradayscan2.c tempControl.c rs485.c stepperMotorControl.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
 polarization: polarization.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
+stepperMotorDiagnose: stepperMotorDiagnose.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
 homeWavePlate: homeWavePlate.c stepperMotorControl.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
 setWavePlate: setWavePlate.c stepperMotorControl.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
 setOmega: setOmega.c tempControl.c rs485.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-
 waitForOmega: waitForOmega.c tempControl.c rs485.c
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)

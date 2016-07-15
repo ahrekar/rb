@@ -22,7 +22,7 @@ for i in $(seq 0 .1 3); do
 	mkdir -p /home/pi/RbPictures/$DATE
 	# take Picture takes the filename and a subfolder to store the 
 	# file in within the RbPicture folder
-	ssh pi@irpi "/home/pi/karlCode/takePicture.sh $FILENAME $DATE"
+	ssh pi@irpi "/home/pi/karlCode/takeRemotePicture.s $FILENAME $DATE"
 
 	sudo ./setWavePlate 17
 	sudo ./faradayscan2 0 1000 200 "Coil Current at: $i, Pump Wavelength: 377.1057 (28.120), s+ pump, $1"

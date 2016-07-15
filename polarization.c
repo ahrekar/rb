@@ -24,18 +24,23 @@
 #include "tempControl.h"
 #include "stepperMotorControl.h"
 
-#define REVOLUTIONS 2
-#define STEPSPERREV 1200
-#define DATAPOINTSPERREV 40
+#define REVOLUTIONS 1
+#define STEPSPERREV 1200 //TURNBACKTIME
+//#define STEPSPERREV 350
+#define DATAPOINTSPERREV 75 //Options: 2,4,6,8,10,12,15,16,20,24,25,30,40,75,120,200,600 // TURNBACKTIME
+//#define DATAPOINTSPERREV 175 //Options: 2,4,6,8,10,12,15,16,20,24,25,30,40,75,120,200,600
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
 #define HPCAL 28.1/960.0
+#define POLMOTOR 0	// The integer that represents the polarization stepper motor is zero.
+#define PROBEMOTOR 1	// The integer that represents the probe stepper motor is one.
+#define CCLOCKWISE 0	// 0 spins the motor counterclockwise
+#define CLOCKWISE 1	// 1 spins it clockwise
 #define NORMCURR 0 	// Set this to 1 to normalize the intensity with the current
-#define DWELL 1		// The number of seconds to pause, letting electronics settle
-#define ALPHA 0		// The constant Alpha (location of transmission axis), measured in degrees.
-#define DALPHA 0 	// The uncertainty in ALPHA
-#define BETA 0		// The constant Beta_0 (beginning position of QWP relative to LP) measured in degrees.
-#define DBETA 0		// The uncertainty in BETA
+#define ALPHA 11.0		// The constant Alpha (location of transmission axis), measured in degrees.
+#define DALPHA 10.0 	// The uncertainty in ALPHA
+#define BETA -22.5		// The constant Beta_0 (beginning position of QWP relative to LP) measured in degrees.
+#define DBETA 10.0		// The uncertainty in BETA
 #define DELTA 90	// The constant Delta (wave plate retardance) in degrees.
 #define DDELTA 0	// The uncertainty in DELTA
 #define DSTEP 0	// The uncertainty in the step size 
@@ -47,7 +52,7 @@
 
 int processFile(char* backgroundFileName, char* comments);
 int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, char* comments);
-int getPolarizationData(char* fileName, int aout);
+int getPolarizationData(char* fileName, int aout, int dwell);
 
 int calculateFourierCoefficients(char* fileName, int dataPoints, float* fcReturn, float* fcErrReturn);
 float calculateOneSumTerm(int trigFunc, float intensity, float i,int k);
@@ -71,14 +76,18 @@ int main (int argc, char **argv)
 {
 	int aout;
 	int flag;
+	int dwell;
 	
 	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; //INCLUDE
+	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+
 
 	// Variables for getting time information to identify
 	// when we recorded the data
 	time_t rawtime;
 	struct tm * timeinfo;
 	float bias, offset,energy, current;
+	char* extension;
 	
 	// Setup time variables
 	time(&rawtime); //INCLUDE
@@ -86,35 +95,24 @@ int main (int argc, char **argv)
 	struct stat st = {0};
 
 	// Get parameters.
-	if (argc==3){
+	if (argc==4){
 		aout=atoi(argv[1]);
-		strcpy(comments,argv[2]);
+		dwell=atoi(argv[2]);
+		strcpy(comments,argv[3]);
 		*backgroundFileName=NULL;
-	} else if(argc==4){
-		aout=atoi(argv[1]);
-		strcpy(backgroundFileName,argv[1]);
-		if(aout==0 && strcmp(backgroundFileName,"0")!=0){//If the second argument is not "0" (is a fileName)
-			// It should be a fileName, process the two files. TODO: Put analysis in a separate program.
-			strcpy(rawDataFileName,argv[2]);
-			strcpy(comments,argv[3]);
-			strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
-			if (stat(analysisFileName, &st) == -1){
-				mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
-			}
-			strftime(analysisFileName,80,"/home/pi/RbData/%F/POLanalysis%F_%H%M%S.dat",timeinfo); //INCLUDE
-			printf("\n%s\n",analysisFileName);
-			processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,comments);
-			return 0;
-		}else{
-			strcpy(backgroundFileName,argv[2]);
-			strcpy(comments,argv[3]);
-		}
-	}else {
-		printf("There are three options for using this program: \n\n");
-		printf("usage '~$ sudo ./polarization <aout_for_target> <comments_in_double_quotes>'\n");
-		printf("usage '~$ sudo ./polarization <aout_for_target> <background file> <comments_in_double_quotes>'\n");
-		printf("usage '~$ sudo ./polarization <background file> <data file> <comments_in_double_quotes'\n");
+	} else {
+		printf("There is one option for using this program: \n\n");
+		printf("usage '~$ sudo ./polarization <aout_for_HeTarget> <dwell> <comments_in_double_quotes>'\n");
+		printf("                                (0-1023)           (1-5)s                            '\n");
 		return 1;
+	}
+
+	// Indicate that data is being collected.
+	FILE* dataCollectionFlagFile;
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("unable to open file \n");
+		exit(1);
 	}
 
 	// RUDAMENTARIY ERROR CHECKING
@@ -127,10 +125,13 @@ int main (int argc, char **argv)
 		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
 	strftime(rawDataFileName,80,"/home/pi/RbData/%F/POL%F_%H%M%S.dat",timeinfo); //INCLUDE
-	strftime(analysisFileName,80,"/home/pi/RbData/%F/POLanalysis%F_%H%M%S.dat",timeinfo); //INCLUDE
+	strcpy(analysisFileName,rawDataFileName);
+	extension = strstr(analysisFileName,".dat");
+	strcpy(extension,"analysis.dat");
+
 	printf("\n%s\n",analysisFileName);
 	FILE* rawData;
-	// Record the results along with the raw data in a file.
+	// Write the header for the raw data file.
 	rawData=fopen(rawDataFileName,"w");
 	if (!rawData) {
 		printf("Unable to open file: %s\n", rawDataFileName);
@@ -147,21 +148,29 @@ int main (int argc, char **argv)
 	fprintf(rawData,"#DataPointsPerRev\t%d\n",DATAPOINTSPERREV);
 	fprintf(rawData,"#StepsPerRev\t%d\n",STEPSPERREV);
 	fprintf(rawData,"#Datapoints\t%d\n",DATAPOINTS);
-	fprintf(rawData,"#PMT dwell time (s)\t%d\n",DWELL);
+	fprintf(rawData,"#PMT dwell time (s)\t%d\n",dwell);
 
 	fclose(rawData);
 
 	// Collect raw data
-	getPolarizationData(rawDataFileName, aout); //INCLUDE
+	getPolarizationData(rawDataFileName, aout, dwell); //INCLUDE
 
 	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, comments); //TODO: Move all processesing of files
 															//	    to find stokes Parameters to 
 															//		a separate funtion.
+
+	// Remove the file indicating that we are taking data.
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
+
 	return 0;
 }
 
 // INCLUDE
-int getPolarizationData(char* fileName, int aout){
+int getPolarizationData(char* fileName, int aout, int dwell){
+
+	FILE* gnuplot;
+	char buffer[1024];
 	// Variables for interfacing with the USB1208
 	HIDInterface*  hid = 0x0;
 	hid_return ret;
@@ -174,7 +183,7 @@ int getPolarizationData(char* fileName, int aout){
 
 	// Variables for data collections.
 	int counts;
-	float current;
+	float current,angle;
 	float currentErr;
 	int nSamples = 8;
 	float* measurement = calloc(nSamples,sizeof(float));
@@ -230,18 +239,22 @@ int getPolarizationData(char* fileName, int aout){
 	}
 	// End File setup
 
+	homeMotor(POLMOTOR); //TURNBACKTIME
+
 	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTSPERREV; // The number of steps to take between readings.
 
-	fprintf(rawData,"Steps\tCount\tCurrent\tCurrent Error\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
+	fprintf(rawData,"Steps\tCount\tCurrent\tCurrent Error\tAngle\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
+	printf("Steps\tCounts\tCurrent\n",steps,counts,current);
 
 	for (steps=0;steps<nsteps;steps+=ninc){
 
 		//200 steps per revoluion
-		moveMotor(0,1,ninc);
+		moveMotor(POLMOTOR,CLOCKWISE,ninc); //TURNBACKTIME
+		//moveMotor(PROBEMOTOR,CLOCKWISE,ninc);
 
 		counts=0;
-		for (i=0;i<DWELL;i++){
+		for (i=0;i<dwell;i++){
 			usbInitCounter_USB1208LS(hid);
 			delayMicrosecondsHard(1000000);//WiringPi
 			counts+=usbReadCounter_USB1208LS(hid);
@@ -255,13 +268,39 @@ int getPolarizationData(char* fileName, int aout){
 
 		current = current/(float)nSamples;
 		currentErr = stdDeviation(measurement,nSamples);
+		angle = (float)steps/STEPSPERREV*2.0*PI;
 
-		printf("Steps %d\tCounts %d\tCurrent %f\n",steps,counts,current);
-		fprintf(rawData,"%d\t%d\t%f\t%f\n",steps,counts,current,currentErr);
+		printf("%d\t%d\t%f\n",steps,counts,current);
+		fprintf(rawData,"%d\t%d\t%f\t%f\t%f\n",steps,counts,current,currentErr,angle);
 	}
 
 
 	fclose(rawData);
+
+	// Create rough graphs of data.
+	gnuplot = popen("gnuplot","w"); 
+
+	if (gnuplot != NULL){
+		fprintf(gnuplot, "set terminal dumb size 158,32\n");
+		fprintf(gnuplot, "set output\n");			
+		
+		sprintf(buffer, "set title '%s'\n", fileName);
+		fprintf(gnuplot, buffer);
+
+		fprintf(gnuplot, "set key autotitle columnheader\n");
+		fprintf(gnuplot, "set xlabel 'Step'\n");			
+		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		fprintf(gnuplot, "set yrange [0:*]\n");			
+		sprintf(buffer, "plot '%s' using 1:2\n",fileName);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset output\n"); 
+		fprintf(gnuplot, "set terminal png\n");
+		sprintf(buffer, "set output '%s.png'\n", fileName);
+		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s' using 1:2\n",fileName);
+		fprintf(gnuplot, buffer);
+	}
+	pclose(gnuplot);
 
 	// Reset Aout back to zero
 	usbAOut_USB1208LS(hid,1,0);
@@ -310,6 +349,7 @@ int calculateFourierCoefficients(char* fileName, int totalDataPoints, float* fcR
 	for (i=0; i< totalDataPoints; i++){
 		int steps, counts;
 		float current, currentErr;
+		float angle;
 		int j=0;
 		while(trash[0]=='#'){ // Skip over all lines that have a # at the beginning. 
 			
@@ -318,7 +358,7 @@ int calculateFourierCoefficients(char* fileName, int totalDataPoints, float* fcR
 		}
 		//printf("Lines skipped=%d\n",j);
 		trash[0]='a';
-		fscanf(data,"%d,%d,%f,%f\n",&steps,&counts,&current,&currentErr);
+		fscanf(data,"%d\t%d\t%f\t%f\t%f\n",&steps,&counts,&current,&currentErr,&angle);
 		//fscanf(data,"%d,%d,%f\n",&steps,&counts,&current); 	// Because I think I might want to revert 
 																// to non-error calculations 
 																// quickly at some point
@@ -569,8 +609,8 @@ int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, cha
 	fprintf(dataSummary,"#DataFile\t%s\n",dataFileName);
 	fprintf(dataSummary,"#BackgroundFile\t%s\n",(*backgroundFileName!=NULL)? backgroundFileName:"NONE");//This is the ternary operator ()?:
 	fprintf(dataSummary,"#Comments\t%s\n",comments);
-	fprintf(dataSummary,"#ALPHA\t%d\t%d\n",ALPHA,DALPHA);
-	fprintf(dataSummary,"#BETA\t%d\t%d\n",BETA,DBETA);
+	fprintf(dataSummary,"#ALPHA\t%f\t%f\n",ALPHA,DALPHA);
+	fprintf(dataSummary,"#BETA\t%f\t%f\n",BETA,DBETA);
 	fprintf(dataSummary,"#DELTA\t%d\t%d\n",DELTA,DDELTA);
 	fprintf(dataSummary,"#Current Adj. Intensity\t%s\n",(NORMCURR==1)?"Yes":"No");
 	fprintf(dataSummary,"#f0\t%f\t%f\t%f\n",fourierCoefficients[COS+0],fcErr[POS+COS+0],fcErr[NEG+COS+0]);

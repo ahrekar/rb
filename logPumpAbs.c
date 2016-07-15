@@ -28,24 +28,57 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <asm/types.h>
+#include "pmd.h"
+#include "usb-1208LS.h"
 #include "mathTools.h"
 
 #define BASE 100
 #define SPI_CHAN 0
 #define BUFSIZE 1024
-#define NSAMPLES 8
-#define DELAYTIME 1000
+#define NSAMPLES 24
+#define DELAYTIME 50
 #define HOURSINDAY 24
 #define MINUTESINHOUR 60
 #define LINECENTER 377.107463380
 
 int main (int argc, char** argv){
-	char* fileName = "/home/pi/RbData/2016-06-11/pumpAbsorption.dat";
+	char* fileName = "/home/pi/RbData/2016-07-06/pumpAbsorption.dat";
+	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 	FILE* dataFile;
+	FILE* dataCollectionFlagFile;
+	signed short svalue;
 	int i;
 	float averageValue,temperature,frequency;
 
-	int chan;
+	// Indicate that data is being collected.
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("unable to open file \n");
+		exit(1);
+	}
+
+	int interface;
+	HIDInterface*  hid = 0x0;
+	__u8  gain;
+	gain = BP_5_00V;
+	hid_return ret;
+
+	ret = hid_init();
+	if (ret != HID_RET_SUCCESS) {
+		fprintf(stderr, "hid_init failed with return code %d\n", ret);
+		return -1;
+	}
+
+	if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
+		fprintf(stderr, "USB 1208LS not found.\n");
+		exit(1);
+	} else {
+		printf("USB 1208LS Device is found! interface = %d\n", interface);
+	}
+
 
 	if (argc==3){
 		temperature=atof(argv[1]);
@@ -64,14 +97,15 @@ int main (int argc, char** argv){
 	wiringPiSetup();
 	mcp3004Setup(BASE,SPI_CHAN);
 
-	//fprintf(dataFile,"Laser Control Temp(C)\tDetuning (87 D1) from Wavemeter (GHz)\tTransmission(V)\tTransStdDev.(V)\n");
+
+//	fprintf(dataFile,"Laser Control Temp(C)\tDetuning (87 D1) from Wavemeter (GHz)\tTransmission(V)\tTransStdDev.(V)\n");
 
 	float* measurement = calloc(NSAMPLES,sizeof(float));
 
 	averageValue=0;
-	chan = 2; // Pump PhotoDiode
 	for(i=0;i<NSAMPLES;i++){
-		measurement[i] = (float) analogRead(BASE + chan);
+		svalue = usbAIn_USB1208LS(hid,1,gain);  //channel 1 for pump
+		measurement[i] = volts_LS(gain,svalue);
 		averageValue += measurement[i] / NSAMPLES;
 		delay(DELAYTIME);
 	}
@@ -79,6 +113,10 @@ int main (int argc, char** argv){
 	printf("%3.8f\t%3.8f\t%3.8f\t%3.8f\n",temperature,(frequency-LINECENTER)*1000,averageValue,stdDeviation(measurement,NSAMPLES));
 
 	fclose(dataFile);
+
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
+
 	free(measurement);
 	return 0;
 }

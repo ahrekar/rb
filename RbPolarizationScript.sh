@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# script to take faraday scan data
+# script to take faraday scan data and absoption data
+# ALL OF THE INFORMATION GATHERED BY THIS SCRIPT IS USED TO CALCUATE NUMBER DENSITY AND Rb POLARIZATION
 # Usage:
 #
 #		sudo ./kensScanScript.sh <aout start> <aout end> <step size> <additional comments>
 
 if [ "$#" -ne 4 ]; then
-	echo "usage: sudo ./kensScanScript.sh <aout start> <aout end> <step size> <additional comments>"
+	echo "usage: sudo ./RbPolarizationScript.sh <aout start> <aout end> <step size> <additional comments>"
 else
 
 	# Unblock the beam for sure
@@ -42,6 +43,6 @@ else
 	sudo ./setLaserFlag 0
 
 	# Absorption Scan
-	sudo ./RbAbsorbScan 575 975 2 "$4"
+	sudo ./RbAbsorbScan 675 975 5 "$4"
 
 fi

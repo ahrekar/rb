@@ -5,6 +5,8 @@
 #include "stepperMotorControl.h"
 
 #define DEL 1500	// Whenever a delay is needed, use this value
+#define CCLOCK 0
+#define CLOCK 1
 
 // Motor 0 -> Polarimeter
 // Motor 1 -> Absorption Analyzer
@@ -55,15 +57,14 @@ void setupMotorVariables(int motor){
     fclose(motorPositionFile);
 }
 
-void homeMotor(int motor)
+int homeMotor(int motor)
 {
     int i=0;
-	wiringPiSetup();
     setupMotorVariables(motor);
 
 	if(motor==1){
 		printf("This motor not setup for home detection\n");
-		return;
+		return 0;
 	}
 
 	pinMode(p_home,INPUT);
@@ -72,15 +73,16 @@ void homeMotor(int motor)
 		// to re-find it.
 		printf("Already in home, reversing 100 steps...\n");
 		fflush(stdout);
-		moveMotor(motor,0,100);
+		moveMotor(motor,CCLOCK,100);
 	}
 	while(!digitalRead(p_home)){
-		moveMotor(motor,1,1);
+		moveMotor(motor,CLOCK,1);
         i++;
 	}
     p_motorPosition=0;
     writeMotorPosition();
 	printf("Found home in %d steps\n",i);
+	return i;
 }
 
 void moveMotor(int motor, int dir, int steps)
@@ -120,17 +122,17 @@ void setMotor(int motor, int newlocation){
 	steps=newlocation-p_motorPosition;
     if (steps>0){
 		if (steps<p_stepsPerRevolution/2)
-			direction = 0;
+			direction = CCLOCK;
 		else{
-			direction = 1;
+			direction = CLOCK;
 			steps=p_stepsPerRevolution-steps;
 		}
     } else {
 		steps=-steps;
 		if (steps<p_stepsPerRevolution/2)
-			direction = 1;
+			direction = CLOCK;
 		else{
-			direction = 0;
+			direction = CCLOCK;
         	steps=p_stepsPerRevolution-steps;
 		}
 	}
@@ -139,7 +141,6 @@ void setMotor(int motor, int newlocation){
 }
 
 void stepMotor(int dir, int steps){
-	wiringPiSetup();
        
     if(p_dir==0 && p_clock==0 && p_home==0){
         printf("Error: Motor variables not initialized\n");
