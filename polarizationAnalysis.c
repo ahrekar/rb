@@ -30,8 +30,8 @@ int main (int argc, char **argv)
 	}else {
 		printf("You put in %d argument(s) \n",argc);
 		printf("There are two options for using this program: \n\n");
-		printf("usage '~$ ./polarization <data file> <comments_in_double_quotes>'\n");
-		printf("usage '~$ ./polarization <background file> <data file> <comments_in_double_quotes'\n");
+		printf("usage '~$ ./polarizationAnalysis <data file> <comments_in_double_quotes>'\n");
+		printf("usage '~$ ./polarizationAnalysis <background file> <data file> <comments_in_double_quotes'\n");
 		return 1;
 	}
 	extensionStart=strstr(analysisFileName,".dat");

@@ -89,8 +89,8 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 		}
 		//printf("Lines skipped=%d\n",j);
 		trash[0]='a';
-		fscanf(data,"%d\t%d\t%f\t%f\t%f\n",&steps,&counts,&current,&currentErr,&angle);
-		//fscanf(data,"%d\t%d\t%f\t%f\n",&steps,&counts,&current,&currentErr);
+		//fscanf(data,"%d\t%d\t%f\t%f\t%f\n",&steps,&counts,&current,&currentErr,&angle);
+		fscanf(data,"%d\t%d\t%f\t%f\n",&steps,&counts,&current,&currentErr);
 		//fscanf(data,"%d,%d,%f\n",&steps,&counts,&current); 	// Because I think I might want to revert 
 																// to non-error calculations 
 																// quickly at some point
@@ -313,8 +313,8 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 
 	// Calculate fourier coefficients from BG data, if provided, and
 	// remove background from data
-	if(!strcmp(backgroundFileName,"NONE")){
-		
+	if(strcmp(backgroundFileName,"NONE")){
+		printf("Let's process the background file!\n");
 		float* fcBg = malloc(totalDatapoints*sizeof(float));
 		float* fcBgErr = malloc(totalDatapoints*2*sizeof(float));
 		float avgCurrentBg;
