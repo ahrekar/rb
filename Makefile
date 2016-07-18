@@ -54,16 +54,18 @@ all: ${BINARIES}
 ${BINARIES}: % : %.c
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-RbAbsorbScan: RbAbsorbScan.c tempControl.c rs485.c
-stepmotor: stepmotor.c stepperMotorControl.c
-homemotor: homemotor.c stepperMotorControl.c
-excitationfn: excitationfn.c tempControl.c rs485.c
-faradayscan: faradayscan.c stepperMotorControl.c
-faradayrotation: faradayrotation.c stepperMotorControl.c
+RbAbsorbScan: RbAbsorbScan.c 	tempControl.c rs485.c
+excitationfn: excitationfn.c 	tempControl.c rs485.c
+setOmega: setOmega.c 			tempControl.c rs485.c
+waitForOmega: waitForOmega.c 	tempControl.c rs485.c
+
+stepmotor: stepmotor.c 				stepperMotorControl.c
+homemotor: homemotor.c 				stepperMotorControl.c
+faradayscan: faradayscan.c 			stepperMotorControl.c
+faradayrotation: faradayrotation.c	stepperMotorControl.c
+homeWavePlate: homeWavePlate.c 		stepperMotorControl.c
+setWavePlate: setWavePlate.c 		stepperMotorControl.c
+
 faradayscan2: faradayscan2.c tempControl.c rs485.c stepperMotorControl.c
 polarization: polarization.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
 stepperMotorDiagnose: stepperMotorDiagnose.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
-homeWavePlate: homeWavePlate.c stepperMotorControl.c
-setWavePlate: setWavePlate.c stepperMotorControl.c
-setOmega: setOmega.c tempControl.c rs485.c
-waitForOmega: waitForOmega.c tempControl.c rs485.c
