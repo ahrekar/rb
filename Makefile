@@ -54,6 +54,8 @@ all: ${BINARIES}
 ${BINARIES}: % : %.c
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
+polarizationAnalysisTools.c: polarizationAnalysisTools.h
+
 RbAbsorbScan: RbAbsorbScan.c 	tempControl.c rs485.c
 excitationfn: excitationfn.c 	tempControl.c rs485.c
 setOmega: setOmega.c 			tempControl.c rs485.c
@@ -67,5 +69,6 @@ homeWavePlate: homeWavePlate.c 		stepperMotorControl.c
 setWavePlate: setWavePlate.c 		stepperMotorControl.c
 
 faradayscan2: faradayscan2.c tempControl.c rs485.c stepperMotorControl.c
-polarization: polarization.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
+polarization: polarization.c polarizationAnalysisTools.c mathTools.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
+polarizationAnalysis: polarizationAnalysis.c polarizationAnalysisTools.c mathTools.c
 stepperMotorDiagnose: stepperMotorDiagnose.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
