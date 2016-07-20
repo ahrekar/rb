@@ -19,14 +19,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <asm/types.h>
-#include <wiringPi.h>
-#include "pmd.h"
-#include "usb-1208LS.h"
-#include "tempControl.h"
+#include "interfacing/interfacing.h"
+#include "mathTools.h"
 
 #define BUFSIZE 1024
 #define NUMCHANNELS 3
 
+void graphData(char* fileName);
 float stdDeviation(float* values, int numValues);
 
 int main (int argc, char **argv)
@@ -37,55 +36,13 @@ int main (int argc, char **argv)
 	signed short svalue;
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+	__u16 value;
 
-	float involts2,involts3;
 	float involts[3];
-	float prevVal3;
-	float slope3;
-	float prevSlope3;
-	int lowValue[4];
+	float returnFloat;
 	int k=0;
-	int currentDataPoint;
-	lowValue[0]=20;
 
 	FILE *fp, *gnuplot, *dataCollectionFlagFile;
-	/** Unused RasbPi things.
-	__s16 sdata[1024];
-	__u16 count;
-	__u8 gains[8];
-	__u8 options;
-	__u8 input, pin = 0;
-	**/
-	__u16 value;
-	__u8  gain;
-
-	HIDInterface*  hid = 0x0;
-	hid_return ret;
-	int interface;
-
-	// Indicate that data is being collected.
-	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
-	if (!dataCollectionFlagFile) {
-		printf("unable to open file \n");
-		exit(1);
-	}
-
-	// set up USB interface
-
-	ret = hid_init();
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_init failed with return code %d\n", ret);
-		return -1;
-	}
-
-	if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
-		fprintf(stderr, "USB 1208LS not found.\n");
-		exit(1);
-	} else {
-		printf("USB 1208LS Device is found! interface = %d\n", interface);
-	}
-
-
 
 	if (argc==5) {
 		startvalue=atoi(argv[1]);
@@ -97,6 +54,16 @@ int main (int argc, char **argv)
 		printf("                              ( 0 - 1023 )                   \n");
 		return 0;
 	}
+	// Indicate that data is being collected.
+	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
+	if (!dataCollectionFlagFile) {
+		printf("unable to open file \n");
+		exit(1);
+	}
+
+	initializeBoard();
+	initializeUSB1208();
+
 	if (endvalue>1024) endvalue=1024;
 	if (startvalue>1024) endvalue=1024;
 	if (startvalue<1) startvalue=0;
@@ -106,61 +73,40 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-
-	// config mask 0x01 means all inputs
-	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
-	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
-	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-
-
 	// get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
-	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F",timeinfo);
 	if (stat(fileName, &st) == -1){ // Create the directory for the Day's data 
 		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
 	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/RbAbs%F_%H%M%S.dat",timeinfo);
 
-	printf("\n");
-	printf(fileName);
-	printf("\n");
-
-	printf("Opening File...\n");
+	printf("\n%s\n",fileName);
 
 	fp=fopen(fileName,"w");
 	if (!fp) {
-		printf("unable to open file \n");
+		printf("unable to open file: %s\n",fileName);
 		exit(1);
 	}
 
-	fprintf(fp,"#");			//gnuplot needs non-data lines commented out.
-	fprintf(fp,fileName);
-	fprintf(fp,"\n");
-	fflush(fp);
-
-	//TODO Scanf terminates read after hitting a space?!?!?!?!?
-	fprintf(fp,"#Comments:\t%s\n",comments);			//gnuplot needs non-data lines commented out.
-	fprintf(fp,"#Cell Temp 1:\t%f\n",getTemperature(3));
-	fprintf(fp,"#Cell Temp 2:\t%f\n",getTemperature(5));
+	fprintf(fp,"#Filename:\t%s\n",fileName);
+	fprintf(fp,"#Comments:\t%s\n",comments);
+	getPVCN7500(3,&returnFloat);
+	fprintf(fp,"#CellTemp1:\t%f\n",returnFloat);
+	getPVCN7500(5,&returnFloat);
+	fprintf(fp,"#CellTemp2:\t%f\n",returnFloat);
 	fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-
-	gain = BP_5_00V;
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
 	nSamples = 32;
 	float* measurement = malloc(nSamples*sizeof(float));
-	float* reference = malloc(nSamples*sizeof(float));
 
-	currentDataPoint =0;
 	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
-		currentDataPoint++;
-		usbAOut_USB1208LS(hid, 0, value);
+		setUSB1208AnalogOut(0,value);
 		printf("Aout %d \t",value);
-		fflush(stdout);
 		fprintf(fp,"%d\t",value);
 
 		// delay to allow transients to settle
@@ -172,8 +118,7 @@ int main (int argc, char **argv)
 		// grab several readings and average
 		for(k=0;k<NUMCHANNELS;k++){
 			for (i=0;i<nSamples;i++){
-				svalue = usbAIn_USB1208LS(hid,k+1,gain);  //channels are 1-3 for pump,probe, and ref. respectively.
-				measurement[i] = volts_LS(gain,svalue);
+				getUSB1208AnalogIn(k,&measurement[i]);
 				involts[k]=involts[k]+measurement[i];
 				delay(1);
 			}
@@ -183,35 +128,27 @@ int main (int argc, char **argv)
 		}
 		fprintf(fp,"\n");
 		printf("\n");
-
-		fflush(stdout);
 	}
-
 	free(measurement);
-	free(reference);
 
-
-// we might rethink where we end the Aout and return.  this just sets an arbitrary voltage. is there a better choice.
 	value=(int)(1.325*617.0);
-	usbAOut_USB1208LS(hid,0,value); //sets vout such that 0 v at the probe laser
-
+	setUSB1208AnalogOut(0,value);//sets vout such that 0 v at the probe laser
 
 	fclose(fp);
 
-	//cleanly close USB
-	ret = hid_close(hid);
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_close failed with return code %d\n", ret);
-		return 1;
-	}
+	closeUSB1208();
 
-	hid_delete_HIDInterface(&hid);
-	ret = hid_cleanup();
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
-		return 1;
-	}
+	graphData(fileName);
 
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
+
+	return 0;
+}
+
+void graphData(char* fileName){
+	char buffer[BUFSIZE];
+	FILE* gnuplot;
 	// Create graphs for data see gnutest.c for an explanation of 
 	// how this process works.
 	gnuplot = popen("gnuplot","w"); 
@@ -244,30 +181,4 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
-
-	fclose(dataCollectionFlagFile);
-	remove(dataCollectionFileName);
-
-	return 0;
-}
-
-float stdDeviation(float* value, int numValues){
-	float stdDev, sum, avg;
-
-	// First Calculate the Average value
-	sum = 0.0;
-	int i;
-	for(i=0; i < numValues;i++){ 
-		sum += value[i];
-	}
-	avg = sum / (float) numValues;
-
-	// Then calculate the Standard Deviation
-	sum = 0.0;
-	for(i=0; i < numValues;i++){
-		sum += pow(avg-value[i],2);
-	}
-	stdDev = sqrt(sum/(numValues-1));
-
-	return stdDev;
 }
