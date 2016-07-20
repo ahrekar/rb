@@ -56,7 +56,7 @@ ${BINARIES}: % : %.c
 
 polarizationAnalysisTools.c: polarizationAnalysisTools.h
 
-RbAbsorbScan: RbAbsorbScan.c 	tempControl.c rs485.c
+RbAbsorbScan: RbAbsorbScan.c mathTools.c interfacing/grandvillePhillips.c interfacing/BK1696.c interfacing/omegaCN7500.c interfacing/kenBoard.c interfacing/USB1208.c
 excitationfn: excitationfn.c 	tempControl.c rs485.c
 setOmega: setOmega.c 			tempControl.c rs485.c
 waitForOmega: waitForOmega.c 	tempControl.c rs485.c
@@ -68,7 +68,7 @@ faradayrotation: faradayrotation.c	stepperMotorControl.c
 homeWavePlate: homeWavePlate.c 		stepperMotorControl.c
 setWavePlate: setWavePlate.c 		stepperMotorControl.c
 
-faradayscan2: faradayscan2.c tempControl.c rs485.c stepperMotorControl.c
+faradayscan2: faradayscan2.c tempControl.c rs485.c stepperMotorControl.c mathTools.c
 polarization: polarization.c polarizationAnalysisTools.c mathTools.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
 polarizationAnalysis: polarizationAnalysis.c polarizationAnalysisTools.c mathTools.c
 stepperMotorDiagnose: stepperMotorDiagnose.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
