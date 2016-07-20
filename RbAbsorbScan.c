@@ -142,14 +142,10 @@ int main (int argc, char **argv)
 	fflush(fp);
 
 	//TODO Scanf terminates read after hitting a space?!?!?!?!?
-	fprintf(fp,"#%s\n",comments);			//gnuplot needs non-data lines commented out.
-	fflush(fp);
-	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
-	fflush(fp);
-	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
-	fflush(fp);
+	fprintf(fp,"#Comments:\t%s\n",comments);			//gnuplot needs non-data lines commented out.
+	fprintf(fp,"#Cell Temp 1:\t%f\n",getTemperature(3));
+	fprintf(fp,"#Cell Temp 2:\t%f\n",getTemperature(5));
 	fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fflush(fp);
 
 	gain = BP_5_00V;
 

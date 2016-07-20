@@ -42,6 +42,8 @@ int writeDataSummaryToFile(char* rawDataFileName, char* analysisFileName, char* 
 							float* stokesParameters, float* spError,
 							float avgCurrent, float avgCurrentStdDev);
 
+int plotStokesParameters(char* analysisFileName);
+
 int printOutFC(float* fourierCoefficients, float* fcErr);
 int printOutSP(float* sp, float* spError);
 int printOutFloatArray(float* array, int n);
@@ -89,8 +91,8 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 		}
 		//printf("Lines skipped=%d\n",j);
 		trash[0]='a';
-		//fscanf(data,"%d\t%d\t%f\t%f\t%f\n",&steps,&counts,&current,&currentErr,&angle);
-		fscanf(data,"%d\t%d\t%f\t%f\n",&steps,&counts,&current,&currentErr);
+		fscanf(data,"%d\t%d\t%f\t%f\t%f\n",&steps,&counts,&current,&currentErr,&angle);
+		//fscanf(data,"%d\t%d\t%f\t%f\n",&steps,&counts,&current,&currentErr);
 		//fscanf(data,"%d,%d,%f\n",&steps,&counts,&current); 	// Because I think I might want to revert 
 																// to non-error calculations 
 																// quickly at some point
@@ -307,8 +309,8 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	// Find fourier coefficients from raw data.
 	calculateFourierCoefficients(dataFileName,dataPointsPerRevolution,revolutions,fourierCoefficients,fcErr,&avgCurrent,&avgCurrentStdDev);
 
-	printf("====Raw Data Fourier Coefficients====\n");
-	printOutFC(fourierCoefficients,fcErr);
+	//printf("====Raw Data Fourier Coefficients====\n");
+	//printOutFC(fourierCoefficients,fcErr);
 	printf("\n");
 
 	// Calculate fourier coefficients from BG data, if provided, and
@@ -321,8 +323,8 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 		float avgCurrentBgStdDev;
 		calculateFourierCoefficients(backgroundFileName,dataPointsPerRevolution,revolutions,fcBg,fcBgErr,&avgCurrentBg,&avgCurrentBgStdDev);
 
-		printf("====Background Fourier Coefficients====\n");
-		printOutFC(fcBg,fcBgErr);
+		//printf("====Background Fourier Coefficients====\n");
+		//printOutFC(fcBg,fcBgErr);
 		printf("\n");
 
 		int k;
@@ -332,8 +334,8 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 			fcErr[NEG+k]=sqrt(pow(fcErr[NEG+k],2)+pow(fcBgErr[NEG+k],2));
 		}
 
-		printf("====Signal Fourier Coefficients====\n");
-		printOutFC(fourierCoefficients,fcErr);
+		//printf("====Signal Fourier Coefficients====\n");
+		//printOutFC(fourierCoefficients,fcErr);
 		printf("\n");
 
 		free(fcBg);
@@ -353,6 +355,8 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 							fourierCoefficients,fcErr,
 							stokesParameters,spErr,
 							avgCurrent,avgCurrentStdDev);
+
+	plotStokesParameters(analysisFileName);
 
 	free(fourierCoefficients);
 	free(fcErr);
@@ -403,4 +407,35 @@ int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, cha
 	fclose(dataSummary);
 
 	return 0;
+}
+
+int plotStokesParameters(char* analysisFileName){
+	FILE* gnuplot;
+	char buffer[1024];
+	// Create rough graphs of data.
+	gnuplot = popen("gnuplot","w"); 
+
+	if (gnuplot != NULL){
+		fprintf(gnuplot, "set terminal dumb size 158,32\n");
+		fprintf(gnuplot, "set output\n");			
+		
+		sprintf(buffer, "set title '%s'\n", analysisFileName);
+		fprintf(gnuplot, buffer);
+
+		fprintf(gnuplot, "set key autotitle columnheader\n");
+		fprintf(gnuplot, "set xlabel 'Relative Stokes Parameter'\n");			
+		fprintf(gnuplot, "set ylabel 'Value'\n");			
+		fprintf(gnuplot, "set yrange [-.2:.2]\n");			
+		fprintf(gnuplot, "set xrange [0:4]\n");			
+		sprintf(buffer, "plot '%s' using (1):4:($4+$5):($4-$6) w yerror,'%s' using (2):7:($7+$8):($7-$9) w yerror,'%s' using (3):10:($10+$11):($10-$12) w yerror\n",analysisFileName,analysisFileName,analysisFileName);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset output\n"); 
+		fprintf(gnuplot, "set terminal png\n");
+		sprintf(buffer, "set output '%s.png'\n", analysisFileName);
+		fprintf(gnuplot, buffer);
+		// SAME PLOT COMMANDS GO HERE
+		sprintf(buffer, "plot '%s' using (1):4:($4+$5):($4-$6) w yerror,'%s' using (2):7:($7+$8):($7-$9) w yerror,'%s' using (3):10:($10+$11):($10-$12) w yerror\n",analysisFileName,analysisFileName,analysisFileName);
+		fprintf(gnuplot, buffer);
+	}
+	return pclose(gnuplot);
 }
