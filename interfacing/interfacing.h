@@ -17,7 +17,7 @@
 #define PROBELASER 2
 #define REFLASER 3
 #define BUFSIZE 1024
-
+/**
 //RS485 Stuff
 	// Temp control
 	int getPVCN7500(unsigned short chan, float* temperature); //3-> Target Cell, 5-> Resevoir
@@ -45,3 +45,4 @@ int initializeUSB1208();
 int getUSB1208AnalogIn(unsigned short chan, float* returnvalue);
 int getUSB1208Counter(unsigned short dwell, long int * returncounts); // Dwell is in 1/10th of second
 int setUSB1208AnalogOut(unsigned short chan, unsigned int outValue);
+**/
