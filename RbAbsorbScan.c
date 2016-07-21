@@ -33,8 +33,7 @@ int main (int argc, char **argv)
 	int i,startvalue,endvalue,stepsize,nSamples;
 	time_t rawtime;
 	struct tm * timeinfo;
-	signed short svalue;
-	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
+	char fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 	__u16 value;
 
@@ -42,7 +41,7 @@ int main (int argc, char **argv)
 	float returnFloat;
 	int k=0;
 
-	FILE *fp, *gnuplot, *dataCollectionFlagFile;
+	FILE *fp, *dataCollectionFlagFile;
 
 	if (argc==5) {
 		startvalue=atoi(argv[1]);
@@ -105,7 +104,7 @@ int main (int argc, char **argv)
 	float* measurement = malloc(nSamples*sizeof(float));
 
 	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
-		setUSB1208AnalogOut(0,value);
+		setUSB1208AnalogOut(PROBEOFFSET,value);
 		printf("Aout %d \t",value);
 		fprintf(fp,"%d\t",value);
 
@@ -132,7 +131,7 @@ int main (int argc, char **argv)
 	free(measurement);
 
 	value=(int)(1.325*617.0);
-	setUSB1208AnalogOut(0,value);//sets vout such that 0 v at the probe laser
+	setUSB1208AnalogOut(PROBEOFFSET,value);//sets vout such that 0 v at the probe laser
 
 	fclose(fp);
 

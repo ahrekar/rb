@@ -30,41 +30,28 @@ Usage:
 #include <sys/types.h>
 #include <asm/types.h>
 #include <wiringPi.h>
-#include "pmd.h"
-#include "usb-1208LS.h"
-#include "tempControl.h"
-#define BASE 100
-#define SPI_CHAN 0
+#include "interfacing/interfacing.h"
+#include "mathTools.h"
 #define BUFSIZE 1024
 
-float stdDeviation(float* values, int numValues);
+void graphData(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int counts,i,stepsize,steprange,chan;
-	int totalCounts;
+	int i,stepsize,steprange;
+	long totalCounts;
 	int minstepsize,maxstepsize, nSamples;
 	int dwell;
 	time_t rawtime;
 	struct tm * timeinfo;
-	signed short svalue;
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
-	float bias, HeOffset, N2Offset,HPcal,primaryEnergy, secondaryEnergy, scanrange, involts;
+	float bias, HeOffset, N2Offset,HPcal,primaryEnergy, secondaryEnergy, scanrange;
+	float returnFloat;
+	float current, pressure;
+	long returnCounts;
 	FILE *fp,*dataCollectionFlagFile;
-	/** These are not used in this program, but might
-	  be useful in the future.
-	  __s16 sdata[BUFSIZE];
-	  _u16 count;
-	  _u8 gains[8];
-	  _u8 options,input,pin = 0;
-	 **/
 	__u16 value;
-	__u8 channel,gain;
-
-	HIDInterface*  hid = 0x0;
-	hid_return ret;
-	int interface;
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
@@ -106,28 +93,8 @@ int main (int argc, char **argv)
 	}
 
 	// set up USB interface
-	ret = hid_init();
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_init failed with return code %d\n", ret);
-		return -1;
-	}
-
-	if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
-		fprintf(stderr, "USB 1208LS not found.\n");
-		exit(1);
-	} else {
-		printf("USB 1208LS Device is found! interface = %d\n", interface);
-	}
-
-	mcp3004Setup(BASE,SPI_CHAN);
-
-
-	// config mask 0x01 means all inputs
-	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
-	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
-	//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-	//	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-
+	initializeBoard();
+	initializeUSB1208();
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -144,14 +111,14 @@ int main (int argc, char **argv)
 
 	fp=fopen(buffer,"w");
 	if (!fp) {
-		printf("unable to open file \n");
+		printf("Unable to open file: %s\n",buffer);
 		exit(1);
 	}
 
-	fprintf(fp,"#%s\n",buffer);
+	fprintf(fp,"#Filename:\t%s\n",buffer);
 
 	HPcal=28.1/960.0;
-	fprintf(fp,"# Assumed USB1208->HP3617A converstion %2.6f\n",HPcal);
+	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPcal);
 
 	steprange = 1+(int)(scanrange/HPcal);
 	if (steprange>1023) steprange = 1023;
@@ -168,53 +135,41 @@ int main (int argc, char **argv)
 		stepsize=maxstepsize;
 	}
 
-	fprintf(fp,"# Filament Bias: %f\n",-bias);
-	fprintf(fp,"# Number of seconds per count measurement: %d\n",dwell);
-	fprintf(fp,"# %s\n",comments);
+	fprintf(fp,"#FilamentBias:\t%f\n",-bias);
+	fprintf(fp,"#NumberOfSecondsPerCountMeasurement:\t%d\n",dwell);
+	fprintf(fp,"#Comments:\t%s\n",comments);
 
-	int x;
-	float IonGauge, CVGauge;
-	chan = 1; // IonGauge
-	x=analogRead(BASE + chan);
-	IonGauge = 0.0107 * (float)x;
-	IonGauge = pow(10,(IonGauge-9.97));
-	printf("IonGauge %2.2E Torr \n",IonGauge);
-	fprintf(fp,"# IonGauge(Torr):\t%2.2E\n",IonGauge);
+	
+	getIonGauge(&returnFloat);
+	printf("IonGauge %2.2E Torr \n",returnFloat);
+	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
 
-	chan = 3; // N2 pressure
-	x=analogRead(BASE + chan);
-	CVGauge = (float)x;
-	CVGauge = pow(10,(0.00499*CVGauge - 4.05));
-	printf("CVGauge(N2) %2.2E Torr\n", CVGauge);
-	fprintf(fp,"# CV Gauge(N2)(Torr):\t%2.2E\n", CVGauge);
+	getConvectron(GP_N2_CHAN,&returnFloat);
+	printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
 
-	chan = 4; // Helium pressure
-	x=analogRead(BASE + chan);
-	CVGauge = (float)x;
-	CVGauge = pow(10,(0.00499*CVGauge - 4.05));
-	printf("CVGauge(He) %2.2E Torr\n", CVGauge);
-	fprintf(fp,"# CV Gauge(He)(Torr):\t%2.2E\n", CVGauge);
+	getConvectron(GP_HE_CHAN,&returnFloat);
+	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
-	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
-	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
+	getPVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
+	getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
 
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
-	channel = 0; //analog input  for Keithly K617
-	gain = BP_10_00V;
-
+	fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
-	totalCounts=0;
 
+	totalCounts=0;
 	for (value=0;value<steprange;value+=stepsize){
-		usbAOut_USB1208LS(hid, 1, value);
+		setUSB1208AnalogOut(HETARGET,value);
 		printf("Aout %d \t",value);
-		fflush(stdout);
 		fprintf(fp,"%d\t",value);
 
 		fprintf(fp,"%4.4f\t",-bias);
@@ -232,68 +187,55 @@ int main (int argc, char **argv)
 		// delay to allow transients to settle
 		delay(500);
 
-		counts=0;
-		for (i=0;i<1;i++){
-			usbInitCounter_USB1208LS(hid);
-			delayMicrosecondsHard(dwell*1000000); // wiringPi
-			counts+=usbReadCounter_USB1208LS(hid);
-		}
-		totalCounts+=counts;
-		printf("Counts %d\t",counts);
+		getUSB1208Counter(dwell*10,&returnCounts);
+		printf("Counts %ld\t",returnCounts);
+		totalCounts+=returnCounts;
 
-		involts = 0.0;
+		current = 0.0;
 		// grab several readings and average
 		for (i=0;i<nSamples;i++){
-			svalue = usbAIn_USB1208LS(hid,0,gain);  //channel = 0 for k617
-			measurement[i] = volts_LS(gain,svalue);
-			involts=involts+measurement[i];
+			getUSB1208AnalogIn(K617,&measurement[i]);
+			current+=measurement[i];
 		}
 
-		involts=involts/(float)nSamples;
+		current=current/(float)nSamples;
 
-		printf("Current %f\t",volts_LS(gain,svalue));
+		printf("Current %f\t",current);
 
-		fprintf(fp,"%d\t%f\t",counts,sqrt(counts));
-		fprintf(fp,"%f\t%f\t",-involts,stdDeviation(measurement,nSamples));
+		fprintf(fp,"%ld\t%Lf\t",returnCounts,sqrtl(returnCounts));
+		fprintf(fp,"%f\t%f\t",-current,stdDeviation(measurement,nSamples));
 
-		involts = 0.0;
-		chan = 1;
-		// grab several readings and average
-		for (i=0;i<8;i++){
-			svalue= analogRead(BASE+chan);
-			involts = involts + 0.0107 * (float) svalue;
+		// Grab several readings and average
+		pressure=0;
+		for (i=0;i<nSamples;i++){
+			getIonGauge(&measurement[i]);
+			pressure+=measurement[i];
 		}
-		involts=involts/8.0;
-		involts = pow(10,involts-9.97);
-		printf("IG= %2.2E \n",involts);
-		fprintf(fp,"%2.4E\n",involts);
-
-		fflush(stdout);
+		pressure=pressure/(float)nSamples;
+		printf("IG= %2.2E \n",pressure);
+		fprintf(fp,"%2.4E\t%2.4E\t",pressure,stdDeviation(measurement,nSamples));
 	}
+
+	setUSB1208AnalogOut(HETARGET,0);
+
+	closeUSB1208();
 
 	free(measurement);
-
-	usbAOut_USB1208LS(hid,1,0);
-
 	fclose(fp);
 
-	//cleanly close USB
-	ret = hid_close(hid);
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_close failed with return code %d\n", ret);
-		return 1;
-	}
+	graphData(fileName);
 
-	hid_delete_HIDInterface(&hid);
-	ret = hid_cleanup();
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
-		return 1;
-	}
+	fclose(dataCollectionFlagFile);
+	remove(dataCollectionFileName);
 
+	return 0;
+}
+
+void graphData(char* fileName){
 	// Create graphs for data see gnutest.c for an explanation of 
 	// how this process works.
 	FILE *gnuplot;
+	char buffer[BUFSIZE];
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
@@ -304,18 +246,16 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, "set output\n");			
 		fprintf(gnuplot, "set key autotitle columnheader\n");			
 
-		if(totalCounts !=0){
-			// Set up the axis for the first plot
-			sprintf(buffer, "set title '%s'\n", fileName);
-			fprintf(gnuplot, buffer);
-			fprintf(gnuplot, "set xlabel 'Energy'\n");			
-			fprintf(gnuplot, "set ylabel 'Counts'\n");			
-			fprintf(gnuplot, "set yrange [0:*]\n");			
+		// Set up the axis for the first plot
+		sprintf(buffer, "set title '%s'\n", fileName);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "set xlabel 'Energy'\n");			
+		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		fprintf(gnuplot, "set yrange [0:*]\n");			
 
-			// Print the plot to the screen
-			sprintf(buffer, "plot '%s.dat' using 5:7:8 with yerrorbars\n", fileName);
-			fprintf(gnuplot, buffer);
-		}
+		// Print the plot to the screen
+		sprintf(buffer, "plot '%s.dat' using 5:7:8 with yerrorbars\n", fileName);
+		fprintf(gnuplot, buffer);
 
 		// Set up the axis for the second plot x axis stays the same
 		sprintf(buffer, "set title '%s'\n", fileName);
@@ -336,21 +276,19 @@ int main (int argc, char **argv)
 
 		// Set up the output.
 		fprintf(gnuplot, "set terminal png\n");
-		if(totalCounts != 0){
-			sprintf(buffer, "set output '%s_counts.png'\n", fileName);
-			fprintf(gnuplot, buffer);
+		sprintf(buffer, "set output '%s_counts.png'\n", fileName);
+		fprintf(gnuplot, buffer);
 
-			fprintf(gnuplot, "set key autotitle columnhead\n");			
-			// Set up the axis labels
-			sprintf(buffer, "set title '%s'\n", fileName);
-			fprintf(gnuplot, buffer);
-			fprintf(gnuplot, "set yrange [0:*]\n");			
-			fprintf(gnuplot, "set ylabel 'Counts'\n");			
-			// Print the plot
-			sprintf(buffer, "plot '%s.dat' using 5:7:8 with yerrorbars\n", fileName);
-			fprintf(gnuplot, buffer);
-			fprintf(gnuplot, "unset output\n"); 
-		}
+		fprintf(gnuplot, "set key autotitle columnhead\n");			
+		// Set up the axis labels
+		sprintf(buffer, "set title '%s'\n", fileName);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "set yrange [0:*]\n");			
+		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		// Print the plot
+		sprintf(buffer, "plot '%s.dat' using 5:7:8 with yerrorbars\n", fileName);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset output\n"); 
 
 		sprintf(buffer, "set output '%s_current.png'\n", fileName);
 		fprintf(gnuplot, buffer);
@@ -360,36 +298,10 @@ int main (int argc, char **argv)
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
-	fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
+		//fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
 		sprintf(buffer, "plot '%s.dat' using 5:9:10 with yerrorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
 
-	fclose(dataCollectionFlagFile);
-	remove(dataCollectionFileName);
-
-	return 0;
-
-}
-
-float stdDeviation(float* value, int numValues){
-	float stdDev, sum, avg;
-
-	// First Calculate the Average value
-	sum = 0.0;
-	int i;
-	for(i=0; i < numValues;i++){ 
-		sum += value[i];
-	}
-	avg = sum / (float) numValues;
-
-	// Then calculate the Standard Deviation
-	sum = 0.0;
-	for(i=0; i < numValues;i++){
-		sum += pow(avg-value[i],2);
-	}
-	stdDev = sqrt(sum/(numValues-1));
-
-	return stdDev;
 }

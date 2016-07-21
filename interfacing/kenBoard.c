@@ -1,4 +1,5 @@
 
+#include <mcp3004.h>
 #include "kenBoard.h"
 
 // ADC variables
@@ -23,10 +24,10 @@
 #define MTR2DLY 1500
 #define MTR2SPR 350
 
+void delayMicrosecondsHard(unsigned int howLong);
+
 int fd, bd, wp;
 // these are for RS485 communications
-
-
 
 long int calcDelay(int size){
 	long int del;
@@ -101,8 +102,7 @@ int x_stepMotor(unsigned int clkpin, unsigned int steps, unsigned int dirpin,uns
 		digitalWrite(clkpin,LOW);
 		delayMicrosecondsHard(dly);
 	}
-
-
+	return 0;
 }
 
 int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps){
@@ -134,8 +134,10 @@ int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps){
 		return -1;
 	}
 
+	p_home=p_home;
+	p_stepsPerRev=p_stepsPerRev;
 	x_stepMotor(p_clock,steps,p_dir,dir,p_delay);
-
+	return 0;
 }
 
 
@@ -143,10 +145,10 @@ int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps){
 // int readMotorPosition(unsigned short chan, int * returndata);
 
 int readDigital(unsigned short chan, unsigned short* returndata){
-
+	return 1;
 }
 int writeDigital(unsigned short chan, unsigned short writedata){
-
+	return 1;
 }
 
 
@@ -155,9 +157,9 @@ int writeDigital(unsigned short chan, unsigned short writedata){
 //
 
 int write_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int writedata){
-	unsigned char cmd[64];
-	unsigned char returndata[64];
-	unsigned short temp;
+	char cmd[64];
+	char returndata[64];
+	short temp;
 	int len,j,z;
 	cmd[0]=address;
 	cmd[1]=0x06; //command to write register(s)
@@ -189,23 +191,29 @@ int write_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int wr
 			} 
 		}
 	}
-return z;
+	return z;
 }
 
 
 
 int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cnReturnData){
-/*
-This layer packs together a Modbus style command to read messages. they 
-are send to rs485 communication
-any  returned data is placed in cnReturnData. 
-*/
+	/*
+	   This layer packs together a Modbus style command to read messages. they 
+	   are send to rs485 communication
+	   any  returned data is placed in cnReturnData. 
+	   */
+	/*
 	unsigned char cmd[64];
 	unsigned char returndata[64];
 	unsigned short temp;
 	unsigned int  tempint;
-	int len,j,i,z,numbytes;
-//build a Modbus RTU style command message to send 
+	*/
+	char cmd[64];
+	char returndata[64];
+	short temp;
+	int  tempint;
+	int len,j,z,numbytes;
+	//build a Modbus RTU style command message to send 
 	cmd[0]=address;
 	cmd[1]=0x03; //command to read register(s)
 	cmd[2]=((reg&0xFF00)>>8); //MSB which register
@@ -220,43 +228,44 @@ any  returned data is placed in cnReturnData.
 	cmd[len]=(unsigned char)(temp&0x00FF);  //before the LSByte
 
 	write_rs485BYTE(cmd,len+2, returndata, &j);
- /* len is the  number of input bytes in the command to send. Add two for the CRC bytes
- and send ALL these bytes.  returndata holds any response */
+	/* len is the  number of input bytes in the command to send. Add two for the CRC bytes
+	   and send ALL these bytes.  returndata holds any response */
 	z=-1; //my way of recording errors
 	tempint=0;
 
 	if(validateRTU(returndata,j)==0){	/* this checks the last
-				two CRC bytes to ensure
-				transmission is  valid.*/
+										   two CRC bytes to ensure
+										   transmission is  valid.*/
 
-	if(returndata[0]==cmd[0]){ // then the correct machine responded
-		if(returndata[1] & 0x80){// then an error occured
-			z=returndata[2];
-		}
-		else{ 
-	/*All good lets do something with the data.
-
-		The return structure looks like 
-		byte0: echo address
-		byte1: echo command. If command is 03, then 03 is expected. However, if 
-		there is an error it will return 83
-		byte2: number of bytes of data to follow: n. 
-		byte3: data byte 0.... 
-		byte3+n: data byte n-1
-		byte 3+n+1: LSB of CRC
-		byte 3+n+2: MSB of CRC
-		*/
-		numbytes=returndata[2];
-
-			for (j=0;j<numbytes;j++){
-				tempint+=(returndata[3+j] << (8*(numbytes-1-j)));
+		if(returndata[0]==cmd[0]){ // then the correct machine responded
+			if(returndata[1] & 0x80){// then an error occured
+				z=returndata[2];
 			}
-			z=0;
-			*cnReturnData=tempint;
+			else{ 
+				/*All good lets do something with the data.
+				 *
+				 * The return structure looks like 
+				 * byte0: echo address
+				 * byte1: echo command. If command is 03, then 03 is expected. However, if 
+				 * there is an error it will return 83
+				 * byte2: number of bytes of data to follow: n. 
+				 * byte3: data byte 0.... 
+				 * byte3+n: data byte n-1
+				 * byte 3+n+1: LSB of CRC
+				 * byte 3+n+2: MSB of CRC
+				 * 
+				*/
+				numbytes=returndata[2];
+
+				for (j=0;j<numbytes;j++){
+					tempint+=(returndata[3+j] << (8*(numbytes-1-j)));
+				}
+				z=0;
+				*cnReturnData=tempint;
+			}
 		}
 	}
-	}
-return z;
+	return z;
 }
 
 
@@ -311,7 +320,7 @@ int initialize_rs485(int baud,int pin){
   }
 	pinMode(wp,OUTPUT);
 	digitalWrite(wp,HIGH);
-
+	return 0;
 }//end initialize
 
 

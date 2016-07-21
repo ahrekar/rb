@@ -14,9 +14,12 @@
 #include "BK1696.h"
 
 #define K617 0
-#define PROBELASER 2
-#define REFLASER 3
+#define PUMPL 1
+#define PROBEL 2
+#define REFL 3
 #define BUFSIZE 1024
+#define PROBEOFFSET 0
+#define HETARGET 1
 /**
 //RS485 Stuff
 	// Temp control
@@ -39,7 +42,7 @@ void getConvectron(unsigned int chan,float* pressure);//0-> Helium, 1-> N2
 void getIonGauge(float* pressure);
 //End GrandvillePhillips
 
-void getUSB1208AnalogIn(int channel,float* intensity); // 0-> Keithly, 1-> Pump Laser, 2-> Probe Laser, 3-> Reference Laser
+void getUSB1208AnalogIn(int channel,float* returnValue); // 0(K617)->Keithly, 1-> Pump Laser, 2-> Probe Laser, 3-> Reference Laser
 int closeUSB1208();
 int initializeUSB1208();
 int getUSB1208AnalogIn(unsigned short chan, float* returnvalue);

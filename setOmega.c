@@ -1,43 +1,32 @@
-
 /*
+   program to set the control temperature of the Omega CN7500
 
+   usage $ sudo ./setOmega <float temperature>
 
-program to set the control temperature of the Omega CN7500
-
-usage $ sudo ./setOmega <float temperature>
-
-e.g  $sudo ./setOmega 45.5
-
-
- */
+   e.g  $sudo ./setOmega 45.5
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "tempControl.h"
-
+#include "interfacing/interfacing.h"
 
 int main (int argc, char* argv[]){
 
+	float myTemp;
+	float returnFloat;
 
-int i,j,chan;
-float myTemp;
-unsigned int returndata;
+	if(argc>1){
+		myTemp=atof(argv[1]);
+		getPVCN7500(CN_TARGET,&returnFloat);
+		printf("Target Temp:%f\n",returnFloat);
+		getPVCN7500(CN_RESERVE,&returnFloat);
+		printf("Reservoir Temp:%f\n",returnFloat);
 
-
-if(argc>1){
-	myTemp=atof(argv[1]);
-	printf("Chan 3 Temp:%f\n",getTemperature(3));
-	printf("Chan 5 Temp:%f\n",getTemperature(5));
-
-	setTargetTemperature(3,myTemp+3.0);
-
-	setTargetTemperature(5,myTemp);
-
-}else{
-printf("usage $ sudo ./setOmega <float temperature>\n Automatically sets RbTarget Reservoir to set temperature and Target +3.0°C higher\n");
-}
-
-
- return 0 ;
+		setSVCN7500(CN_RESERVE, myTemp);
+		setSVCN7500(CN_TARGET, myTemp+3.0);
+	}else{
+		printf("usage $ sudo ./setOmega <float temperature>\n Automatically sets RbTarget Reservoir to set temperature and Target +3.0°C higher\n");
+	}
+	return 0 ;
 }

@@ -56,10 +56,12 @@ ${BINARIES}: % : %.c
 
 polarizationAnalysisTools.c: polarizationAnalysisTools.h
 
-RbAbsorbScan: RbAbsorbScan.c mathTools.c interfacing/grandvillePhillips.c interfacing/BK1696.c interfacing/omegaCN7500.c interfacing/kenBoard.c interfacing/USB1208.c
-excitationfn: excitationfn.c 	tempControl.c rs485.c
-setOmega: setOmega.c 			tempControl.c rs485.c
-waitForOmega: waitForOmega.c 	tempControl.c rs485.c
+INTERFACING=interfacing/grandvillePhillips.c interfacing/BK1696.c interfacing/omegaCN7500.c interfacing/kenBoard.c interfacing/USB1208.c
+
+RbAbsorbScan: RbAbsorbScan.c mathTools.c $(INTERFACING)
+excitationfn: excitationfn.c mathTools.c $(INTERFACING) 
+setOmega: setOmega.c $(INTERFACING)
+waitForOmega: waitForOmega.c $(INTERFACING)
 
 stepmotor: stepmotor.c 				stepperMotorControl.c
 homemotor: homemotor.c 				stepperMotorControl.c

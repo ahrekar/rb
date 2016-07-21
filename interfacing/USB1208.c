@@ -3,8 +3,10 @@
 
 */
 
-#include "wiringPi.h"
+#include <wiringPi.h>
 #include "USB1208.h"
+
+void delayMicrosecondsHard(unsigned int howLong);
 
 //global variables for USB1208 but not for public
 	HIDInterface*  hid = 0x0;
