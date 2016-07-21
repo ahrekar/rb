@@ -213,7 +213,7 @@ int main (int argc, char **argv)
 		}
 		pressure=pressure/(float)nSamples;
 		printf("IG= %2.2E \n",pressure);
-		fprintf(fp,"%2.4E\t%2.4E\t",pressure,stdDeviation(measurement,nSamples));
+		fprintf(fp,"%2.4E\t%2.4E\n",pressure,stdDeviation(measurement,nSamples));
 	}
 
 	setUSB1208AnalogOut(HETARGET,0);

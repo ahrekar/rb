@@ -42,6 +42,11 @@ MODBUS RTU LAYER::
 #include <wiringPi.h>
 #include <wiringSerial.h>
 
+#define POL_MOTOR	0
+#define PROBE_MOTOR	1
+#define PUMP_MOTOR	2
+#define CCLK 0
+#define CLK 1
 
 /* KenBoard board level IO.  See schematics for orgainziation of IO and GPIO wiringPi assignments
 

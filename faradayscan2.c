@@ -28,9 +28,9 @@
 #include <wiringPi.h>
 #include "pmd.h"
 #include "usb-1208LS.h"
-#include "stepperMotorControl.h"
 #include "mathTools.h" //includes stdDeviation
 #include "tempControl.h"
+#include "interfacing/interfacing.h"
 
 #define CLK 21
 #define DIR 26
@@ -53,6 +53,7 @@ int main (int argc, char **argv)
 	signed short svalue;
 	float sumI, sumSin, sumCos;
 	float f4,f3,df4,df3,angle,stderrangle,count;
+	float returnFloat;
 	struct tm * timeinfo;
 	char fileName[BUFSIZE], comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
@@ -145,19 +146,17 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"# %s\n# %s\n",fileName,comments);
 
-	chan = 1; // IonGauge
-	x=analogRead(BASE + chan);
-	IonGauge = 0.0107 * (float)x;
-	IonGauge = pow(10,(IonGauge-9.97));
-	printf("IonGauge %2.2E Torr \n",IonGauge);
-	fprintf(fp,"# IonGauge(Torr):\t%2.2E\n",IonGauge);
+	getIonGauge(&returnFloat);
+	printf("IonGauge %2.2E Torr \n",returnFloat);
+	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
 
-	chan = 3; //pressure
-	x=analogRead(BASE + chan);
-	CVGauge = (float)x;
-	CVGauge = pow(10,(0.00499*CVGauge - 4.05));
-	printf("CVGauge %2.2E Torr\n", CVGauge);
-	fprintf(fp,"# CV Gauge(Torr):\t%2.2E\n", CVGauge);
+	getConvectron(GP_N2_CHAN,&returnFloat);
+	printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
+
+	getConvectron(GP_HE_CHAN,&returnFloat);
+	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
 	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
 	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
@@ -210,7 +209,7 @@ int main (int argc, char **argv)
 			//printf("PhotoI %f\t",involts);
 			//fflush(stdout);
 
-			moveMotor(1,1,STEPSIZE);
+			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
 
 		}
 		sumI=sumI/count;
