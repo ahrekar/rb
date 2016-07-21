@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c getadc.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayscan2.c homeWavePlate.c setWavePlate.c faradayAnalysis.c setOmega.c waitForOmega.c polarizationAnalysis.c 
+SOURCES=excitationfn.c getadc.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayscan.c homeWavePlate.c setWavePlate.c faradayAnalysis.c setOmega.c waitForOmega.c polarizationAnalysis.c 
 
 # BINARIES are the names of the executable files that we are compiling
 # This particular command substitutes a blank string for ".c" in the
@@ -65,12 +65,11 @@ waitForOmega: waitForOmega.c $(INTERFACING)
 
 stepmotor: stepmotor.c 				stepperMotorControl.c
 homemotor: homemotor.c 				stepperMotorControl.c
-faradayscan: faradayscan.c 			stepperMotorControl.c
 faradayrotation: faradayrotation.c	stepperMotorControl.c
 homeWavePlate: homeWavePlate.c 		stepperMotorControl.c
 setWavePlate: setWavePlate.c 		stepperMotorControl.c
 
-faradayscan2: faradayscan2.c mathTools.c $(INTERFACING)
+faradayscan: faradayscan.c mathTools.c $(INTERFACING)
 polarization: polarization.c polarizationAnalysisTools.c mathTools.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
 polarizationAnalysis: polarizationAnalysis.c polarizationAnalysisTools.c mathTools.c
 stepperMotorDiagnose: stepperMotorDiagnose.c tempControl.c rs485.c fileTools.c stepperMotorControl.c

@@ -32,14 +32,11 @@
 #include "tempControl.h"
 #include "interfacing/interfacing.h"
 
-#define DEL 1500
 #define PI 3.14159265358979
 #define NUMSTEPS 350	
 #define STEPSIZE 25
 #define STEPSPERREV 350.0
 
-#define BASE 100
-#define SPI_CHAN 0
 #define BUFSIZE 1024
 
 int plotData(char* fileName);
@@ -73,7 +70,7 @@ int main (int argc, char **argv)
 	// Indicate that data is being collected.
 	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
 	if (!dataCollectionFlagFile) {
-		printf("unable to open file \n");
+		printf("unable to open file:\t%s\n",dataCollectionFileName);
 		exit(1);
 	}
 
