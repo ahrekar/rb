@@ -32,8 +32,6 @@
 #include "tempControl.h"
 #include "interfacing/interfacing.h"
 
-#define CLK 21
-#define DIR 26
 #define DEL 1500
 #define PI 3.14159265358979
 #define NUMSTEPS 350	
@@ -50,7 +48,6 @@ int main (int argc, char **argv)
 {
 	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
 	time_t rawtime;
-	signed short svalue;
 	float sumI, sumSin, sumCos;
 	float f4,f3,df4,df3,angle,stderrangle,count;
 	float returnFloat;
@@ -61,20 +58,6 @@ int main (int argc, char **argv)
 	float involts; 	// The amount of light that is entering into the sensor. 
 	float stderrinvolts;
 	FILE *fp,*dataCollectionFlagFile;
-	__s16 sdata[1024];
-	__u16 value;
-	//	__u16 count;
-	//	__u8 gains[8];
-	//	__u8 options;
-	__u8 input, pin = 0, channel, gain;
-
-	int x;
-	int chan;
-	float CVGauge,IonGauge; // Rb target CV Gauge (buffer pressure)
-
-	HIDInterface*  hid = 0x0;
-	hid_return ret;
-	int interface;
 
 
 	if (argc==5){
@@ -94,36 +77,12 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	// set up USB interface
-	ret = hid_init();
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_init failed with return code %d\n", ret);
-		return -1;
-	}
-
-	if ((interface = PMD_Find_Interface(&hid, 0, USB1208LS_PID)) < 0) {
-		fprintf(stderr, "USB 1208LS not found.\n");
-		exit(1);
-	} else {
-		printf("USB 1208LS Device is found! interface = %d\n", interface);
-	}
-
-	// Setup wiringPi
-	wiringPiSetup();
-
-
-	// config mask 0x01 means all inputs
-	usbDConfigPort_USB1208LS(hid, DIO_PORTB, DIO_DIR_IN);
-	usbDConfigPort_USB1208LS(hid, DIO_PORTA, DIO_DIR_OUT);
-	usbDOut_USB1208LS(hid, DIO_PORTA, 0x0);
-
 	nsamples=32;
 	float* measurement = malloc(nsamples*sizeof(float));
 
-	// set up for stepmotor
-
-	wiringPiSetup();
-	mcp3004Setup(BASE,SPI_CHAN);
+	// Set up interfacing devices
+	initializeBoard();
+	initializeUSB1208();
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -140,11 +99,11 @@ int main (int argc, char **argv)
 
 	fp=fopen(fileName,"w");
 	if (!fp) {
-		printf("unable to open file \n");
+		printf("Unable to open file: %s\n",fileName);
 		exit(1);
 	}
 
-	fprintf(fp,"# %s\n# %s\n",fileName,comments);
+	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
 	getIonGauge(&returnFloat);
 	printf("IonGauge %2.2E Torr \n",returnFloat);
@@ -158,18 +117,16 @@ int main (int argc, char **argv)
 	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
-	fprintf(fp,"# Cell Temp 1:\t%f\n",getTemperature(3));
-	fprintf(fp,"# Cell Temp 2:\t%f\n",getTemperature(5));
-
-
-	channel = 2;// analog input for photodiode
-	gain=BP_5_00V;
+	getPVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
+	getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"Aout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
+	fprintf(fp,"Aout\tc0\ts4\td-s4\tc4\td-c4\tangle\tangleError\n");
 
+	stderrangle=0;
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
-
 		printf("Aout %d\n",Aout);
 		sumSin=0.0;
 		sumCos=0.0;
@@ -179,7 +136,7 @@ int main (int argc, char **argv)
 		count=0.0;
 		sumI=0.0;
 
-		usbAOut_USB1208LS(hid,0,Aout);
+		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 
 		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
 			// (NUMSTEPS) in increments of STEPSIZE
@@ -188,8 +145,7 @@ int main (int argc, char **argv)
 			//get samples and average
 			involts=0.0;	
 			for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
-				svalue=usbAIn_USB1208LS(hid,channel,gain);
-				measurement[i]=volts_LS(gain,svalue);
+				getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
 				involts=involts+measurement[i];
 				delay(2);
 			}
@@ -205,12 +161,7 @@ int main (int argc, char **argv)
 			df3+=pow(stderrinvolts,2)*pow(sin(2*angle),2);
 			df4+=pow(stderrinvolts,2)*pow(cos(2*angle),2);
 
-			//printf("steps %d\t",(steps));
-			//printf("PhotoI %f\t",involts);
-			//fflush(stdout);
-
 			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
-
 		}
 		sumI=sumI/count;
 		f3=sumSin/count;
@@ -218,19 +169,16 @@ int main (int argc, char **argv)
 		df3=sqrt(df3)/count;
 		df4=sqrt(df4)/count;
 
-		// NEEDED there needs to be a check?? for atan.  what if sumcos2b is zero?
-		//     CHANGED: Implemented atan2, which handles when f3 is zero.
 		angle = 0.5*atan2(f4,f3);
 		angle = angle*180.0/PI;
 
-		//		stderrangle=pow(f4/f3,2);
 		stderrangle=(1/(1+pow(f4/f3,2)))*sqrt(pow(f3,-2))*(sqrt(pow(df4,2) + stderrangle*pow(df3,2))/2.0);
 
 		stderrangle = stderrangle*180.0/PI;
 
-		printf("f0 = %f\t",sumI);
-		printf("f3 = %f\t",f3);
-		printf("f4 = %f\t",f4);
+		printf("c0 = %f\t",sumI);
+		printf("s4 = %f\t",f3);
+		printf("c4 = %f\t",f4);
 		printf("angle = %f (%f)\n",angle,stderrangle);
 		// As a reminder, these are the headers: fprintf(fp,"Aout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
 		fprintf(fp,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
@@ -240,19 +188,7 @@ int main (int argc, char **argv)
 
 	plotData(fileName);
 
-	//cleanly close USB
-	ret = hid_close(hid);
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_close failed with return code %d\n", ret);
-		return 1;
-	}
-
-	hid_delete_HIDInterface(&hid);
-	ret = hid_cleanup();
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
-		return 1;
-	}
+	closeUSB1208();
 
 	// Remove the file indicating that we are taking data.
 	fclose(dataCollectionFlagFile);

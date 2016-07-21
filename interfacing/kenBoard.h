@@ -57,7 +57,7 @@ int initializeBoard();
 int getADC(unsigned short chan, unsigned int * returndata);
 // uses MCP3008 ADC conected to SPI channel 0.
 
-int stepmotor(unsigned short mtr,unsigned int dir, unsigned int steps);
+int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps);
 // bit-bangs clock and direction for stepper motor driver.
 
 //int homemotor(unsigned short chan, unsigned int* steps);

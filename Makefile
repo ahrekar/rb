@@ -70,7 +70,7 @@ faradayrotation: faradayrotation.c	stepperMotorControl.c
 homeWavePlate: homeWavePlate.c 		stepperMotorControl.c
 setWavePlate: setWavePlate.c 		stepperMotorControl.c
 
-faradayscan2: faradayscan2.c tempControl.c mathTools.c $(INTERFACING)
+faradayscan2: faradayscan2.c mathTools.c $(INTERFACING)
 polarization: polarization.c polarizationAnalysisTools.c mathTools.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
 polarizationAnalysis: polarizationAnalysis.c polarizationAnalysisTools.c mathTools.c
 stepperMotorDiagnose: stepperMotorDiagnose.c tempControl.c rs485.c fileTools.c stepperMotorControl.c

@@ -92,10 +92,10 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#Filename:\t%s\n",fileName);
 	fprintf(fp,"#Comments:\t%s\n",comments);
-	getPVCN7500(3,&returnFloat);
-	fprintf(fp,"#CellTemp1:\t%f\n",returnFloat);
-	getPVCN7500(5,&returnFloat);
-	fprintf(fp,"#CellTemp2:\t%f\n",returnFloat);
+	getPVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
+	getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
 	fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
 
 	// Allocate some memory to store measurements for calculating
