@@ -27,6 +27,7 @@
 
 void graphData(char* fileName);
 float stdDeviation(float* values, int numValues);
+void findAndSetProbeMaxTransmission();
 
 int main (int argc, char **argv)
 {
@@ -103,6 +104,8 @@ int main (int argc, char **argv)
 	nSamples = 32;
 	float* measurement = malloc(nSamples*sizeof(float));
 
+	findAndSetProbeMaxTransmission();
+
 	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
 		setUSB1208AnalogOut(PROBEOFFSET,value);
 		printf("Aout %d \t",value);
@@ -115,15 +118,15 @@ int main (int argc, char **argv)
 		}
 
 		// grab several readings and average
-		for(k=0;k<NUMCHANNELS;k++){
+		for(k=1;k<NUMCHANNELS+1;k++){
 			for (i=0;i<nSamples;i++){
 				getUSB1208AnalogIn(k,&measurement[i]);
-				involts[k]=involts[k]+measurement[i];
+				involts[k-1]=involts[k-1]+measurement[i];
 				delay(1);
 			}
-			involts[k]=fabs(involts[k])/(float)nSamples;
-			fprintf(fp,"%f\t%f\t",involts[k],stdDeviation(measurement,nSamples));
-			printf("%f\t%f\t",involts[k],stdDeviation(measurement,nSamples));
+			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
+			fprintf(fp,"%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
+			printf("%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
 		}
 		fprintf(fp,"\n");
 		printf("\n");
@@ -180,4 +183,38 @@ void graphData(char* fileName){
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
+}
+
+void findAndSetProbeMaxTransmission(){
+	int i;
+	int numMoves=0;
+	int stepsPerRevolution=350;
+	int moveSize=stepsPerRevolution/4;
+	int foundMax=0;
+	float returnFloat;
+	float maxIntensity=0;
+	int numMovesBackToMax=0;
+	do{
+		getUSB1208AnalogIn(PROBE_LASER,&returnFloat);
+		if(fabs(returnFloat)>maxIntensity){
+			numMovesBackToMax=4-numMoves;
+			maxIntensity=fabs(returnFloat);
+		}
+		stepMotor(PROBE_MOTOR,CLK,moveSize);
+		numMoves++;
+		if(numMoves==4){
+			// Go back to the maximum
+			for(i=0;i<numMovesBackToMax+1;i++){
+				stepMotor(PROBE_MOTOR,CCLK,moveSize);
+			}
+			if(moveSize==1){
+				stepMotor(PROBE_MOTOR,CLK,moveSize);
+			}
+			moveSize=moveSize/2;
+			numMoves=0;
+		}
+		if(moveSize==0){
+			foundMax=1;
+		}
+	}while(!foundMax);
 }

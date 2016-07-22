@@ -36,14 +36,18 @@
 #define NUMSTEPS 350	
 #define STEPSIZE 25
 #define STEPSPERREV 350.0
+#define WAITTIME 2
 
 #define BUFSIZE 1024
 
 int plotData(char* fileName);
+int calculateNumberDensity(char* fileName);
+int recordNumberDensity(char* fileName);
 
 int main (int argc, char **argv)
 {
 	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
+	int dataPoints=0;
 	time_t rawtime;
 	float sumI, sumSin, sumCos;
 	float f4,f3,df4,df3,angle,stderrangle,count;
@@ -81,7 +85,7 @@ int main (int argc, char **argv)
 	initializeBoard();
 	initializeUSB1208();
 
-	// get file name.  use format "EX"+$DATE+$TIME+".dat"
+	// Get file name.  Use format "FDayScan"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
@@ -115,15 +119,21 @@ int main (int argc, char **argv)
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
 	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
+	fprintf(fp,"#CurrTemp(Res):\t%f\n",returnFloat);
+	getSVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#SetTemp(Res):\t%f\n",returnFloat);
+
 	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
+	getSVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
 	// Write the header for the data to the file.
 	fprintf(fp,"Aout\tc0\ts4\td-s4\tc4\td-c4\tangle\tangleError\n");
 
 	stderrangle=0;
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
+		dataPoints+=1;
 		printf("Aout %d\n",Aout);
 		sumSin=0.0;
 		sumCos=0.0;
@@ -144,7 +154,7 @@ int main (int argc, char **argv)
 			for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
 				getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
 				involts=involts+measurement[i];
-				delay(2);
+				delay(WAITTIME);
 			}
 			involts=involts/(float)nsamples; 
 
@@ -182,14 +192,97 @@ int main (int argc, char **argv)
 	}//end for Aout
 
 	fclose(fp);
+	closeUSB1208();
 
 	plotData(fileName);
-
-	closeUSB1208();
+	calculateNumberDensity(fileName);
+	recordNumberDensity(fileName);
 
 	// Remove the file indicating that we are taking data.
 	fclose(dataCollectionFlagFile);
 	remove(dataCollectionFileName);
+
+	return 0;
+}
+
+// Okay, so gnuplot's fitting function isn't behaving like I want it to
+// (not giving me "reasonable" answers), so I'm hacking together
+// a quick automated data fitting scheme. It involves using Wolfram,
+// so it's going to be kind of messy.
+int calculateNumberDensity(char* fileName){
+	int i=0;
+	char buffer[BUFSIZE];
+	FILE *wolfram;
+	wolfram = popen("wolfram >> /dev/null","w"); 
+
+	if (wolfram != NULL){
+		sprintf(buffer, "faradayData=Import[\"%s\",\"Data\"]\n", fileName);
+		fprintf(wolfram, buffer);
+
+		//Removes lines from the file (This one gets rid of the comments)
+	//	fprintf(wolfram, "faradayData=Delete[faradayData,{{1},{2},{3},{4},{5},{6},{7},{8}}]\n");			
+		for(i=0;i<10;i++){
+			fprintf(wolfram, "faradayData=Delete[faradayData,{{1}}]\n");			
+			
+		}
+		//Removes unneccesary columns from the file
+		for(i=0;i<5;i++){
+			fprintf(wolfram, "faradayData=Drop[faradayData,None,{2}]\n");
+		}
+		fprintf(wolfram, "faradayData=Drop[faradayData,None,{3}]\n");
+		//Removes lines from the file (This one gets rid of the data close to resonance)
+		//fprintf(wolfram, "faradayData=Delete[faradayData,{{8},{9},{10},{11}}]\n");
+		fprintf(wolfram, "l=2.8\n");
+		fprintf(wolfram, "c=2.9979*^10\n");
+		fprintf(wolfram, "re=2.8179*^-13\n");
+		fprintf(wolfram, "fge=0.34231\n");
+		fprintf(wolfram, "k=4/3\n");
+		fprintf(wolfram, "Mb=9.2740*^-24\n");
+		fprintf(wolfram, "B=5.8867*^-3\n");
+		fprintf(wolfram, "h=6.6261*^-34\n");
+		fprintf(wolfram, "vo=3.77107*^14\n");
+		fprintf(wolfram, "pi=3.14.159265\n");
+		fprintf(wolfram, "aoutConv=-.0266\n");
+		fprintf(wolfram, "aoutIntercept=14.961\n");
+		fprintf(wolfram, "const=l*c*re*fge*k*Mb*B/(4*pi*h*vo)\n");
+		fprintf(wolfram, "model=a+b*const*(vo+(aoutConv*detune+aoutIntercept)*1*^9)/((aoutConv*detune+aoutIntercept)*1*^9)^2+d*(vo+(aoutConv*detune+aoutIntercept))^5/((aoutConv*detune+aoutIntercept))^4\n");
+		fprintf(wolfram, "vect=FindFit[faradayData,model,{a,b,d},detune]\n");
+		fprintf(wolfram, "Replace[a,vect]>>fitParams.txt\n");
+		fprintf(wolfram, "Replace[b,vect]>>>fitParams.txt\n");
+		fprintf(wolfram, "Replace[d,vect]>>>fitParams.txt\n");
+	}
+	return pclose(wolfram);
+}
+
+int recordNumberDensity(char* fileName){
+	char analysisFileName[1024];
+	strcpy(analysisFileName,fileName);
+	char* extensionStart=strstr(analysisFileName,".dat");
+	strcpy(extensionStart,"analysis.dat");
+	float a,b,c;
+	int bExp,cExp;
+
+	FILE* data = fopen("fitParams.txt","r");
+	if (!data) {
+		printf("Unable to open file %s\n",fileName);
+		exit(1);
+	}
+	fscanf(data,"%f\n%f*^%d\n%f*^%d\n",	&a,&b,&bExp,&c,&cExp);
+	fclose(data);
+
+	FILE* dataSummary;
+	// Record the results along with the raw data in a file.
+	dataSummary=fopen(analysisFileName,"w");
+	if (!dataSummary) {
+		printf("Unable to open file: %s\n", analysisFileName);
+		exit(1);
+	}
+	fprintf(dataSummary,"#File\t%s\n",analysisFileName);
+	fprintf(dataSummary,"theta_o\tN\tdetuneFourthTerm\n");
+	fprintf(dataSummary,"%2.2E\t%2.2E\t%2.2E\n",a,b*pow(10,bExp),c*pow(10,cExp));
+	printf("theta_o\tdetuneSquare\tdetuneFourth\n");
+	printf("%2.2E\t%2.2E\t%2.2E\n",a,b*pow(10,bExp),c*pow(10,cExp));
+	fclose(dataSummary);
 
 	return 0;
 }
