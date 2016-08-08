@@ -8,7 +8,12 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c getadc.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayscan.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c 
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayscan.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c
+
+INTERFACING=interfacing/grandvillePhillips.c interfacing/BK1696.c interfacing/omegaCN7500.c interfacing/kenBoard.c interfacing/USB1208.c
+
+INTOBJECTS=$(INTERFACING:.c=.o)
+OBJECTS=$(SOURCES:.c=.o)
 
 # BINARIES are the names of the executable files that we are compiling
 # This particular command substitutes a blank string for ".c" in the
@@ -50,26 +55,37 @@ all: ${BINARIES}
 # file in the BINARIES list is selected by the % symbol.
 # The percent symbol from that point forward then 
 # represents the binary file's name. 
+#$(BINARIES):$@.o
+#	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-${BINARIES}: % : %.c
+
+getcounts: getcounts.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+RbAbsorbScan: RbAbsorbScan.o mathTools.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+excitationfn: excitationfn.o mathTools.o $(INTOBJECTS) 
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+faradayscan: faradayscan.o mathTools.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+setOmega: setOmega.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+setProbeLaser: setProbeLaser.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+waitForOmega: waitForOmega.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-polarizationAnalysisTools.c: polarizationAnalysisTools.h
+stepmotor: stepmotor.o 				$(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+homemotor: homemotor.o 				$(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+faradayrotation: faradayrotation.o	$(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+homeWavePlate: homeWavePlate.c 		$(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+setWavePlate: setWavePlate.c 		$(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-INTERFACING=interfacing/grandvillePhillips.c interfacing/BK1696.c interfacing/omegaCN7500.c interfacing/kenBoard.c interfacing/USB1208.c
-
-RbAbsorbScan: RbAbsorbScan.c mathTools.c $(INTERFACING)
-excitationfn: excitationfn.c mathTools.c $(INTERFACING) 
-setOmega: setOmega.c $(INTERFACING)
-waitForOmega: waitForOmega.c $(INTERFACING)
-
-stepmotor: stepmotor.c 				stepperMotorControl.c
-homemotor: homemotor.c 				stepperMotorControl.c
-faradayrotation: faradayrotation.c	stepperMotorControl.c
-homeWavePlate: homeWavePlate.c 		stepperMotorControl.c
-setWavePlate: setWavePlate.c 		stepperMotorControl.c
-
-faradayscan: faradayscan.c mathTools.c $(INTERFACING)
-polarization: polarization.c polarizationAnalysisTools.c mathTools.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
-polarizationAnalysis: polarizationAnalysis.c polarizationAnalysisTools.c mathTools.c
-stepperMotorDiagnose: stepperMotorDiagnose.c tempControl.c rs485.c fileTools.c stepperMotorControl.c
+polarizationAnalysis: polarizationAnalysis.o polarizationAnalysisTools.o mathTools.o
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
