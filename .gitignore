@@ -36,3 +36,4 @@ stepperMotorDiagnose
 
 *.data
 *~
+*.o
