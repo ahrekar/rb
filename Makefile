@@ -10,10 +10,21 @@ CC=gcc
 # SOURCES are the names of the executable files that we are compiling
 SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayscan.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c
 
-INTERFACING=interfacing/grandvillePhillips.c interfacing/BK1696.c interfacing/omegaCN7500.c interfacing/kenBoard.c interfacing/USB1208.c
+INTDIR=interfacing
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c
+INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
-INTOBJECTS=$(INTERFACING:.c=.o)
-OBJECTS=$(SOURCES:.c=.o)
+# The directory to put object files into.
+ODIR=obj
+
+# Take all of the interfacing source files, and give them .o suffixes instead.
+_INTOBJECTS=$(INTERFACING:.c=.o)
+# Create all of the interfacing object files in their own directory.
+INTOBJECTS=$(patsubst %,$(ODIR)/%,$(_INTOBJECTS))
+# Take all of the regular source files, and give them .o suffixes instead.
+_OBJECTS=$(SOURCES:.c=.o)
+# Create all of the object files in their own directory.
+OBJECTS=$(patsubst %,$(ODIR)/%,$(_OBJECTS))
 
 # BINARIES are the names of the executable files that we are compiling
 # This particular command substitutes a blank string for ".c" in the
@@ -57,6 +68,9 @@ all: ${BINARIES}
 # represents the binary file's name. 
 #$(BINARIES):$@.o
 #	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+$(ODIR)/%.o: %.c
+		$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
+
 
 
 getcounts: getcounts.o $(INTOBJECTS)
