@@ -33,6 +33,7 @@ logPumpAbs
 setBKamps
 waitForOmega
 stepperMotorDiagnose
+fitParams.txt
 
 *.data
 *~
