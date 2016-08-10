@@ -104,7 +104,7 @@ int main (int argc, char **argv)
 	nSamples = 32;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	findAndSetProbeMaxTransmission();
+	homeMotor(PROBE_MOTOR);
 
 	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
 		setUSB1208AnalogOut(PROBEOFFSET,value);
