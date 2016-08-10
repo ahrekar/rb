@@ -50,7 +50,6 @@ int printOutFloatArray(float* array, int n);
 int printOutFloatArrayWithError(float* array, float* error, int n);
 
 int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, int revolutions, float* fcReturn,float* fcErrReturn, float* avgCurrentReturn, float* avgCurrentStdDevReturn){	
-	// normalizeWithCurrent should be set to 1 if it is desired
 	// Begin File setup
 	int totalDatapoints=dataPointsPerRevolution*revolutions;
 	float currentSum, currentErrSum;
@@ -246,6 +245,12 @@ float calculateStokesErr(int i, int signOfError, float alpha, float beta, float 
 	temp[7]=calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4+fcErrors[SIN+sign+4])-k;
 
 	int j;
+	/**
+	printf("For the %d param:\n",i);
+	for(j=0;j<numVars;j++)
+		printf("\tError for the %d variable is: %f\n",j,temp[j]);
+		**/
+
 	for(j=0;j<numVars;j++)
 		totalError+=pow(temp[j],2);
 	
@@ -388,10 +393,16 @@ int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, cha
 	fprintf(dataSummary,"#Current Adj. Intensity\t%s\n",(NORMCURR==1)?"Yes":"No");
 	fprintf(dataSummary,"# SOS p1 & p2\t%f\n",pow(stokesParameters[1],2)+pow(stokesParameters[2],2));
 	// Print out the header information
+	fprintf(dataSummary,"fileName\tprocessedFile\tbackgroundFile\tcomments\t");
+	fprintf(dataSummary,"alpha\td_alpha\tbeta_0\td_beta_0\tdelta\td_delta\t");
+	fprintf(dataSummary,"normCurr\t");
 	fprintf(dataSummary,"p0\tp0ErrUp\tp0ErrDown\tp1\tp1ErrUp\tp1ErrDown\tp2\tp2ErrUp\tp2ErrDown\tp3\tp3ErrUp\tp3ErrDown\t");
 	fprintf(dataSummary,"c0\tc0ErrUp\tc0ErrDown\tc4\tc4ErrUp\tc4ErrDown\ts4\ts4ErrUp\ts4ErrDown\ts2\ts2ErrUp\ts2ErrDown\t");
 	fprintf(dataSummary,"c2\tc2ErrUp\tc2ErrDown\tAvg.Current\tAvg.CurrentStdDev\n");
 	// Print out the data
+	fprintf(dataSummary,"%s\t%s\t%s\t%s\t",analysisFileName,dataFileName,backgroundFileName,comments);
+	fprintf(dataSummary,"%f\t%f\t%f\t%f\t%f\t%f\t",ALPHA,DALPHA,BETA,DBETA,DELTA,DDELTA);
+	fprintf(dataSummary,"%d\t",NORMCURR);
 	fprintf(dataSummary,"%f\t%f\t%f\t",stokesParameters[0],spErr[0+0],spErr[NUMSTOKES+0]);
 	fprintf(dataSummary,"%f\t%f\t%f\t",stokesParameters[1],spErr[0+1],spErr[NUMSTOKES+1]);
 	fprintf(dataSummary,"%f\t%f\t%f\t",stokesParameters[2],spErr[0+2],spErr[NUMSTOKES+2]);
@@ -425,16 +436,16 @@ int plotStokesParameters(char* analysisFileName){
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Relative Stokes Parameter'\n");			
 		fprintf(gnuplot, "set ylabel 'Value'\n");			
-		fprintf(gnuplot, "set yrange [-.2:.2]\n");			
+		fprintf(gnuplot, "set yrange [-.5:.5]\n");			
 		fprintf(gnuplot, "set xrange [0:4]\n");			
-		sprintf(buffer, "plot '%s' using (1):4:($4+$5):($4-$6) w yerror,'%s' using (2):7:($7+$8):($7-$9) w yerror,'%s' using (3):10:($10+$11):($10-$12) w yerror\n",analysisFileName,analysisFileName,analysisFileName);
+		sprintf(buffer, "plot '%s' using (1):15:($15+$16):($15-$17) w yerror,'%s' using (2):18:($18+$19):($18-$20) w yerror,'%s' using (3):21:($21+$22):($21-$23) w yerror\n",analysisFileName,analysisFileName,analysisFileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", analysisFileName);
 		fprintf(gnuplot, buffer);
 		// SAME PLOT COMMANDS GO HERE
-		sprintf(buffer, "plot '%s' using (1):4:($4+$5):($4-$6) w yerror,'%s' using (2):7:($7+$8):($7-$9) w yerror,'%s' using (3):10:($10+$11):($10-$12) w yerror\n",analysisFileName,analysisFileName,analysisFileName);
+		sprintf(buffer, "plot '%s' using (1):15:($15+$16):($15-$17) w yerror,'%s' using (2):18:($18+$19):($18-$20) w yerror,'%s' using (3):21:($21+$22):($21-$23) w yerror\n",analysisFileName,analysisFileName,analysisFileName);
 		fprintf(gnuplot, buffer);
 	}
 	return pclose(gnuplot);
