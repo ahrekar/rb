@@ -13,20 +13,28 @@
 
 int main (int argc, char* argv[]){
 
-	float myTemp;
+	float tempTarg;
+	float tempRes;
 	float returnFloat;
 
-	if(argc>1){
-		myTemp=atof(argv[1]);
+	if(argc==2){
+		tempRes=atof(argv[1]);
 		getPVCN7500(CN_TARGET,&returnFloat);
 		printf("Target Temp:%f\n",returnFloat);
 		getPVCN7500(CN_RESERVE,&returnFloat);
 		printf("Reservoir Temp:%f\n",returnFloat);
 
-		setSVCN7500(CN_RESERVE, myTemp);
-		setSVCN7500(CN_TARGET, myTemp+3.0);
+		setSVCN7500(CN_RESERVE, tempRes);
+		setSVCN7500(CN_TARGET, tempRes+3.0);
+	}else if(argc==3){
+		tempTarg=atof(argv[1]);
+		tempRes=atof(argv[2]);
+		setSVCN7500(CN_TARGET, tempTarg);
+		setSVCN7500(CN_RESERVE, tempRes);
 	}else{
-		printf("usage $ sudo ./setOmega <float temperature>\n Automatically sets RbTarget Reservoir to set temperature and Target +3.0°C higher\n");
+		printf("usages:\n");
+		printf("   $ sudo ./setOmega <float temperature> --- Automatically sets RbTarget Reservoir to set temperature and Target +3.0°C higher\n");
+		printf("   $ sudo ./setOmega <float targTemp> <float resTemp>\n");
 	}
 	return 0 ;
 }

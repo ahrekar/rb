@@ -18,7 +18,7 @@ where steps is integer number of steps and dir is 0 or 1
 #include <stdio.h>
 #include <wiringPi.h>
 #include <stdlib.h>
-#include "stepperMotorControl.h"
+#include "interfacing/interfacing.h"
 
 int main (int argc, char *argv[]) {
 

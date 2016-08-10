@@ -15,23 +15,24 @@ compile
 */
 
 #include <stdio.h>
-#include <wiringPi.h>
-#include "stepperMotorControl.h"
+#include "interfacing/interfacing.h"
 
 int main (int argc, char *argv[]){
-	int i, steps, dir;
-	int motor;
+	unsigned short motor;
 
 	if (argc==2){
-		motor = atoi(argv[1]); // which steper motor
+		motor = (unsigned short) atoi(argv[1]); // which steper motor
 	} else {
 		printf("Usage:  ~$sudo ./homemotor2 <motor(0,1,2)> \n");
 		motor = 3;// not part of the switch statment, so nuthing happens
-		steps=0;
-		dir=0;
 	}
 
+	initializeBoard();
+	initializeUSB1208();
+
 	homeMotor(motor);
+
+	closeUSB1208();
 
 	return 0;
 }

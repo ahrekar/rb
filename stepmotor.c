@@ -26,14 +26,12 @@ compile
 */
 
 #include <stdio.h>
-#include <wiringPi.h>
-#include "stepperMotorControl.h"
+#include "interfacing/interfacing.h"
 
 int main (int argc, char *argv[]){
-	int i, steps, dir;
+	int steps, dir;
 	int motor;
 
-	wiringPiSetup();
 
 	if (argc==4){
 		motor = atoi(argv[1]); // which steper motor
@@ -47,7 +45,12 @@ int main (int argc, char *argv[]){
 		dir=0;
 	}
 
-	moveMotor(motor,dir,steps);
+	initializeBoard();
+	initializeUSB1208();
+
+	stepMotor(motor,dir,steps);
+
+	closeUSB1208();
 
 	return 0;
 }

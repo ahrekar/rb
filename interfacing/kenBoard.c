@@ -25,6 +25,7 @@
 #define MTR2SPR 350
 
 void delayMicrosecondsHard(unsigned int howLong);
+int x_stepMotor(unsigned int clkpin, unsigned int steps, unsigned int dirpin,unsigned int dir, unsigned int dly);
 
 int fd, bd, wp;
 // these are for RS485 communications
@@ -58,6 +59,10 @@ int initializeBoard(){
 	digitalWrite(MTR1CLK,LOW);
 	pinMode(MTR2CLK,OUTPUT);
 	digitalWrite(MTR2CLK,LOW);
+	// Setup the proper pins to receive input for the homing function
+	pinMode(MTR0HOME,INPUT);
+	pinMode(MTR1HOME,INPUT);
+	pinMode(MTR2HOME,INPUT);
 return 0;
 
 }
@@ -90,24 +95,47 @@ return 0;
 /*
 private function (for now)
 */
-int x_stepMotor(unsigned int clkpin, unsigned int steps, unsigned int dirpin,unsigned int dir, unsigned int dly){
-	int i;
-	pinMode(clkpin,OUTPUT);
-	pinMode(dirpin,OUTPUT);
-	digitalWrite(dirpin,dir);
 
-	for (i=0;i<steps;i++){
-		digitalWrite(clkpin,HIGH);
-		delayMicrosecondsHard(dly);
-		digitalWrite(clkpin,LOW);
-		delayMicrosecondsHard(dly);
+int homeMotor(unsigned short mtr){
+	int stepsTaken=0;
+	unsigned int p_home,p_stepsPerRev;
+	switch(mtr){
+		case 0:
+			p_home=MTR0HOME;
+			p_stepsPerRev=MTR0SPR;
+			break;
+		case 1:
+			p_home=MTR1HOME;
+			p_stepsPerRev=MTR1SPR;
+			break;
+		case 2:
+			p_home=MTR2HOME;
+			p_stepsPerRev=MTR2SPR;
+			break;
+		default:
+			return -1;
 	}
-	return 0;
+	if(digitalRead(p_home)){//Already in home
+		// Then move away from home and allow it 
+		// to re-find it.
+		printf("Already in home, reversing 100 steps...\n");
+		stepMotor(mtr,CLK,100);
+		if(digitalRead(p_home)){
+			printf("Error: Home state not changing\n");
+			return -1;
+		}
+	}
+	while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){
+		stepMotor(mtr,CCLK,1);
+        stepsTaken++;
+	}
+	printf("Found home in %d steps\n",stepsTaken);
+	return stepsTaken;
 }
 
 int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps){
-
-	unsigned int p_dir, p_clock, p_home, p_delay, p_stepsPerRev;
+	unsigned int p_dir, p_clock, p_delay, p_stepsPerRev;
+	int p_home;
 	switch(mtr){
 	case 0:
 		p_dir=MTR0DIR;
@@ -140,16 +168,43 @@ int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps){
 	return 0;
 }
 
+int x_stepMotor(unsigned int clkpin, unsigned int steps, unsigned int dirpin,unsigned int dir, unsigned int dly){
+	int i;
+	pinMode(clkpin,OUTPUT);
+	pinMode(dirpin,OUTPUT);
+	digitalWrite(dirpin,dir);
+
+	for (i=0;i<steps;i++){
+		digitalWrite(clkpin,HIGH);
+		delayMicrosecondsHard(dly);
+		digitalWrite(clkpin,LOW);
+		delayMicrosecondsHard(dly);
+	}
+	return 0;
+}
+
+int setMotor(unsigned short motor, int newLocation){
+	int returnValue;
+	returnValue=homeMotor(motor);
+	if(returnValue==-1)
+		return returnValue;
+	returnValue=stepMotor(motor,CCLK,newLocation);
+	if(returnValue!=0)
+		return returnValue;
+	return 0;
+}
 
 
 // int readMotorPosition(unsigned short chan, int * returndata);
 
+/**
 int readDigital(unsigned short chan, unsigned short* returndata){
 	return 1;
 }
 int writeDigital(unsigned short chan, unsigned short writedata){
 	return 1;
 }
+**/
 
 
 
