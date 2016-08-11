@@ -104,6 +104,7 @@ int main (int argc, char **argv)
 
 	fprintf(rawData,"#File\t%s\n",rawDataFileName);
 	fprintf(rawData,"#Comments\t%s\n",comments);
+	printf(rawData,"Comments:\t%s\n",comments);
 
 	getIonGauge(&returnFloat);
 	printf("IonGauge %2.2E Torr \n",returnFloat);
