@@ -13,15 +13,15 @@ else
 
 	for i in $(seq 1 5); do 
 		# Unblock the beam
-		echo "Unblocking beam..."
+		echo "Unblocking pump beam..."
 		sudo /home/pi/RbControl/setLaserFlag 1 0
 
-		echo "blocking tha probe beam"
+		echo "Blocking probe beam..."
 		sudo /home/pi/RbControl/setLaserFlag 0 1
 
 		echo "Setting pump to Pi..."
 		sudo /home/pi/RbControl/setWavePlate 61
-		echo "Pi Polarized light (Background)"
+		echo "Pi Polarized light (Background)..."
 		sudo /home/pi/RbControl/polarization "$6" "$8" "$9, pump=pi, Run $i"
 
 		echo "Setting pump to S+..."
@@ -34,6 +34,7 @@ else
 		echo "Polarization Run with S- light..."
 		sudo /home/pi/RbControl/polarization "$7" "$8" "$9, pump=s-, Run $i"
 
+		echo "Unblocking probe beam..."
 		sudo /home/pi/RbControl/setLaserFlag 0 0
 	done
 fi
