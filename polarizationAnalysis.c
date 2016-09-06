@@ -13,29 +13,32 @@
 
 int main (int argc, char **argv)
 {
-	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80]; 
+	char analysisFileName[1024],backgroundFileName[1024],rawDataFileName[1024]; 
 	char* extensionStart;
+	int normalizeWithCurrent;
 
 	// Get parameters.
-	if (argc==2){
+	if (argc==3){
 		strcpy(rawDataFileName,argv[1]);
 		strcpy(analysisFileName,argv[1]);
+		normalizeWithCurrent=atoi(argv[2]);
 		strcpy(backgroundFileName,"NONE");
-	} else if(argc==3){
+	} else if(argc==4){
 		strcpy(backgroundFileName,argv[1]);
 		strcpy(rawDataFileName,argv[2]);
 		strcpy(analysisFileName,argv[2]);
+		normalizeWithCurrent=atoi(argv[3]);
 	}else {
 		printf("You put in %d argument(s) \n",argc);
 		printf("There are two options for using this program: \n\n");
-		printf("usage '~$ ./polarizationAnalysis <data file>'\n");
-		printf("usage '~$ ./polarizationAnalysis <background file> <data file>\n");
+		printf("usage '~$ ./polarizationAnalysis <data file> <normalize with current (0=no, 1=yes)>'\n");
+		printf("usage '~$ ./polarizationAnalysis <background file> <data file> <normalize with current (0=no, 1=yes)>\n");
 		return 1;
 	}
 	extensionStart=strstr(analysisFileName,".dat");
 	strcpy(extensionStart,"analysis.dat");
 
-	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, DATAPOINTSPERREV, REVOLUTIONS, "No_longer_supports_comments"); 
+	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, DATAPOINTSPERREV, REVOLUTIONS, normalizeWithCurrent,"No_longer_supports_comments"); 
 
 	return 0;
 }

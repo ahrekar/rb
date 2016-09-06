@@ -24,9 +24,7 @@
 #define DEFINITIONS_H
 	#include "mathTools.h"
 #endif
-
-#define REVOLUTIONS 1
-#define STEPSPERREV 1200 
+#define STEPSPERREV 1200
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
 #define HPCAL 28.1/960.0
@@ -104,7 +102,7 @@ int main (int argc, char **argv)
 
 	fprintf(rawData,"#File\t%s\n",rawDataFileName);
 	fprintf(rawData,"#Comments\t%s\n",comments);
-	printf(rawData,"Comments:\t%s\n",comments);
+	printf("Comments:\t%s\n",comments);
 
 	getIonGauge(&returnFloat);
 	printf("IonGauge %2.2E Torr \n",returnFloat);
@@ -143,7 +141,7 @@ int main (int argc, char **argv)
 
 	plotData(rawDataFileName);
 
-	processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,DATAPOINTSPERREV,REVOLUTIONS,comments);
+	processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,DATAPOINTSPERREV,REVOLUTIONS,1,comments);
 
 	closeUSB1208();
 
@@ -162,7 +160,7 @@ int getPolarizationData(char* fileName, int aout, int dwell){
 	long returnCounts;
 	float current,angle;
 	float currentErr;
-	int nSamples = 8;
+	int nSamples = 32;
 	float* measurement = calloc(nSamples,sizeof(float));
 
 	// Write Aout for He traget here
@@ -193,7 +191,7 @@ int getPolarizationData(char* fileName, int aout, int dwell){
 
 		current=0.0;
 		for (i=0;i<nSamples;i++){
-			getUSB1208AnalogIn(K617,&measurement[i]);
+			getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
 			current += measurement[i];
 		}
 
@@ -228,7 +226,7 @@ void plotData(char* fileName){
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Step'\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
-		fprintf(gnuplot, "set yrange [0:*]\n");			
+		fprintf(gnuplot, "set yrange [*:*]\n");			
 		sprintf(buffer, "plot '%s' using 1:2\n",fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 

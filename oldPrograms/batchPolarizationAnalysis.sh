@@ -1,20 +1,10 @@
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_175609.dat "Background 1"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_180417.dat "Background 2"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_181216.dat "Background 3"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_182019.dat "Background 4"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_182828.dat "Background 5"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_183633.dat "Background 6"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_184439.dat "Background 7"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_185237.dat "Background 8"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_190040.dat "Background 9"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_190840.dat "Background 10"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_191641.dat "Background 11"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_192439.dat "Background 12"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_193244.dat "Background 13"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_194044.dat "Background 14"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_194846.dat "Background 15"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_195647.dat "Background 16"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_200451.dat "Background 17"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_201256.dat "Background 18"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_202055.dat "Background 19"
-sudo ./polarizationAnalysis ../RbData/2016-07-13/POL2016-07-13_202857.dat "Background 20"
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_160037.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_161122.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_162207.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_163251.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_164336.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_165420.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_170505.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_171549.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_172634.dat 0
+sudo /home/pi/RbControl/polarizationAnalysis /home/pi/RbData/2016-08-09/POL2016-08-09_173718.dat 0

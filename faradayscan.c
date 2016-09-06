@@ -124,7 +124,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"#SetTemp(Res):\t%f\n",returnFloat);
 
 	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
+	fprintf(fp,"#CurrTemp(Targ):\t%f\n",returnFloat);
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
@@ -212,6 +212,7 @@ int main (int argc, char **argv)
 int calculateNumberDensity(char* fileName){
 	int i=0;
 	char buffer[BUFSIZE];
+	//char script[BUFSIZE]="\\home\\pi\\RbControl\\shortGetFit.wl";
 	FILE *wolfram;
 	wolfram = popen("wolfram >> /dev/null","w"); 
 
@@ -219,8 +220,9 @@ int calculateNumberDensity(char* fileName){
 		sprintf(buffer, "faradayData=Import[\"%s\",\"Data\"]\n", fileName);
 		fprintf(wolfram, buffer);
 
+		//sprintf(buffer, "Get[\"%s\"]",script);
 		//Removes lines from the file (This one gets rid of the comments)
-	//	fprintf(wolfram, "faradayData=Delete[faradayData,{{1},{2},{3},{4},{5},{6},{7},{8}}]\n");			
+		//fprintf(wolfram, "faradayData=Delete[faradayData,{{1},{2},{3},{4},{5},{6},{7},{8}}]\n");			
 		for(i=0;i<10;i++){
 			fprintf(wolfram, "faradayData=Delete[faradayData,{{1}}]\n");			
 			
@@ -238,7 +240,7 @@ int calculateNumberDensity(char* fileName){
 		fprintf(wolfram, "fge=0.34231\n");
 		fprintf(wolfram, "k=4/3\n");
 		fprintf(wolfram, "Mb=9.2740*^-24\n");
-		fprintf(wolfram, "B=5.8867*^-3\n");
+		fprintf(wolfram, "B=2.08*^-2\n");
 		fprintf(wolfram, "h=6.6261*^-34\n");
 		fprintf(wolfram, "vo=3.77107*^14\n");
 		fprintf(wolfram, "pi=3.14.159265\n");

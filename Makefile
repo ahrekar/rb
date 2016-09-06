@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayscan.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayscan.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c
 
 INTDIR=interfacing
 _INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c
@@ -86,6 +86,8 @@ polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationA
 setOmega: setOmega.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 setProbeLaser: setProbeLaser.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+setHeliumTarget: setHeliumTarget.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 waitForOmega: waitForOmega.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
