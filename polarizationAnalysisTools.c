@@ -99,7 +99,6 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 																// I'm going to keep it hanging 
 																// around commented out for a while.
 		//printf("%d,%d,%f,%f\n",steps,counts,current,currentErr);
-		//
 		currentSum+=current;
 		currentErrSum+=currentErr;
 		currentValues[i]=current;
@@ -302,6 +301,7 @@ int printOutFloatArrayWithError(float* array, float* errorArray, int n){
 
 int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFileName, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent, char* comments){
 
+	printf("Data Points Per Revolution=%d\nRevolutions=%d\n",dataPointsPerRevolution,revolutions);
 	int totalDatapoints = dataPointsPerRevolution * revolutions;
 	float* fourierCoefficients = malloc(totalDatapoints*sizeof(float));
 	float* fcErr = malloc(totalDatapoints*2*sizeof(float)); 	// We need twice as many datapoints for the 
@@ -313,8 +313,10 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	float avgCurrentStdDev;
 
 	// Find fourier coefficients from raw data.
+	printf("Calculating Fourier Coefficients for raw Data...\n");
 	calculateFourierCoefficients(dataFileName,dataPointsPerRevolution,revolutions,normalizeWithCurrent,fourierCoefficients,fcErr,&avgCurrent,&avgCurrentStdDev);
 
+	printf("Plotting Data Fit...\n");
 	plotDataFit(analysisFileName,fourierCoefficients);
 
 	//printf("====Raw Data Fourier Coefficients====\n");
@@ -324,11 +326,11 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	// Calculate fourier coefficients from BG data, if provided, and
 	// remove background from data
 	if(strcmp(backgroundFileName,"NONE") != 0){
-		printf("Processing background file...\n");
 		float* fcBg = malloc(totalDatapoints*sizeof(float));
 		float* fcBgErr = malloc(totalDatapoints*2*sizeof(float));
 		float avgCurrentBg;
 		float avgCurrentBgStdDev;
+		printf("Calculating Fourier Coefficients for background...\n");
 		calculateFourierCoefficients(backgroundFileName,dataPointsPerRevolution,revolutions,normalizeWithCurrent,fcBg,fcBgErr,&avgCurrentBg,&avgCurrentBgStdDev);
 
 		//printf("====Background Fourier Coefficients====\n");
@@ -352,18 +354,21 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	// Calculate Stokes Parameters from Fourier Coefficients.
 	float* stokesParameters = malloc(NUMSTOKES*sizeof(float));
 	float* spErr = malloc(NUMSTOKES*2*sizeof(float));
+	printf("Calculating Stokes Parameters from Fourier Coefficients...\n");
 	calculateStokesFromFC(fourierCoefficients,fcErr,stokesParameters,spErr);
 
 	printf("====Stokes Parameters====\n");
 	printOutSP(stokesParameters,spErr);
 	printf("\n");
 
+	printf("Writing analysis to file...\n");
 	writeDataSummaryToFile(analysisFileName,backgroundFileName,dataFileName,
 							normalizeWithCurrent,comments,
 							fourierCoefficients,fcErr,
 							stokesParameters,spErr,
 							avgCurrent,avgCurrentStdDev);
 
+	printf("Generating graph of Stokes parameters...\n");
 	plotStokesParameters(analysisFileName);
 
 	free(fourierCoefficients);

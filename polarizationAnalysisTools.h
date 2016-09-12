@@ -13,9 +13,9 @@
 #define HPCAL 28.1/960.0
 #define NORMCURR 0 	// Set this to 1 to normalize the intensity with the current
 #define DWELL 1		// The number of seconds to pause, letting electronics settle
-#define ALPHA 16.64	// The constant Alpha (location of transmission axis), measured in degrees.
+#define ALPHA -30.07	// The constant Alpha (location of transmission axis), measured in degrees.
 #define DALPHA 0.0	// The uncertainty in ALPHA
-#define BETA -10.61	// The constant Beta_0 (beginning position of QWP relative to positive x axis  ) measured in degrees.
+#define BETA 9.08	// The constant Beta_0 (beginning position of QWP relative to positive x axis  ) measured in degrees.
 #define DBETA 0.0		// The uncertainty in BETA
 #define DELTA 90.0	// The constant Delta (wave plate retardance) in degrees.
 #define DDELTA 2.0	// The uncertainty in DELTA
