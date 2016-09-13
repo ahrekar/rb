@@ -38,36 +38,32 @@
 int plotData(char* fileName);
 int calculateNumberDensity(char* fileName);
 int recordNumberDensity(char* fileName);
-int analyzeData(char* fileName);
+int analyzeData(char* fileName,int dataPtsPerRev, int revolutions, int numAouts);
+int	readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, int* steps, float* intensity, float* inensityErr);
+float calculateOneSumTerm(int trigFunc, int dataPointsPerRevolution,int revolutions,float intensity, float i,int k);
+float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevolution, int revolutions, float intensity,float intensityErr, float i, float iErr, int k);
+int fourierAnalysis(int dataPointsPerRevolution, int revolutions, int* steps, float* intensity, float* intensityErr, float* fourierCoefficients, float* fcErr);
 
 int main (int argc, char **argv)
 {
-	float sumI, sumSin, sumCos;
-	float f4,f3,df4,df3,angle,stderrangle,count;
-	float returnFloat;
-	struct tm * timeinfo;
-	char fileName[BUFSIZE], comments[BUFSIZE];
-
-	float involts; 	// The amount of light that is entering into the sensor. 
-	float stderrinvolts;
-	FILE *fp,*dataCollectionFlagFile;
-
-
-	if (argc==5){
-		AoutStart= atoi(argv[1]);
-		AoutStop=atoi(argv[2]);
-		deltaAout=atoi(argv[3]);
-		strcpy(comments,argv[4]);
+	char fileName[1024];
+	if (argc==2){
+		strcpy(fileName,argv[1]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments in quotes>'\n");
+		printf("usage '~$ sudo ./faradayscan <fileName>'\n");
 		return 1;
 	}
 
-
+	int dataPointsPerRev=14;
+	int revolutions=1;
+	int numAouts=5;
+	printf("Processing Data...\n");
+	analyzeData(fileName,dataPointsPerRev,revolutions,numAouts);
+/*
 	plotData(fileName);
 	calculateNumberDensity(fileName);
 	recordNumberDensity(fileName);
-
+*/
 	return 0;
 }
 
@@ -183,74 +179,158 @@ int plotData(char* fileName){
 	return pclose(gnuplot);
 }
 
-int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
+int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions, int numAouts){
 	int totalDatapoints=dataPointsPerRevolution*revolutions;
+	int cos=0;
+	int sin=dataPointsPerRevolution/2;
+	int pos=0;
+	int neg=dataPointsPerRevolution;
+
+	char* extensionStart;
+
+	FILE* rawData = fopen(fileName,"r");
+	if (!rawData) {
+		printf("Unable to open file %s\n",fileName);
+		exit(1);
+	}
+	int* aouts=calloc(totalDatapoints*numAouts,sizeof(float)); 
+	float* intensity=calloc(totalDatapoints*numAouts,sizeof(float));
+	float* intensityErr=calloc(totalDatapoints*numAouts,sizeof(float));
+	int* steps=calloc(totalDatapoints*numAouts,sizeof(float)); 
+
+	printf("Reading in data...\n");
+	readInData(fileName,totalDatapoints,numAouts,aouts,steps,intensity,intensityErr);
+	printf("Data read in.\n");
+
 	extensionStart=strstr(fileName,".dat");
 	strcpy(extensionStart,"Analysis.dat");
-	FILE* data = fopen(fileName,"r");
-	// Write the header for the data to the file.
-	fprintf(fp,"Aout\tc0\ts4\td-s4\tc4\td-c4\tangle\tangleError\n");
 
-	stderrangle=0;
-	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
-		dataPoints+=1;
-		printf("Aout %d\n",Aout);
-		sumSin=0.0;
-		sumCos=0.0;
-		df4=0.0;
-		df3=0.0;
-		angle=0.0;
-		count=0.0;
-		sumI=0.0;
+	FILE* analysis = fopen(fileName,"w");
+	if (!analysis) {
+		printf("Unable to open file %s\n",fileName);
+		exit(1);
+	}
 
-		setUSB1208AnalogOut(PROBEOFFSET,Aout);
+	fprintf(analysis,"Aout\tc0\ts4\td-s4\tc4\td-c4\tangle\tangleError\n");
+	float* fourierCoefficients = calloc(totalDatapoints,sizeof(float));
+	float* fcErr = calloc(totalDatapoints*2,sizeof(float));
+	int i;
+	float c0,s4,c4,angle,stderrangle=0;
 
-		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
-			// (NUMSTEPS) in increments of STEPSIZE
-
-			delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
-			//get samples and average
-			involts=0.0;	
-			for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
-				getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
-				involts=involts+measurement[i];
-				delay(WAITTIME);
-			}
-			involts=involts/(float)nsamples; 
-
-			stderrinvolts = stdDeviation(measurement,nsamples);
-
-			angle=2.0*PI*(float)(steps)/STEPSPERREV; // Calculate the angle in radians of the axis of the LP
-			count=count+1.0;
-			sumSin+=involts*sin(2*angle);
-			sumCos+=involts*cos(2*angle);
-			sumI+=involts;
-			df3+=pow(stderrinvolts,2)*pow(sin(2*angle),2);
-			df4+=pow(stderrinvolts,2)*pow(cos(2*angle),2);
-
-			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
-		}
-		sumI=sumI/count;
-		f3=sumSin/count;
-		f4=sumCos/count;
-		df3=sqrt(df3)/count;
-		df4=sqrt(df4)/count;
-
-		angle = 0.5*atan2(f4,f3);
+	printf("Beginning Data Analysis...\n");
+	for(i=0;i<numAouts;i++){
+		fourierAnalysis(dataPointsPerRevolution,revolutions,&steps[totalDatapoints*i],&intensity[totalDatapoints*i],&intensityErr[totalDatapoints*i],fourierCoefficients,fcErr);
+		c0=fourierCoefficients[cos+0];
+		s4=fourierCoefficients[sin+4];
+		c4=fourierCoefficients[cos+4];
+		angle = 0.5*atan2(c4,s4);
 		angle = angle*180.0/PI;
-
-		stderrangle=(1/(1+pow(f4/f3,2)))*sqrt(pow(f3,-2))*(sqrt(pow(df4,2) + stderrangle*pow(df3,2))/2.0);
-
+		stderrangle=(1/(1+pow(c4/s4,2)))*sqrt(pow(s4,-2))*(sqrt(pow(fcErr[cos+pos],2) + stderrangle*pow(fcErr[sin+pos],2))/2.0);
 		stderrangle = stderrangle*180.0/PI;
+		printf("c0 = %f\ts4 = %f\tc4 = %f\tangle = %f (%f)\n",c0,s4,c4,angle,stderrangle);
+		fprintf(analysis,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",aouts[i],c0,s4,fcErr[sin+pos],fcErr[sin+neg],c4,fcErr[cos+pos],fcErr[cos+neg],angle,stderrangle);
+	}
+	free(aouts);
+	free(intensity);
+	free(intensityErr);
+	free(steps);
+	fclose(analysis);
 
-		printf("c0 = %f\t",sumI);
-		printf("s4 = %f\t",f3);
-		printf("c4 = %f\t",f4);
-		printf("angle = %f (%f)\n",angle,stderrangle);
-		// As a reminder, these are the headers: fprintf(fp,"Aout\tf0\tf3\td-f3\tf4\td-f4\tangle\tangleError\n");
-		fprintf(fp,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",Aout,sumI,f3,df3,f4,df4,angle,stderrangle);
-	}//end for Aout
+	return 0;
+}
 
-	fclose(fp);
+int readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, int* steps, float* intensity, float* intensityErr){
+	FILE* data = fopen(fileName,"r");
+	char trash[1024];
+	if (!data) {
+		printf("Unable to open file %s\n",fileName);
+		exit(1);
+	}
 
+	// Skips over comment lines and the header.
+	do{
+		fgets(trash,1024,data);
+		printf("Skipped a line\n");
+	}while(trash[0]=='#');
+
+	int i;
+	for (i=0; i< totalDatapoints*numAouts; i++){
+		fscanf(data,"%d\t%d\t%f\t%f\n",&aouts[i],&steps[i],&intensity[i],&intensityErr[i]);
+		printf("%d\t%d\t%f\t%f\n",aouts[i],steps[i],intensity[i],intensityErr[i]);
+	}
+
+	fclose(data);
+	return 0;
+}
+
+int fourierAnalysis(int dataPointsPerRevolution, int revolutions, int* steps, float* intensity, float* intensityErr, float* fourierCoefficients, float* fcErr){
+	float dstep=1.0/350.0;
+	int totalDatapoints = dataPointsPerRevolution*revolutions;
+
+	int i;
+	int k;
+	int cos=0;
+	int sin=dataPointsPerRevolution/2;
+	int pos=0;
+	int neg=dataPointsPerRevolution;
+	for (k=0; k < totalDatapoints/2; k++){
+		fourierCoefficients[cos+k]=0;
+		fourierCoefficients[sin+k]=0;
+		fcErr[cos+pos+k]=0;
+		fcErr[cos+neg+k]=0;
+		fcErr[sin+pos+k]=0;
+		fcErr[sin+neg+k]=0;
+	}
+	for (i=0;i < totalDatapoints;i++){ 
+		for (k=0; k < totalDatapoints/2; k++){
+			fourierCoefficients[cos+k] += calculateOneSumTerm(cos,dataPointsPerRevolution,revolutions,intensity[i], (float)i, k);
+			fourierCoefficients[sin+k] += calculateOneSumTerm(sin,dataPointsPerRevolution,revolutions,intensity[i], (float)i, k);
+
+			fcErr[cos+pos+k] += pow(calculateOneSumTermError(cos,pos,dataPointsPerRevolution,revolutions,intensity[i],intensityErr[i],(float)i,dstep,k),2);
+			fcErr[cos+neg+k] += pow(calculateOneSumTermError(cos,neg,dataPointsPerRevolution,revolutions,intensity[i],intensityErr[i],(float)i,dstep,k),2);
+			fcErr[sin+pos+k] += pow(calculateOneSumTermError(sin,pos,dataPointsPerRevolution,revolutions,intensity[i],intensityErr[i],(float)i,dstep,k),2);
+			fcErr[sin+neg+k] += pow(calculateOneSumTermError(sin,neg,dataPointsPerRevolution,revolutions,intensity[i],intensityErr[i],(float)i,dstep,k),2);
+		}
+	}
+	for (k=0; k < totalDatapoints/2; k++){
+		fcErr[cos+pos+k]=sqrt(fcErr[cos+pos+k]);
+		fcErr[cos+neg+k]=sqrt(fcErr[cos+neg+k]);
+		fcErr[sin+pos+k]=sqrt(fcErr[sin+pos+k]);
+		fcErr[sin+neg+k]=sqrt(fcErr[sin+neg+k]);
+	}
+	return 0;
+}
+
+float calculateOneSumTerm(int trigFunc, int dataPointsPerRevolution,int revolutions,float intensity, float i,int k){
+	int totalDatapoints = dataPointsPerRevolution*revolutions;
+	int cosIndex=0;
+
+	int d0_L=0;	// d0_L represents two delta functions. See Berry for
+				// more info.
+	if(k==0){
+		d0_L=1;
+	}else if(k==totalDatapoints/2-1 && totalDatapoints%2==0){
+		d0_L=1;
+	}
+	else{
+		d0_L=0;
+	}
+	if (trigFunc==cosIndex)
+		return 2 * intensity * cos(k*((2*PI*revolutions)*i/totalDatapoints))/(totalDatapoints*(1+d0_L));
+	else
+		return 2 * intensity * sin(k*((2*PI*revolutions)*i/totalDatapoints))/(totalDatapoints*(1+d0_L));
+}
+
+float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevolution, int revolutions, float intensity,float intensityErr, float i, float iErr, int k){
+	int pos=0;
+
+	if (posOrNeg!=pos){
+		intensityErr=-intensityErr;	
+		iErr=-iErr;	
+	}
+	
+	float sI=calculateOneSumTerm(trigFunc,dataPointsPerRevolution,revolutions,intensity+intensityErr,i,k)-calculateOneSumTerm(trigFunc,dataPointsPerRevolution,revolutions,intensity,i,k);
+	float sStep=calculateOneSumTerm(trigFunc,dataPointsPerRevolution,revolutions,intensity,i+iErr,k)-calculateOneSumTerm(trigFunc,dataPointsPerRevolution,revolutions,intensity,i,k);
+
+	return sqrt(pow(sI,2)+pow(sStep,2));
 }
