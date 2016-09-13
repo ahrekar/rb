@@ -134,7 +134,6 @@ int main (int argc, char **argv)
 
 		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
 			// (NUMSTEPS) in increments of STEPSIZE
-
 			delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
 			//get samples and average
 			involts=0.0;	
@@ -145,7 +144,7 @@ int main (int argc, char **argv)
 			}
 			involts=involts/(float)nsamples; 
 
-			fprintf(fp,"%d\t%d\t%f\n",Aout,steps,involts);
+			fprintf(fp,"%d\t%d\t%f\t%f\n",Aout,steps,involts,stdDeviation(measurement,nsamples));
 
 			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
 		}
