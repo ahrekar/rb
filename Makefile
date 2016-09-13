@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayscan.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c
 
 INTDIR=interfacing
 _INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c
@@ -79,7 +79,7 @@ RbAbsorbScan: RbAbsorbScan.o mathTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 excitationfn: excitationfn.o mathTools.o $(INTOBJECTS) 
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayscan: faradayscan.o mathTools.o $(INTOBJECTS)
+faradayScan: faradayScan.o mathTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
@@ -104,4 +104,6 @@ setWavePlate: setWavePlate.c 		$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
 polarizationAnalysis: polarizationAnalysis.o polarizationAnalysisTools.o mathTools.o
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+faradayScanAnalysis: faradayScanAnalysis.o mathTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
