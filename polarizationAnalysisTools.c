@@ -28,29 +28,29 @@
 int processFile(char* backgroundFileName, char* comments);
 int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent, char* comments);
 
-int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, int Revolutions, int normalizeWithCurrent, float* fcReturn, float* fcErrReturn, float* avgCurrentReturn, float* avgCurrentStdDevReturn);
+int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, int Revolutions, int normalizeWithCurrent, float* fcCosRet, float* fcCosErrRet, float* fcSinRet, float* fcSinErrRet, float* avgCurrentReturn, float* avgCurrentStdDevReturn);
 float calculateOneSumTerm(int trigFunc, float intensity, float i,int k);
 float calculateOneSumTermError(int trigFunc, int posOrNeg, float intensity,float intensityErr, float i, float iErr, int k);
 
-int calculateStokesFromFC(float* fourierCoefficients, float* fcErr, float* stokesReturn, float* stokesErrReturn);
+int calculateStokesFromFC(float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr, float* stokesReturn, float* stokesErrReturn);
 float calculateStokes(int i, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4);
-float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4, float* fcErrors);
+float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr);
 
 int writeDataSummaryToFile(char* rawDataFileName, char* analysisFileName, char* backgroundFileName, 
 							int normalizeWithCurrent, char* comments,
-							float* fourierCoefficients, float* fcError, 
+							float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr,
 							float* stokesParameters, float* spError,
 							float avgCurrent, float avgCurrentStdDev);
 
 int plotStokesParameters(char* analysisFileName);
-int plotDataFit(char* analysisFileName,float* fourierCoefficients);
+int plotDataFit(char* analysisFileName,float* fcCos, float* fcSin);
 
 int printOutFC(float* fourierCoefficients, float* fcErr);
 int printOutSP(float* sp, float* spError);
 int printOutFloatArray(float* array, int n);
 int printOutFloatArrayWithError(float* array, float* error, int n);
 
-int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent, float* fcReturn,float* fcErrReturn, float* avgCurrentReturn, float* avgCurrentStdDevReturn){	
+int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent, float* fcCosRet, float* fcCosErrRet, float* fcSinRet, float* fcSinErrRet, float* avgCurrentReturn, float* avgCurrentStdDevReturn){	
 	// Begin File setup
 	int totalDatapoints=dataPointsPerRevolution*revolutions;
 	float currentSum, currentErrSum;
@@ -63,12 +63,12 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 	// End File setup
 	int k;
 	for (k=0; k < totalDatapoints/2; k++){
-		fcReturn[COS+k]=0;
-		fcReturn[SIN+k]=0;
-		fcErrReturn[COS+POS+k]=0;
-		fcErrReturn[COS+NEG+k]=0;
-		fcErrReturn[SIN+POS+k]=0;
-		fcErrReturn[SIN+NEG+k]=0;
+		fcCosRet[k]=0;
+		fcSinRet[k]=0;
+		fcCosErrRet[POS+k]=0;
+		fcCosErrRet[NEG+k]=0;
+		fcSinErrRet[POS+k]=0;
+		fcSinErrRet[NEG+k]=0;
 	}
 	// TODO: implement the FFT version of this. 
 	int i;
@@ -76,7 +76,7 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 					 	// This is a buffer to accomplish that.
 	trash[0]='#'; 	// This is a quickly thrown together hack to avoid having an fgets statement 
 				 	// outside of the while loop.
-	
+	float initialCurrent=0;	
 	currentSum=0;
 	currentErrSum=0;
 	for (i=0; i< totalDatapoints; i++){
@@ -92,16 +92,11 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 		//printf("Lines skipped=%d\n",j);
 		trash[0]='a';
 		fscanf(data,"%d\t%d\t%f\t%f\t%f\n",&steps,&counts,&current,&currentErr,&angle);
-		//fscanf(data,"%d\t%d\t%f\t%f\n",&steps,&counts,&current,&currentErr);
-		//fscanf(data,"%d,%d,%f\n",&steps,&counts,&current); 	// Because I think I might want to revert 
-																// to non-error calculations 
-																// quickly at some point
-																// I'm going to keep it hanging 
-																// around commented out for a while.
-		//printf("%d,%d,%f,%f\n",steps,counts,current,currentErr);
 		currentSum+=current;
 		currentErrSum+=currentErr;
 		currentValues[i]=current;
+		if(i==0)
+			initialCurrent=current;
 
 		float intensity;
 		float intensityErr;
@@ -109,17 +104,17 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 			intensity=counts;
 			intensityErr=sqrt((float)counts);
 			if(normalizeWithCurrent==1){
-				intensity=intensity/fabs(current);
-				intensityErr=counts/fabs(current)*sqrt(pu2(counts,sqrt(counts))+pu2(current,currentErr));
+				intensity=intensity/fabs(current/initialCurrent);
+				intensityErr=counts/fabs(current/initialCurrent)*sqrt(pu2(counts,sqrt(counts))+pu2(current,currentErr));
 			}
 
-			fcReturn[COS+k] += calculateOneSumTerm(COS,intensity, (float)i, k);
-			fcReturn[SIN+k] += calculateOneSumTerm(SIN,intensity, (float)i, k);
+			fcCosRet[k] += calculateOneSumTerm(COS,intensity, (float)i, k);
+			fcSinRet[k] += calculateOneSumTerm(SIN,intensity, (float)i, k);
 
-			fcErrReturn[COS+POS+k] += pow(calculateOneSumTermError(COS,POS,intensity,intensityErr,(float)i,DSTEP,k),2);
-			fcErrReturn[COS+NEG+k] += pow(calculateOneSumTermError(COS,NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
-			fcErrReturn[SIN+POS+k] += pow(calculateOneSumTermError(SIN,POS,intensity,intensityErr,(float)i,DSTEP,k),2);
-			fcErrReturn[SIN+NEG+k] += pow(calculateOneSumTermError(SIN,NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcCosErrRet[POS+k] += pow(calculateOneSumTermError(COS,POS,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcCosErrRet[NEG+k] += pow(calculateOneSumTermError(COS,NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcSinErrRet[POS+k] += pow(calculateOneSumTermError(SIN,POS,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcSinErrRet[NEG+k] += pow(calculateOneSumTermError(SIN,NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
 		}
 		//printf("%f\t%f\n",fcErrReturn[COS+POS+0],fcErrReturn[COS+POS+1]);
 	}
@@ -128,10 +123,10 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 	*avgCurrentStdDevReturn = stdDeviation(currentValues,totalDatapoints);
 
 	for (k=0; k < totalDatapoints/2; k++){
-		fcErrReturn[COS+POS+k]=sqrt(fcErrReturn[COS+POS+k]);
-		fcErrReturn[COS+NEG+k]=sqrt(fcErrReturn[COS+NEG+k]);
-		fcErrReturn[SIN+POS+k]=sqrt(fcErrReturn[SIN+POS+k]);
-		fcErrReturn[SIN+NEG+k]=sqrt(fcErrReturn[SIN+NEG+k]);
+		fcCosErrRet[POS+k]=sqrt(fcCosErrRet[POS+k]);
+		fcCosErrRet[NEG+k]=sqrt(fcCosErrRet[NEG+k]);
+		fcSinErrRet[POS+k]=sqrt(fcSinErrRet[POS+k]);
+		fcSinErrRet[NEG+k]=sqrt(fcSinErrRet[NEG+k]);
 	}
 	//printf("Lines Read: %d\n",i);
 	fclose(data);
@@ -167,22 +162,22 @@ float calculateOneSumTermError(int trigFunc, int posOrNeg, float intensity,float
 	return sqrt(pow(sI,2)+pow(sStep,2));
 }
 
-int calculateStokesFromFC(float* fourierCoefficients, float* fcErrors, float* stokesReturn, float* stokesErrorReturn){
+int calculateStokesFromFC(float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr, float* stokesReturn, float* stokesErrorReturn){
 	float delta=2*PI*(DELTA)/360.0;
 	float alpha=2*PI*(ALPHA)/360.0;
 	float beta_0=2*PI*(BETA)/360.0;
-	float c0=fourierCoefficients[COS+0];
-	float c2=fourierCoefficients[COS+2];
-	float c4=fourierCoefficients[COS+4];
-	float s2=fourierCoefficients[SIN+2];
-	float s4=fourierCoefficients[SIN+4];
+	float c0=fcCos[0];
+	float c2=fcCos[2];
+	float c4=fcCos[4];
+	float s2=fcSin[2];
+	float s4=fcSin[4];
 	int pos=0;
 	int neg=NUMSTOKES;
 	int i;
 	for(i=0;i<NUMSTOKES;i++){
 		stokesReturn[i]=calculateStokes(i,alpha,beta_0,delta,c0,c2,c4,s2,s4);
-		stokesErrorReturn[pos+i]=calculateStokesErr(i,pos,alpha,beta_0,delta,c0,c2,c4,s2,s4,fcErrors);
-		stokesErrorReturn[neg+i]=calculateStokesErr(i,neg,alpha,beta_0,delta,c0,c2,c4,s2,s4,fcErrors);
+		stokesErrorReturn[pos+i]=calculateStokesErr(i,pos,alpha,beta_0,delta,fcCos,fcCosErr,fcSin,fcSinErr);
+		stokesErrorReturn[neg+i]=calculateStokesErr(i,neg,alpha,beta_0,delta,fcCos,fcCosErr,fcSin,fcSinErr);
 	}	
 	return 0;
 }
@@ -218,7 +213,12 @@ float calculateStokes(int i, float alpha, float beta, float delta, float c0, flo
 	}
 }
 
-float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4, float* fcErrors){
+float calculateStokesErr(int i, int signOfError, float alpha, float beta, float delta, float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr){
+	float c0=fcCos[0];
+	float c2=fcCos[2];
+	float c4=fcCos[4];
+	float s2=fcSin[2];
+	float s4=fcSin[4];
 	int numVars = 8;
 	float* temp = calloc(numVars,sizeof(float));
 	float totalError=0;
@@ -238,18 +238,13 @@ float calculateStokesErr(int i, int signOfError, float alpha, float beta, float 
 	temp[0]=calculateStokes(i,   alpha+sgn*(dAlpha)     , beta, delta, c0, c2, c4, s2, s4)-k;
 	temp[1]=calculateStokes(i,alpha, beta  +  sgn*dBeta       , delta, c0, c2, c4, s2, s4)-k;
 	temp[2]=calculateStokes(i,alpha, beta,     delta+sgn*dDelta      , c0, c2, c4, s2, s4)-k;
-	temp[3]=calculateStokes(i,alpha, beta, delta, c0+fcErrors[COS+sign+0], c2, c4, s2, s4)-k;
-	temp[4]=calculateStokes(i,alpha, beta, delta, c0, c2+fcErrors[COS+sign+2], c4, s2, s4)-k;
-	temp[5]=calculateStokes(i,alpha, beta, delta, c0, c2, c4+fcErrors[COS+sign+4], s2, s4)-k;
-	temp[6]=calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2+fcErrors[SIN+sign+2], s4)-k;
-	temp[7]=calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4+fcErrors[SIN+sign+4])-k;
+	temp[3]=calculateStokes(i,alpha, beta, delta, c0+fcCosErr[sign+0], c2, c4, s2, s4)-k;
+	temp[4]=calculateStokes(i,alpha, beta, delta, c0, c2+fcCosErr[sign+2], c4, s2, s4)-k;
+	temp[5]=calculateStokes(i,alpha, beta, delta, c0, c2, c4+fcCosErr[sign+4], s2, s4)-k;
+	temp[6]=calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2+fcSinErr[sign+2], s4)-k;
+	temp[7]=calculateStokes(i,alpha, beta, delta, c0, c2, c4, s2, s4+fcSinErr[sign+4])-k;
 
 	int j;
-	/**
-	printf("For the %d param:\n",i);
-	for(j=0;j<numVars;j++)
-		printf("\tError for the %d variable is: %f\n",j,temp[j]);
-		**/
 
 	for(j=0;j<numVars;j++)
 		totalError+=pow(temp[j],2);
@@ -303,21 +298,23 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 
 	printf("Data Points Per Revolution=%d\nRevolutions=%d\n",dataPointsPerRevolution,revolutions);
 	int totalDatapoints = dataPointsPerRevolution * revolutions;
-	float* fourierCoefficients = malloc(totalDatapoints*sizeof(float));
-	float* fcErr = malloc(totalDatapoints*2*sizeof(float)); 	// We need twice as many datapoints for the 
-														// error because I'm doing the upper error and
-														// lower error separately. I'll access the upper
-														// and lower error in a similarly convoluted way
-														// to how I access the fourier coefficients.
+	float* fcCos = malloc(totalDatapoints/2*sizeof(float));
+	float* fcSin = malloc(totalDatapoints/2*sizeof(float));
+	float* fcCosErr = malloc(totalDatapoints*sizeof(float)); 	// We need twice as many datapoints for the 
+	float* fcSinErr = malloc(totalDatapoints*sizeof(float)); 	// error because I'm doing the upper error and   														
+																// lower error separately. I'll access the upper
+																// and lower error in a similarly convoluted way
+																// to how I access the fourier coefficients.     
+																
 	float avgCurrent;
 	float avgCurrentStdDev;
 
 	// Find fourier coefficients from raw data.
 	printf("Calculating Fourier Coefficients for raw Data...\n");
-	calculateFourierCoefficients(dataFileName,dataPointsPerRevolution,revolutions,normalizeWithCurrent,fourierCoefficients,fcErr,&avgCurrent,&avgCurrentStdDev);
+	calculateFourierCoefficients(dataFileName,dataPointsPerRevolution,revolutions,normalizeWithCurrent,fcCos,fcCosErr,fcSin,fcSinErr,&avgCurrent,&avgCurrentStdDev);
 
 	printf("Plotting Data Fit...\n");
-	plotDataFit(analysisFileName,fourierCoefficients);
+	plotDataFit(analysisFileName,fcCos,fcSin);
 
 	//printf("====Raw Data Fourier Coefficients====\n");
 	//printOutFC(fourierCoefficients,fcErr);
@@ -326,12 +323,14 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	// Calculate fourier coefficients from BG data, if provided, and
 	// remove background from data
 	if(strcmp(backgroundFileName,"NONE") != 0){
-		float* fcBg = malloc(totalDatapoints*sizeof(float));
-		float* fcBgErr = malloc(totalDatapoints*2*sizeof(float));
+		float* fcCosBg = malloc(totalDatapoints/2*sizeof(float));
+		float* fcSinBg = malloc(totalDatapoints/2*sizeof(float));
+		float* fcCosBgErr = malloc(totalDatapoints*sizeof(float));
+		float* fcSinBgErr = malloc(totalDatapoints*sizeof(float));
 		float avgCurrentBg;
 		float avgCurrentBgStdDev;
 		printf("Calculating Fourier Coefficients for background...\n");
-		calculateFourierCoefficients(backgroundFileName,dataPointsPerRevolution,revolutions,normalizeWithCurrent,fcBg,fcBgErr,&avgCurrentBg,&avgCurrentBgStdDev);
+		calculateFourierCoefficients(backgroundFileName,dataPointsPerRevolution,revolutions,normalizeWithCurrent,fcCosBg,fcCosBgErr,fcSinBg,fcSinBgErr,&avgCurrentBg,&avgCurrentBgStdDev);
 
 		//printf("====Background Fourier Coefficients====\n");
 		//printOutFC(fcBg,fcBgErr);
@@ -339,23 +338,28 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 
 		int k;
 		for (k=0; k < totalDatapoints; k++){
-			fourierCoefficients[k]-=fcBg[k];
-			fcErr[POS+k]=sqrt(pow(fcErr[POS+k],2)+pow(fcBgErr[POS+k],2));
-			fcErr[NEG+k]=sqrt(pow(fcErr[NEG+k],2)+pow(fcBgErr[NEG+k],2));
+			fcCos[k]-=fcCosBg[k];
+			fcSin[k]-=fcSinBg[k];
+			fcCosErr[POS+k]=sqrt(pow(fcCosErr[POS+k],2)+pow(fcCosBgErr[POS+k],2));
+			fcCosErr[NEG+k]=sqrt(pow(fcCosErr[NEG+k],2)+pow(fcCosBgErr[NEG+k],2));
+			fcSinErr[POS+k]=sqrt(pow(fcSinErr[POS+k],2)+pow(fcSinBgErr[POS+k],2));
+			fcSinErr[NEG+k]=sqrt(pow(fcSinErr[NEG+k],2)+pow(fcSinBgErr[NEG+k],2));
 		}
 
 		//printf("====Signal Fourier Coefficients====\n");
 		//printOutFC(fourierCoefficients,fcErr);
 		printf("\n");
 
-		free(fcBg);
-		free(fcBgErr);
+		free(fcCosBg);
+		free(fcSinBg);
+		free(fcCosBgErr);
+		free(fcSinBgErr);
 	}
 	// Calculate Stokes Parameters from Fourier Coefficients.
 	float* stokesParameters = malloc(NUMSTOKES*sizeof(float));
 	float* spErr = malloc(NUMSTOKES*2*sizeof(float));
 	printf("Calculating Stokes Parameters from Fourier Coefficients...\n");
-	calculateStokesFromFC(fourierCoefficients,fcErr,stokesParameters,spErr);
+	calculateStokesFromFC(fcCos,fcCosErr,fcSin,fcSinErr,stokesParameters,spErr);
 
 	printf("====Stokes Parameters====\n");
 	printOutSP(stokesParameters,spErr);
@@ -364,15 +368,17 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	printf("Writing analysis to file...\n");
 	writeDataSummaryToFile(analysisFileName,backgroundFileName,dataFileName,
 							normalizeWithCurrent,comments,
-							fourierCoefficients,fcErr,
+							fcCos,fcCosErr,fcSin,fcSinErr,
 							stokesParameters,spErr,
 							avgCurrent,avgCurrentStdDev);
 
 	printf("Generating graph of Stokes parameters...\n");
 	plotStokesParameters(analysisFileName);
 
-	free(fourierCoefficients);
-	free(fcErr);
+	free(fcCos);
+	free(fcSin);
+	free(fcCosErr);
+	free(fcSinErr);
 	free(stokesParameters);
 	free(spErr);
 	return 0;
@@ -380,7 +386,7 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 
 int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, char* dataFileName, 
 							int normalizeWithCurrent, char* comments,
-							float* fourierCoefficients, float* fcErr, 
+							float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr,
 							float* stokesParameters, float* spErr,
 							float avgCurrent, float avgCurrentStdDev){
 	FILE *dataSummary,*dailySummary;
@@ -438,11 +444,11 @@ int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, cha
 		fprintf(file[i],"%f\t%f\t%f\t",stokesParameters[1],spErr[0+1],spErr[NUMSTOKES+1]);
 		fprintf(file[i],"%f\t%f\t%f\t",stokesParameters[2],spErr[0+2],spErr[NUMSTOKES+2]);
 		fprintf(file[i],"%f\t%f\t%f\t",stokesParameters[3],spErr[0+3],spErr[NUMSTOKES+3]);
-		fprintf(file[i],"%f\t%f\t%f\t",fourierCoefficients[COS+0],fcErr[POS+COS+0],fcErr[NEG+COS+0]);
-		fprintf(file[i],"%f\t%f\t%f\t",fourierCoefficients[COS+4],fcErr[POS+COS+4],fcErr[NEG+COS+4]);
-		fprintf(file[i],"%f\t%f\t%f\t",fourierCoefficients[SIN+4],fcErr[POS+SIN+4],fcErr[NEG+SIN+4]);
-		fprintf(file[i],"%f\t%f\t%f\t",fourierCoefficients[SIN+2],fcErr[POS+SIN+2],fcErr[NEG+SIN+2]);
-		fprintf(file[i],"%f\t%f\t%f\t",fourierCoefficients[COS+2],fcErr[POS+COS+2],fcErr[NEG+COS+2]);
+		fprintf(file[i],"%f\t%f\t%f\t",fcCos[0],fcCosErr[POS+0],fcCosErr[NEG+0]);
+		fprintf(file[i],"%f\t%f\t%f\t",fcCos[4],fcCosErr[POS+4],fcCosErr[NEG+4]);
+		fprintf(file[i],"%f\t%f\t%f\t",fcSin[4],fcSinErr[POS+4],fcSinErr[NEG+4]);
+		fprintf(file[i],"%f\t%f\t%f\t",fcSin[2],fcSinErr[POS+2],fcSinErr[NEG+2]);
+		fprintf(file[i],"%f\t%f\t%f\t",fcCos[2],fcCosErr[POS+2],fcCosErr[NEG+2]);
 		fprintf(file[i],"%f\t%f\n",avgCurrent,avgCurrentStdDev);
 
 		fflush(file[i]);
@@ -452,7 +458,7 @@ int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, cha
 	return 0;
 }
 
-int plotDataFit(char* analysisDataFileName, float* fourierCoefficients){
+int plotDataFit(char* analysisDataFileName, float* fcCos, float* fcSin){
 	char rawDataFileName[1024];
 	char* extensionStart;
 	strcpy(rawDataFileName,analysisDataFileName);
@@ -474,14 +480,14 @@ int plotDataFit(char* analysisDataFileName, float* fourierCoefficients){
 		fprintf(gnuplot, "set xlabel 'Angle'\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		fprintf(gnuplot, "set xtics (\"0\" 0,\"0.5{/Symbol p}\" pi/2,\"{/Symbol p}\" pi,\"1.5{/Symbol p}\" 1.5*pi,\"2{/Symbol p}\" 2*pi)\n");
-		sprintf(buffer, "plot '%s' using ($1/1200*2*pi):2, %f+%f*cos(2*x)+%f*cos(4*x)+%f*sin(2*x)+%f*sin(4*x)\n",rawDataFileName,fourierCoefficients[COS+0],fourierCoefficients[COS+2],fourierCoefficients[COS+4],fourierCoefficients[SIN+2],fourierCoefficients[SIN+4]);
+		sprintf(buffer, "plot '%s' using ($1/1200*2*pi):2, %f+%f*cos(2*x)+%f*cos(4*x)+%f*sin(2*x)+%f*sin(4*x)\n",rawDataFileName,fcCos[0],fcCos[2],fcCos[4],fcSin[2],fcSin[4]);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png enhanced\n");
 		sprintf(buffer, "set output '%s.png'\n", rawDataFileName);
 		fprintf(gnuplot, buffer);
 		// SAME PLOT COMMANDS GO HERE
-		sprintf(buffer, "plot '%s' using ($1/1200*2*pi):2, %f+%f*cos(2*x)+%f*cos(4*x)+%f*sin(2*x)+%f*sin(4*x)\n",rawDataFileName,fourierCoefficients[COS+0],fourierCoefficients[COS+2],fourierCoefficients[COS+4],fourierCoefficients[SIN+2],fourierCoefficients[SIN+4]);
+		sprintf(buffer, "plot '%s' using ($1/1200*2*pi):2, %f+%f*cos(2*x)+%f*cos(4*x)+%f*sin(2*x)+%f*sin(4*x)\n",rawDataFileName,fcCos[0],fcCos[2],fcCos[4],fcSin[2],fcSin[4]);
 		fprintf(gnuplot, buffer);
 	}
 	return pclose(gnuplot);

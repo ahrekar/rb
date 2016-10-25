@@ -71,39 +71,37 @@ all: ${BINARIES}
 $(ODIR)/%.o: %.c
 		$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
 
-
-
-getcounts: getcounts.o $(INTOBJECTS)
+getcounts: obj/getcounts.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-RbAbsorbScan: RbAbsorbScan.o mathTools.o $(INTOBJECTS)
+RbAbsorbScan: obj/RbAbsorbScan.o obj/mathTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-excitationfn: excitationfn.o mathTools.o $(INTOBJECTS) 
+excitationfn: obj/excitationfn.o obj/mathTools.o $(INTOBJECTS) 
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayScan: faradayScan.o mathTools.o $(INTOBJECTS)
+faradayScan: obj/faradayScan.o obj/mathTools.o obj/faradayScanAnalysisTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
+polarization: obj/polarization.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS) obj/polarizationAnalysisTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setOmega: setOmega.o $(INTOBJECTS)
+setOmega: obj/setOmega.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setProbeLaser: setProbeLaser.o $(INTOBJECTS)
+setProbeLaser: obj/setProbeLaser.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setHeliumTarget: setHeliumTarget.o $(INTOBJECTS)
+setHeliumTarget: obj/setHeliumTarget.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-waitForOmega: waitForOmega.o $(INTOBJECTS)
+waitForOmega: obj/waitForOmega.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-stepmotor: stepmotor.o 				$(INTOBJECTS)
+stepmotor: obj/stepmotor.o 				$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-homemotor: homemotor.o 				$(INTOBJECTS)
+homemotor: obj/homemotor.o 				$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayrotation: faradayrotation.o	$(INTOBJECTS)
+faradayrotation: obj/faradayrotation.o	$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 homeWavePlate: homeWavePlate.c 		$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 setWavePlate: setWavePlate.c 		$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-polarizationAnalysis: polarizationAnalysis.o polarizationAnalysisTools.o mathTools.o
+polarizationAnalysis: obj/polarizationAnalysis.o obj/polarizationAnalysisTools.o obj/mathTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayScanAnalysis: faradayScanAnalysis.o mathTools.o
+faradayScanAnalysis: obj/faradayScanAnalysis.o obj/faradayScanAnalysisTools.o obj/mathTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)

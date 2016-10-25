@@ -31,6 +31,7 @@
 #include "mathTools.h" //includes stdDeviation
 #include "tempControl.h"
 #include "interfacing/interfacing.h"
+#include "faradayScanAnalysisTools.h"
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350	
@@ -47,6 +48,7 @@ int recordNumberDensity(char* fileName);
 int main (int argc, char **argv)
 {
 	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
+	int numAouts=0;
 	time_t rawtime;
 	float returnFloat;
 	struct tm * timeinfo;
@@ -127,6 +129,8 @@ int main (int argc, char **argv)
 	// Write the header for the data to the file.
 	fprintf(fp,"Aout\tstep\tintensity\n");
 
+	printf("Homing motor...\n");
+	homeMotor(PROBE_MOTOR);
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
 		printf("Aout %d\n",Aout);
 
@@ -148,10 +152,27 @@ int main (int argc, char **argv)
 
 			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
 		}
-
+		numAouts++;
 	}//end for Aout
-
 	fclose(fp);
+
+
+	int dataPointsPerRev=STEPSPERREV/STEPSIZE;
+	int revolutions=1;
+	printf("Processing Data...\n");
+	analyzeData(fileName,dataPointsPerRev,revolutions);
+
+	char* extensionStart;
+	extensionStart=strstr(fileName,".dat");
+	strcpy(extensionStart,"Analysis.dat");
+
+	printf("Plotting Data...\n");
+	plotData(fileName);
+	printf("Calculating number density...\n");
+	calculateNumberDensity(fileName);
+	printf("Recording number density to file...\n");
+	recordNumberDensity(fileName);
+
 	closeUSB1208();
 
 	// Remove the file indicating that we are taking data.

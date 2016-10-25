@@ -29,13 +29,13 @@
 #define PI 3.14159265358979
 #define HPCAL 28.1/960.0
 
-int getPolarizationData(char* fileName, int aout, int dwell);
+int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurrent);
 void plotData(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int aout;
-	int dwell;
+	int aout, dwell;
+	float leakageCurrent;
 	
 	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; 
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
@@ -54,15 +54,16 @@ int main (int argc, char **argv)
 	struct stat st = {0};
 
 	// Get parameters.
-	if (argc==4){
+	if (argc==5){
 		aout=atoi(argv[1]);
 		dwell=atoi(argv[2]);
-		strcpy(comments,argv[3]);
+		leakageCurrent=atof(argv[3]);
+		strcpy(comments,argv[4]);
 		strcpy(backgroundFileName,"NONE");
 	} else {
 		printf("There is one option for using this program: \n\n");
-		printf("usage '~$ sudo ./polarization <aout_for_HeTarget> <dwell> <comments_in_double_quotes>'\n");
-		printf("                                (0-1023)           (1-5)s                            '\n");
+		printf("usage '~$ sudo ./polarization <aout_for_HeTarget> <dwell> <leakageCurrent> <comments_in_double_quotes>'\n");
+		printf("                                (0-1023)           (1-5)s                                              \n");
 		return 1;
 	}
 
@@ -127,6 +128,7 @@ int main (int argc, char **argv)
 	fprintf(rawData,"#SetTemp(Targ):\t%f\n",returnFloat);
 
 	fprintf(rawData,"#Aout\t%d\n",aout);
+	fprintf(rawData,"#LeakageCurrent\t%f\n",leakageCurrent);
 	fprintf(rawData,"#Assumed USB1208->HP3617A conversion\t%2.6f\n",HPCAL);
 	fprintf(rawData,"#REVOLUTIONS\t%d\n",REVOLUTIONS);
 	fprintf(rawData,"#DataPointsPerRev\t%d\n",DATAPOINTSPERREV);
@@ -137,7 +139,7 @@ int main (int argc, char **argv)
 	fclose(rawData);
 
 	// Collect raw data
-	getPolarizationData(rawDataFileName, aout, dwell); 
+	getPolarizationData(rawDataFileName, aout, dwell, leakageCurrent); 
 
 	plotData(rawDataFileName);
 
@@ -152,7 +154,7 @@ int main (int argc, char **argv)
 	return 0;
 }
 
-int getPolarizationData(char* fileName, int aout, int dwell){
+int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurrent){
 	// Variables for stepper motor control.
 	int nsteps,steps,ninc,i;
 
@@ -191,7 +193,7 @@ int getPolarizationData(char* fileName, int aout, int dwell){
 
 		current=0.0;
 		for (i=0;i<nSamples;i++){
-			getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
+			getUSB1208AnalogIn(K617,&measurement[i]);
 			current += measurement[i];
 		}
 
@@ -199,8 +201,8 @@ int getPolarizationData(char* fileName, int aout, int dwell){
 		currentErr = stdDeviation(measurement,nSamples);
 		angle = (float)steps/STEPSPERREV*2.0*PI;
 
-		printf("%d\t%ld\t%f\n",steps,returnCounts,current);
-		fprintf(rawData,"%d\t%ld\t%f\t%f\t%f\n",steps,returnCounts,current,currentErr,angle);
+		printf("%d\t%ld\t%f\n",steps,returnCounts,current-leakageCurrent);
+		fprintf(rawData,"%d\t%ld\t%f\t%f\t%f\n",steps,returnCounts,current-leakageCurrent,currentErr,angle);
 	}
 	fclose(rawData);
 

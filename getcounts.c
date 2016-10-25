@@ -64,10 +64,11 @@ int main (int argc, char *argv[])
 		printf("%d: Counts %ld\n",i,returnCounts);
 	}
 
-	printf("Total %ld \n",totalcount);
+	printf("Total: %ld \n",totalcount);
 
 	counterror = sqrt((float)totalcount);
 	printf("SQRT(total) %f \n",counterror);
+	printf("Total/sec: %f \n",totalcount/(numit*dwell*.1));
 
 
 	closeUSB1208();

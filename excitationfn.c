@@ -70,7 +70,7 @@ int main (int argc, char **argv)
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
 		printf("           sudo ./excitationfn <filament bias> <N2 Offset> <He offset> <scan range> <step size> <dwell time> <comments>\n");
-		printf("                                                               		   (   0-30   ) (  1-24   )    (1-5)s       \n");
+		printf("                                (assumed neg.)            (assmd. neg) (   0-30   ) (  1-24   )    (1-5)s       \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
 		printf("               1: 0.029V    9: 0.263V   17: 0.497V                                             \n");
@@ -176,11 +176,11 @@ int main (int argc, char **argv)
 		fprintf(fp,"%4.4f\t",N2Offset);
 		fprintf(fp,"%4.4f\t",HeOffset + HPcal*(float)value);
 
-		primaryEnergy = bias - (HeOffset + HPcal*(float)value);
+		primaryEnergy = fabs(-bias - (-HeOffset - HPcal*(float)value));
 		printf("eV %4.2f\t",primaryEnergy);
 		fprintf(fp,"%4.4f\t",primaryEnergy);
 
-		secondaryEnergy =  bias - N2Offset - (HeOffset + HPcal*(float)value);
+		secondaryEnergy =  fabs((-bias + N2Offset) - (-HeOffset - HPcal*(float)value));
 		printf("eV %4.2f\t",secondaryEnergy);
 		fprintf(fp,"%4.4f\t",secondaryEnergy);
 

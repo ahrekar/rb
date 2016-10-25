@@ -103,7 +103,8 @@ int main (int argc, char **argv)
 	// error bars.
 	nSamples = 32;
 	float* measurement = malloc(nSamples*sizeof(float));
-
+	
+	printf("Homing linear polarizer...\n");
 	homeMotor(PROBE_MOTOR);
 
 	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){

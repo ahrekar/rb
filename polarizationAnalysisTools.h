@@ -13,9 +13,9 @@
 #define HPCAL 28.1/960.0
 #define NORMCURR 0 	// Set this to 1 to normalize the intensity with the current
 #define DWELL 1		// The number of seconds to pause, letting electronics settle
-#define ALPHA -30.07	// The constant Alpha (location of transmission axis), measured in degrees.
+#define ALPHA 3.2	// The constant Alpha (location of transmission axis), measured in degrees.
 #define DALPHA 0.0	// The uncertainty in ALPHA
-#define BETA 9.08	// The constant Beta_0 (beginning position of QWP relative to positive x axis  ) measured in degrees.
+#define BETA -6.95	// The constant Beta_0 (beginning position of QWP relative to positive x axis  ) measured in degrees.
 #define DBETA 0.0		// The uncertainty in BETA
 #define DELTA 90.0	// The constant Delta (wave plate retardance) in degrees.
 #define DDELTA 2.0	// The uncertainty in DELTA
@@ -26,7 +26,7 @@
 #define POS 0			// Used for my error array positive values are stored first.
 #define NEG (DATAPOINTS)// Then negative values. 
 
-int calculateStokesFromFC(float* fourierCoefficients, float* fcErr, float* stokesReturn, float* stokesErrReturn);
+int calculateStokesFromFC(float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr, float* stokesReturn, float* stokesErrReturn);
 int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, int datapointsPerRevolution, int revolutions, int normalizeWithCurrent, char* comments);
 // Calculates the ith relative stokes parameter.
 float calculateStokes(int i, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4);
