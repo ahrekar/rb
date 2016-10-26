@@ -21,13 +21,24 @@
 #define DDELTA 2.0	// The uncertainty in DELTA
 #define DSTEP 0	// The uncertainty in the step size 
 #define NUMSTOKES 4
-#define COS 0			// Used for my fourier coefficient array. Cos stored first.
-#define SIN (DATAPOINTS/2)	// Sin stored second
 #define POS 0			// Used for my error array positive values are stored first.
-#define NEG (DATAPOINTS)// Then negative values. 
+#define NEG (DATAPOINTS/2)// Then negative values. 
 
+int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, int Revolutions, int normalizeWithCurrent, float* fcCosRet, float* fcCosErrRet, float* fcSinRet, float* fcSinErrRet, float* avgCurrentReturn, float* avgCurrentStdDevReturn);
 int calculateStokesFromFC(float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr, float* stokesReturn, float* stokesErrReturn);
-int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, int datapointsPerRevolution, int revolutions, int normalizeWithCurrent, char* comments);
+int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, int datapointsPerRevolution, int revolutions, int normalizeWithCurrent);
 // Calculates the ith relative stokes parameter.
 float calculateStokes(int i, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4);
+int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName,char* rawDataFileName,  
+							int normalizeWithCurrent, char* comments,
+							float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr,
+							float* stokesParameters, float* spError,
+							float avgCurrent, float avgCurrentStdDev);
+int writeDataSummaryFileEntry(char* analysisFileName, char* backgroundFileName, char* dataFileName, 
+							int normalizeWithCurrent, char* comments,
+							float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr,
+							float* stokesParameters, float* spErr,
+							float avgCurrent, float avgCurrentStdDev);
+int writeDataSummaryFileColumnHeadings(char* analysisFileName);
+int writeDataSummaryFileHeader(char* analysisFileName, char* backgroundFileName, char* dataFileName, char* comments);
 int printOutSP(float* sp, float* spError);

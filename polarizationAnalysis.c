@@ -38,7 +38,8 @@ int main (int argc, char **argv)
 	extensionStart=strstr(analysisFileName,".dat");
 	strcpy(extensionStart,"analysis.dat");
 
-	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, DATAPOINTSPERREV, REVOLUTIONS, normalizeWithCurrent,"No_longer_supports_comments"); 
+
+	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, DATAPOINTSPERREV, REVOLUTIONS, normalizeWithCurrent); 
 
 	return 0;
 }

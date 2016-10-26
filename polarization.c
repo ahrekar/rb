@@ -143,7 +143,7 @@ int main (int argc, char **argv)
 
 	plotData(rawDataFileName);
 
-	processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,DATAPOINTSPERREV,REVOLUTIONS,1,comments);
+	processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,DATAPOINTSPERREV,REVOLUTIONS,1);
 
 	closeUSB1208();
 

@@ -26,11 +26,12 @@
 #endif
 
 int processFile(char* backgroundFileName, char* comments);
-int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent, char* comments);
+int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent);
+int getCommentLineFromFile(char* inputFile, char* returnString);
 
 int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, int Revolutions, int normalizeWithCurrent, float* fcCosRet, float* fcCosErrRet, float* fcSinRet, float* fcSinErrRet, float* avgCurrentReturn, float* avgCurrentStdDevReturn);
-float calculateOneSumTerm(int trigFunc, float intensity, float i,int k);
-float calculateOneSumTermError(int trigFunc, int posOrNeg, float intensity,float intensityErr, float i, float iErr, int k);
+float calculateOneSumTerm(char trigFunc, float intensity, float i,int k);
+float calculateOneSumTermError(char trigFunc, int posOrNeg, float intensity,float intensityErr, float i, float iErr, int k);
 
 int calculateStokesFromFC(float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr, float* stokesReturn, float* stokesErrReturn);
 float calculateStokes(int i, float alpha, float beta, float delta, float c0, float c2, float c4, float s2, float s4);
@@ -45,7 +46,7 @@ int writeDataSummaryToFile(char* rawDataFileName, char* analysisFileName, char* 
 int plotStokesParameters(char* analysisFileName);
 int plotDataFit(char* analysisFileName,float* fcCos, float* fcSin);
 
-int printOutFC(float* fourierCoefficients, float* fcErr);
+int printOutFC(float* fcCos, float* fcCosErr,float* fcSin, float* fcSinErr);
 int printOutSP(float* sp, float* spError);
 int printOutFloatArray(float* array, int n);
 int printOutFloatArrayWithError(float* array, float* error, int n);
@@ -108,13 +109,13 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 				intensityErr=counts/fabs(current/initialCurrent)*sqrt(pu2(counts,sqrt(counts))+pu2(current,currentErr));
 			}
 
-			fcCosRet[k] += calculateOneSumTerm(COS,intensity, (float)i, k);
-			fcSinRet[k] += calculateOneSumTerm(SIN,intensity, (float)i, k);
+			fcCosRet[k] += calculateOneSumTerm('c',intensity, (float)i, k);
+			fcSinRet[k] += calculateOneSumTerm('s',intensity, (float)i, k);
 
-			fcCosErrRet[POS+k] += pow(calculateOneSumTermError(COS,POS,intensity,intensityErr,(float)i,DSTEP,k),2);
-			fcCosErrRet[NEG+k] += pow(calculateOneSumTermError(COS,NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
-			fcSinErrRet[POS+k] += pow(calculateOneSumTermError(SIN,POS,intensity,intensityErr,(float)i,DSTEP,k),2);
-			fcSinErrRet[NEG+k] += pow(calculateOneSumTermError(SIN,NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcCosErrRet[POS+k] += pow(calculateOneSumTermError('c',POS,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcCosErrRet[NEG+k] += pow(calculateOneSumTermError('c',NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcSinErrRet[POS+k] += pow(calculateOneSumTermError('s',POS,intensity,intensityErr,(float)i,DSTEP,k),2);
+			fcSinErrRet[NEG+k] += pow(calculateOneSumTermError('s',NEG,intensity,intensityErr,(float)i,DSTEP,k),2);
 		}
 		//printf("%f\t%f\n",fcErrReturn[COS+POS+0],fcErrReturn[COS+POS+1]);
 	}
@@ -133,7 +134,7 @@ int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, in
 	return 0;
 }
 
-float calculateOneSumTerm(int trigFunc, float intensity, float i,int k){
+float calculateOneSumTerm(char trigFunc, float intensity, float i,int k){
 	int totalDatapoints=DATAPOINTS;
 	int d0_L=0;	// d0_L represents two delta functions. See Berry for
 				// more info.
@@ -145,13 +146,13 @@ float calculateOneSumTerm(int trigFunc, float intensity, float i,int k){
 	else{
 		d0_L=0;
 	}
-	if (trigFunc==COS)
+	if (trigFunc=='c')
 		return 2 * intensity * cos(k*((2*PI*REVOLUTIONS)*i/totalDatapoints))/(totalDatapoints*(1+d0_L));
 	else
 		return 2 * intensity * sin(k*((2*PI*REVOLUTIONS)*i/totalDatapoints))/(totalDatapoints*(1+d0_L));
 }
 
-float calculateOneSumTermError(int trigFunc, int posOrNeg, float intensity,float intensityErr, float i, float iErr, int k){
+float calculateOneSumTermError(char trigFunc, int posOrNeg, float intensity,float intensityErr, float i, float iErr, int k){
 	if (posOrNeg==NEG){
 		intensityErr=-intensityErr;	
 		iErr=-iErr;	
@@ -254,16 +255,16 @@ float calculateStokesErr(int i, int signOfError, float alpha, float beta, float 
 	return sqrt(totalError);
 }
 
-int printOutFC(float* fourierCoefficients, float* fcError){
+int printOutFC(float* fcCos, float* fcCosErr,float* fcSin, float* fcSinErr){
 	printf("Cos Coefficients:\n");
 	int numCoefficients = 10;
 	int i;
 	for(i=0;i<numCoefficients;i++){
-		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Cos",i,fourierCoefficients[COS+i],fcError[COS+POS+i],fcError[COS+NEG+i]);
+		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Cos",i,fcCos[i],fcCosErr[POS+i],fcCosErr[NEG+i]);
 	}
 	printf("Sin Coefficients:\n");
 	for(i=0;i<numCoefficients;i++){
-		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Sin",i,fourierCoefficients[SIN+i],fcError[SIN+POS+i],fcError[SIN+NEG+i]);
+		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Sin",i,fcSin[i],fcSinErr[POS+i],fcSinErr[NEG+i]);
 	}
 	return 0;
 }
@@ -294,7 +295,29 @@ int printOutFloatArrayWithError(float* array, float* errorArray, int n){
 	return 0;
 }
 
-int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFileName, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent, char* comments){
+int getCommentLineFromFile(char* inputFile, char* returnString){
+	FILE* data = fopen(inputFile,"r");
+	char* pointer;
+	if (!data) {
+		printf("Unable to open file %s\n",inputFile);
+		exit(1);
+	}
+	do{
+		fgets(returnString,1024,data);
+	} while(strncmp(returnString,"#Comments",9));
+	pointer = strtok(returnString,"\t");
+	printf("%s\n",pointer);
+	pointer = strtok(NULL,"\t");
+	printf("%s\n",pointer);
+	strcpy(returnString,pointer);
+	returnString[strcspn(returnString,"\n")]=0;
+
+	return 0;
+}
+
+int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFileName, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent){
+	char comments[1024];
+	strcpy(comments,"TEST STRING");
 
 	printf("Data Points Per Revolution=%d\nRevolutions=%d\n",dataPointsPerRevolution,revolutions);
 	int totalDatapoints = dataPointsPerRevolution * revolutions;
@@ -302,9 +325,7 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	float* fcSin = malloc(totalDatapoints/2*sizeof(float));
 	float* fcCosErr = malloc(totalDatapoints*sizeof(float)); 	// We need twice as many datapoints for the 
 	float* fcSinErr = malloc(totalDatapoints*sizeof(float)); 	// error because I'm doing the upper error and   														
-																// lower error separately. I'll access the upper
-																// and lower error in a similarly convoluted way
-																// to how I access the fourier coefficients.     
+																// lower error separately.      
 																
 	float avgCurrent;
 	float avgCurrentStdDev;
@@ -317,7 +338,6 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	plotDataFit(analysisFileName,fcCos,fcSin);
 
 	//printf("====Raw Data Fourier Coefficients====\n");
-	//printOutFC(fourierCoefficients,fcErr);
 	printf("\n");
 
 	// Calculate fourier coefficients from BG data, if provided, and
@@ -333,11 +353,10 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 		calculateFourierCoefficients(backgroundFileName,dataPointsPerRevolution,revolutions,normalizeWithCurrent,fcCosBg,fcCosBgErr,fcSinBg,fcSinBgErr,&avgCurrentBg,&avgCurrentBgStdDev);
 
 		//printf("====Background Fourier Coefficients====\n");
-		//printOutFC(fcBg,fcBgErr);
 		printf("\n");
 
 		int k;
-		for (k=0; k < totalDatapoints; k++){
+		for (k=0; k < totalDatapoints/2; k++){
 			fcCos[k]-=fcCosBg[k];
 			fcSin[k]-=fcSinBg[k];
 			fcCosErr[POS+k]=sqrt(pow(fcCosErr[POS+k],2)+pow(fcCosBgErr[POS+k],2));
@@ -347,7 +366,6 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 		}
 
 		//printf("====Signal Fourier Coefficients====\n");
-		//printOutFC(fourierCoefficients,fcErr);
 		printf("\n");
 
 		free(fcCosBg);
@@ -364,6 +382,8 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	printf("====Stokes Parameters====\n");
 	printOutSP(stokesParameters,spErr);
 	printf("\n");
+
+	getCommentLineFromFile(dataFileName,comments);
 
 	printf("Writing analysis to file...\n");
 	writeDataSummaryToFile(analysisFileName,backgroundFileName,dataFileName,
@@ -384,75 +404,107 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	return 0;
 }
 
+int writeDataSummaryFileHeader(char* analysisFileName, char* backgroundFileName, char* dataFileName, char* comments){
+	FILE *file;
+	file=fopen(analysisFileName,"w");
+	if (!file) {
+		printf("Unable to open file: %s\n", analysisFileName);
+		exit(1);
+	}
+	fprintf(file,"#File\t%s\n",analysisFileName);
+	fprintf(file,"#DataFile\t%s\n",dataFileName);
+	fprintf(file,"#BackgroundFile\t%s\n",backgroundFileName);
+	fprintf(file,"#Comments\t%s\n",comments);
+	fprintf(file,"#ALPHA\t%f\t%f\n",ALPHA,DALPHA);
+	fprintf(file,"#BETA\t%f\t%f\n",BETA,DBETA);
+	fprintf(file,"#DELTA\t%f\t%f\n",DELTA,DDELTA);
+
+	fflush(file);
+	fclose(file);
+	return 0;
+}
+
+int writeDataSummaryFileColumnHeadings(char* analysisFileName){
+	FILE *file;
+	file=fopen(analysisFileName,"a");
+	if (!file) {
+		printf("Unable to open file: %s\n", analysisFileName);
+		exit(1);
+	}
+	fprintf(file,"fileName\tprocessedFile\tbackgroundFile\tcomments\t");
+	fprintf(file,"alpha\td_alpha\tbeta_0\td_beta_0\tdelta\td_delta\t");
+	fprintf(file,"normCurr\t");
+	fprintf(file,"p0\tp0ErrUp\tp0ErrDown\tp1\tp1ErrUp\tp1ErrDown\tp2\tp2ErrUp\tp2ErrDown\tp3\tp3ErrUp\tp3ErrDown\t");
+	fprintf(file,"c0\tc0ErrUp\tc0ErrDown\tc4\tc4ErrUp\tc4ErrDown\ts4\ts4ErrUp\ts4ErrDown\ts2\ts2ErrUp\ts2ErrDown\t");
+	fprintf(file,"c2\tc2ErrUp\tc2ErrDown\tAvg.Current\tAvg.CurrentStdDev\n");
+
+	fflush(file);
+	fclose(file);
+	return 0;
+}
+
+int writeDataSummaryFileEntry(char* analysisFileName, char* backgroundFileName, char* dataFileName, 
+							int normalizeWithCurrent, char* comments,
+							float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr,
+							float* stokesParameters, float* spErr,
+							float avgCurrent, float avgCurrentStdDev){
+	FILE *file;
+	file=fopen(analysisFileName,"a");
+	if (!file) {
+		printf("Unable to open file: %s\n", analysisFileName);
+		exit(1);
+	}
+	fprintf(file,"%s\t%s\t%s\t%s\t",analysisFileName,dataFileName,backgroundFileName,comments);
+	fprintf(file,"%f\t%f\t%f\t%f\t%f\t%f\t",ALPHA,DALPHA,BETA,DBETA,DELTA,DDELTA);
+	fprintf(file,"%d\t",normalizeWithCurrent);
+	fprintf(file,"%f\t%f\t%f\t",stokesParameters[0],spErr[0+0],spErr[NUMSTOKES+0]);
+	fprintf(file,"%f\t%f\t%f\t",stokesParameters[1],spErr[0+1],spErr[NUMSTOKES+1]);
+	fprintf(file,"%f\t%f\t%f\t",stokesParameters[2],spErr[0+2],spErr[NUMSTOKES+2]);
+	fprintf(file,"%f\t%f\t%f\t",stokesParameters[3],spErr[0+3],spErr[NUMSTOKES+3]);
+	fprintf(file,"%f\t%f\t%f\t",fcCos[0],fcCosErr[POS+0],fcCosErr[NEG+0]);
+	fprintf(file,"%f\t%f\t%f\t",fcCos[4],fcCosErr[POS+4],fcCosErr[NEG+4]);
+	fprintf(file,"%f\t%f\t%f\t",fcSin[4],fcSinErr[POS+4],fcSinErr[NEG+4]);
+	fprintf(file,"%f\t%f\t%f\t",fcSin[2],fcSinErr[POS+2],fcSinErr[NEG+2]);
+	fprintf(file,"%f\t%f\t%f\t",fcCos[2],fcCosErr[POS+2],fcCosErr[NEG+2]);
+	fprintf(file,"%f\t%f\n",avgCurrent,avgCurrentStdDev);
+
+	fflush(file);
+	fclose(file);
+	return 0;
+}
+
 int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, char* dataFileName, 
 							int normalizeWithCurrent, char* comments,
 							float* fcCos, float* fcCosErr, float* fcSin, float* fcSinErr,
 							float* stokesParameters, float* spErr,
 							float avgCurrent, float avgCurrentStdDev){
-	FILE *dataSummary,*dailySummary;
-	FILE* file[2];
-
 	char* underscoreLocation;
 	int fileExists;
 	char dailySummaryFileName[1024];
-	// Record the results along with the raw data in a file.
-	dataSummary=fopen(analysisFileName,"w");
-	if (!dataSummary) {
-		printf("Unable to open file: %s\n", analysisFileName);
-		exit(1);
-	}
+	char fileName[2][1024];
 
 	strcpy(dailySummaryFileName,analysisFileName);
 	underscoreLocation=strstr(dailySummaryFileName,"_");
 	strcpy(underscoreLocation,".dat");
 	fileExists=access(dailySummaryFileName,F_OK);
 
-	dailySummary=fopen(dailySummaryFileName,"a");
-	if (!dailySummary) {
-		printf("Unable to open file: %s\n", dailySummaryFileName);
-		exit(1);
-	}
-	
-	fprintf(dataSummary,"#File\t%s\n",analysisFileName);
-	fprintf(dataSummary,"#DataFile\t%s\n",dataFileName);
-	fprintf(dataSummary,"#BackgroundFile\t%s\n",backgroundFileName);
-	fprintf(dataSummary,"#Comments\t%s\n",comments);
-	fprintf(dataSummary,"#ALPHA\t%f\t%f\n",ALPHA,DALPHA);
-	fprintf(dataSummary,"#BETA\t%f\t%f\n",BETA,DBETA);
-	fprintf(dataSummary,"#DELTA\t%f\t%f\n",DELTA,DDELTA);
-	fprintf(dataSummary,"#Current Adj. Intensity\t%s\n",(normalizeWithCurrent==1)?"Yes":"No");
-	fprintf(dataSummary,"#SOS p1 & p2\t%f\n",pow(stokesParameters[1],2)+pow(stokesParameters[2],2));
+	writeDataSummaryFileHeader(analysisFileName,backgroundFileName,dataFileName,comments);
 
-	file[0]=dataSummary;
-	file[1]=dailySummary;
+	strcpy(fileName[0],analysisFileName);
+	strcpy(fileName[1],dailySummaryFileName);
+
 	int i;
 	for(i=0;i<2;i++){
 		// Print out the header information
 		if(i==0 || (i==1 && fileExists == -1)){ // If it's the datafile OR if its the daily file and the file didn't exist before. 
-			fprintf(file[i],"fileName\tprocessedFile\tbackgroundFile\tcomments\t");
-			fprintf(file[i],"alpha\td_alpha\tbeta_0\td_beta_0\tdelta\td_delta\t");
-			fprintf(file[i],"normCurr\t");
-			fprintf(file[i],"p0\tp0ErrUp\tp0ErrDown\tp1\tp1ErrUp\tp1ErrDown\tp2\tp2ErrUp\tp2ErrDown\tp3\tp3ErrUp\tp3ErrDown\t");
-			fprintf(file[i],"c0\tc0ErrUp\tc0ErrDown\tc4\tc4ErrUp\tc4ErrDown\ts4\ts4ErrUp\ts4ErrDown\ts2\ts2ErrUp\ts2ErrDown\t");
-			fprintf(file[i],"c2\tc2ErrUp\tc2ErrDown\tAvg.Current\tAvg.CurrentStdDev\n");
+			writeDataSummaryFileColumnHeadings(fileName[i]);
 		}
-		// Print out the data
-		fprintf(file[i],"%s\t%s\t%s\t%s\t",analysisFileName,dataFileName,backgroundFileName,comments);
-		fprintf(file[i],"%f\t%f\t%f\t%f\t%f\t%f\t",ALPHA,DALPHA,BETA,DBETA,DELTA,DDELTA);
-		fprintf(file[i],"%d\t",normalizeWithCurrent);
-		fprintf(file[i],"%f\t%f\t%f\t",stokesParameters[0],spErr[0+0],spErr[NUMSTOKES+0]);
-		fprintf(file[i],"%f\t%f\t%f\t",stokesParameters[1],spErr[0+1],spErr[NUMSTOKES+1]);
-		fprintf(file[i],"%f\t%f\t%f\t",stokesParameters[2],spErr[0+2],spErr[NUMSTOKES+2]);
-		fprintf(file[i],"%f\t%f\t%f\t",stokesParameters[3],spErr[0+3],spErr[NUMSTOKES+3]);
-		fprintf(file[i],"%f\t%f\t%f\t",fcCos[0],fcCosErr[POS+0],fcCosErr[NEG+0]);
-		fprintf(file[i],"%f\t%f\t%f\t",fcCos[4],fcCosErr[POS+4],fcCosErr[NEG+4]);
-		fprintf(file[i],"%f\t%f\t%f\t",fcSin[4],fcSinErr[POS+4],fcSinErr[NEG+4]);
-		fprintf(file[i],"%f\t%f\t%f\t",fcSin[2],fcSinErr[POS+2],fcSinErr[NEG+2]);
-		fprintf(file[i],"%f\t%f\t%f\t",fcCos[2],fcCosErr[POS+2],fcCosErr[NEG+2]);
-		fprintf(file[i],"%f\t%f\n",avgCurrent,avgCurrentStdDev);
 
-		fflush(file[i]);
-		fclose(file[i]);
+		writeDataSummaryFileEntry(fileName[i], backgroundFileName, dataFileName, 
+									normalizeWithCurrent, comments, 
+									fcCos, fcCosErr, fcSin, fcSinErr,
+									stokesParameters, spErr,
+									avgCurrent, avgCurrentStdDev);
 	}
 
 	return 0;
