@@ -30,6 +30,7 @@
 #define HPCAL 28.1/960.0
 
 int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurrent);
+void plotCommand(FILE* gnuplot, char* fileName, char* buffer);
 void plotData(char* fileName);
 
 int main (int argc, char **argv)
@@ -38,6 +39,7 @@ int main (int argc, char **argv)
 	float leakageCurrent;
 	
 	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; 
+	char buffer[1024];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
 
@@ -63,7 +65,8 @@ int main (int argc, char **argv)
 	} else {
 		printf("There is one option for using this program: \n\n");
 		printf("usage '~$ sudo ./polarization <aout_for_HeTarget> <dwell> <leakageCurrent> <comments_in_double_quotes>'\n");
-		printf("                                (0-1023)           (1-5)s                                              \n");
+		printf("                                (0-1023)           (1-5)s (just mantissa,                              \n");
+		printf("                                                              assumed neg.)                            \n");
 		return 1;
 	}
 
@@ -82,11 +85,17 @@ int main (int argc, char **argv)
 	if (aout<0) aout=0;
 	if (aout>1023) aout=1023;
 
-	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
+	// Create Directory for the day
 	strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); 
 	if (stat(analysisFileName, &st) == -1){
 		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
+		sprintf(buffer,"%s/img",analysisFileName); 
+		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
+		extension = strstr(buffer,"/img");
+		strcpy(extension,"/anl");
+		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
+	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
 	strftime(rawDataFileName,80,"/home/pi/RbData/%F/POL%F_%H%M%S.dat",timeinfo); 
 	strcpy(analysisFileName,rawDataFileName);
 	extension = strstr(analysisFileName,".dat");
@@ -160,10 +169,10 @@ int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurren
 
 	// Variables for data collections.
 	long returnCounts;
+	long sumCounts;
 	float current,angle;
 	float currentErr;
-	int nSamples = 32;
-	float* measurement = calloc(nSamples,sizeof(float));
+	float* measurement = calloc(dwell,sizeof(float));
 
 	// Write Aout for He traget here
 	setUSB1208AnalogOut(HETARGET,aout);//sets vout such that 0 v at the probe laser
@@ -189,20 +198,24 @@ int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurren
 	for (steps=0;steps<nsteps;steps+=ninc){
 		stepMotor(POL_MOTOR,CCLK,ninc); 
 
-		getUSB1208Counter(dwell*10,&returnCounts);
-
 		current=0.0;
-		for (i=0;i<nSamples;i++){
+		sumCounts=0;
+		for(i=0;i<dwell;i++){
+			getUSB1208Counter(10,&returnCounts);
+			sumCounts += returnCounts;
+
 			getUSB1208AnalogIn(K617,&measurement[i]);
 			current += measurement[i];
 		}
 
-		current = current/(float)nSamples;
-		currentErr = stdDeviation(measurement,nSamples);
+
+		current = current/(float)dwell;
+		currentErr = stdDeviation(measurement,dwell);
+
 		angle = (float)steps/STEPSPERREV*2.0*PI;
 
-		printf("%d\t%ld\t%f\n",steps,returnCounts,current-leakageCurrent);
-		fprintf(rawData,"%d\t%ld\t%f\t%f\t%f\n",steps,returnCounts,current-leakageCurrent,currentErr,angle);
+		printf("%d\t%ld\t%f\n",steps,sumCounts,current+leakageCurrent);
+		fprintf(rawData,"%d\t%ld\t%f\t%f\t%f\n",steps,sumCounts,current+leakageCurrent,currentErr,angle);
 	}
 	fclose(rawData);
 
@@ -215,28 +228,31 @@ int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurren
 void plotData(char* fileName){
 	FILE* gnuplot;
 	char buffer[1024];
+	char fileNameBase[1024];
+	char* extension;
 	// Create rough graphs of data.
 	gnuplot = popen("gnuplot","w"); 
+
+	strcpy(fileNameBase,fileName);
+	extension = strstr(fileNameBase,".dat");
+	strcpy(extension,"");
 
 	if (gnuplot != NULL){
 		fprintf(gnuplot, "set terminal dumb size 158,32\n");
 		fprintf(gnuplot, "set output\n");			
-		
-		sprintf(buffer, "set title '%s'\n", fileName);
+		sprintf(buffer, "set title '%s'\n", fileNameBase);
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Step'\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		fprintf(gnuplot, "set yrange [*:*]\n");			
-		sprintf(buffer, "plot '%s' using 1:2\n",fileName);
-		fprintf(gnuplot, buffer);
-		fprintf(gnuplot, "unset output\n"); 
-		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s.png'\n", fileName);
-		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:2\n",fileName);
-		fprintf(gnuplot, buffer);
+		plotCommand(gnuplot, fileName,buffer);
 	}
 	pclose(gnuplot);
+}
+
+void plotCommand(FILE* gnuplot, char* fileName, char* buffer){
+	sprintf(buffer, "plot '%s' using 1:2\n",fileName);
+	fprintf(gnuplot, buffer);
 }

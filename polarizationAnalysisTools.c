@@ -306,9 +306,7 @@ int getCommentLineFromFile(char* inputFile, char* returnString){
 		fgets(returnString,1024,data);
 	} while(strncmp(returnString,"#Comments",9));
 	pointer = strtok(returnString,"\t");
-	printf("%s\n",pointer);
 	pointer = strtok(NULL,"\t");
-	printf("%s\n",pointer);
 	strcpy(returnString,pointer);
 	returnString[strcspn(returnString,"\n")]=0;
 
@@ -317,7 +315,6 @@ int getCommentLineFromFile(char* inputFile, char* returnString){
 
 int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFileName, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent){
 	char comments[1024];
-	strcpy(comments,"TEST STRING");
 
 	printf("Data Points Per Revolution=%d\nRevolutions=%d\n",dataPointsPerRevolution,revolutions);
 	int totalDatapoints = dataPointsPerRevolution * revolutions;
@@ -511,39 +508,51 @@ int writeDataSummaryToFile(char* analysisFileName, char* backgroundFileName, cha
 }
 
 int plotDataFit(char* analysisDataFileName, float* fcCos, float* fcSin){
-	char rawDataFileName[1024];
+	char rawDataFileNameBase[1024];
 	char* extensionStart;
-	strcpy(rawDataFileName,analysisDataFileName);
-	extensionStart=strstr(rawDataFileName,"analysis.dat");
-	strcpy(extensionStart,".dat");
+	strcpy(rawDataFileNameBase,analysisDataFileName);
+	extensionStart=strstr(rawDataFileNameBase,"analysis.dat");
+	strcpy(extensionStart,"");
 
 	FILE* gnuplot;
 	char buffer[1024];
 	// Create rough graphs of data.
 	gnuplot = popen("gnuplot","w"); 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 158,32 enhanced\n");
+		fprintf(gnuplot, "set terminal dumb size 158,72 enhanced\n");
 		fprintf(gnuplot, "set output\n");			
 		
-		sprintf(buffer, "set title '%s'\n", rawDataFileName);
+		sprintf(buffer, "set title '%s'\n", rawDataFileNameBase);
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Angle'\n");			
-		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		fprintf(gnuplot, "set xtics (\"0\" 0,\"0.5{/Symbol p}\" pi/2,\"{/Symbol p}\" pi,\"1.5{/Symbol p}\" 1.5*pi,\"2{/Symbol p}\" 2*pi)\n");
-		sprintf(buffer, "plot '%s' using ($1/1200*2*pi):2, %f+%f*cos(2*x)+%f*cos(4*x)+%f*sin(2*x)+%f*sin(4*x)\n",rawDataFileName,fcCos[0],fcCos[2],fcCos[4],fcSin[2],fcSin[4]);
+		//Begin plot command
+		fprintf(gnuplot, "set multiplot layout 2,1\n");
+		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		sprintf(buffer, "plot '%s.dat' using ($1/1200*2*pi):2, %f+%f*cos(2*x)+%f*cos(4*x)+%f*sin(2*x)+%f*sin(4*x)\n",rawDataFileNameBase,fcCos[0],fcCos[2],fcCos[4],fcSin[2],fcSin[4]);
 		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "set ylabel 'Current'\n");			
+		sprintf(buffer, "plot '%s.dat' using ($1/1200*2*pi):(-$3)\n",rawDataFileNameBase);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset multiplot\n");
+		//End plot command
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png enhanced\n");
-		sprintf(buffer, "set output '%s.png'\n", rawDataFileName);
+		sprintf(buffer, "set output '%s.png'\n", rawDataFileNameBase);
 		fprintf(gnuplot, buffer);
 		// SAME PLOT COMMANDS GO HERE
-		sprintf(buffer, "plot '%s' using ($1/1200*2*pi):2, %f+%f*cos(2*x)+%f*cos(4*x)+%f*sin(2*x)+%f*sin(4*x)\n",rawDataFileName,fcCos[0],fcCos[2],fcCos[4],fcSin[2],fcSin[4]);
+		fprintf(gnuplot, "set multiplot layout 2,1\n");
+		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		sprintf(buffer, "plot '%s.dat' using ($1/1200*2*pi):2, %f+%f*cos(2*x)+%f*cos(4*x)+%f*sin(2*x)+%f*sin(4*x)\n",rawDataFileNameBase,fcCos[0],fcCos[2],fcCos[4],fcSin[2],fcSin[4]);
 		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "set ylabel 'Current'\n");			
+		sprintf(buffer, "plot '%s.dat' using ($1/1200*2*pi):(-$3)\n",rawDataFileNameBase);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset multiplot\n");
 	}
 	return pclose(gnuplot);
-
 }
 
 int plotStokesParameters(char* analysisFileName){

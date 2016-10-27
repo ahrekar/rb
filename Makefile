@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c
 
 INTDIR=interfacing
 _INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c
@@ -84,6 +84,8 @@ polarization: obj/polarization.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS) o
 setOmega: obj/setOmega.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 setProbeLaser: obj/setProbeLaser.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+toggleLaserFlag: obj/toggleLaserFlag.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 setHeliumTarget: obj/setHeliumTarget.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
