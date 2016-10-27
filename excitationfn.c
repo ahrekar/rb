@@ -248,24 +248,24 @@ void graphData(char* fileName){
 
 		// Set up the axis for the first plot
 		sprintf(buffer, "set title '%s'\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 		fprintf(gnuplot, "set xlabel 'Energy'\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
 		sprintf(buffer, "plot '%s.dat' using 5:7:8 with yerrorbars\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s", buffer);
 
 		// Set up the axis for the second plot x axis stays the same
 		sprintf(buffer, "set title '%s'\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
 		sprintf(buffer, "plot '%s.dat' using 5:9:10 with yerrorbars\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 		// End printing to screen
 
 		// Clear the previous output settings, we no longer want to 
@@ -277,30 +277,30 @@ void graphData(char* fileName){
 		// Set up the output.
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s_counts.png'\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 
 		fprintf(gnuplot, "set key autotitle columnhead\n");			
 		// Set up the axis labels
 		sprintf(buffer, "set title '%s'\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		// Print the plot
 		sprintf(buffer, "plot '%s.dat' using 5:7:8 with yerrorbars\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 		fprintf(gnuplot, "unset output\n"); 
 
 		sprintf(buffer, "set output '%s_current.png'\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 		// Set up the axis labels, x stays the same
 		sprintf(buffer, "set title '%s'\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
 		//fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
 		sprintf(buffer, "plot '%s.dat' using 5:9:10 with yerrorbars\n", fileName);
-		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "%s",buffer);
 	}
 	pclose(gnuplot);
 
