@@ -172,7 +172,7 @@ int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurren
 	long sumCounts;
 	float current,angle;
 	float currentErr;
-	float* measurement = calloc(dwell,sizeof(float));
+	float* measurement = calloc(dwell*2,sizeof(float));
 
 	// Write Aout for He traget here
 	setUSB1208AnalogOut(HETARGET,aout);//sets vout such that 0 v at the probe laser
@@ -201,16 +201,18 @@ int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurren
 		current=0.0;
 		sumCounts=0;
 		for(i=0;i<dwell;i++){
+			getUSB1208AnalogIn(K617,&measurement[i]);
+			current += measurement[i];
 			getUSB1208Counter(10,&returnCounts);
 			sumCounts += returnCounts;
 
-			getUSB1208AnalogIn(K617,&measurement[i]);
-			current += measurement[i];
+			getUSB1208AnalogIn(K617,&measurement[i+dwell]);
+			current += measurement[i+dwell];
 		}
 
 
-		current = current/(float)dwell;
-		currentErr = stdDeviation(measurement,dwell);
+		current = current/(float)(dwell*2);
+		currentErr = stdDeviation(measurement,dwell*2);
 
 		angle = (float)steps/STEPSPERREV*2.0*PI;
 

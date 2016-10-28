@@ -113,7 +113,7 @@ int main (int argc, char **argv)
 		}
 		//Calculate the Stokes Parameters from the FC
 		printf("Calculating Stokes: %s\n",runTypes[i]);
-		calculateStokesFromFC(fcCos,fcCosErr,fcSin,fcSinErr,stokesParameters,spErr);
+		calculateStokesFromFC(avgFcCos,avgFcCosErr,avgFcSin,avgFcSinErr,stokesParameters,spErr);
 			
 		printf("Writing Data to file: %s\n",runTypes[i]);
 		//Record the average values to file.
