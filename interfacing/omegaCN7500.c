@@ -18,11 +18,11 @@ int getPVCN7500(unsigned short chan, float* temperature){
 	status=read_Modbus_RTU(chan,PV_REG,&returndata); //register4096 is PV
 
 	if(status==0){
-			*temperature =(float)returndata/10.0;
-		}else{
-	printf("error reading CN7500 code %d\n",status);
-		}
-return status;
+		*temperature =(float)returndata/10.0;
+	}else{
+		printf("error reading CN7500 code %d\n",status);
+	}
+	return status;
 }
 
 int getSVCN7500(unsigned short chan, float* temperature){
@@ -30,13 +30,13 @@ int getSVCN7500(unsigned short chan, float* temperature){
 	int status;
 	initialize_rs485(9600,25);
 
-		status=read_Modbus_RTU(chan,SV_REG,&returndata); //register4096 is SV
+	status=read_Modbus_RTU(chan,SV_REG,&returndata); //register4096 is SV
 	if(status==0){
-			*temperature  =(float)returndata/10.0;
-		}else{
-
-		}
-return status;
+		*temperature  =(float)returndata/10.0;
+	}else{
+		printf("error reading CN7500 code %d\n",status);
+	}
+	return status;
 }
 
 int setSVCN7500(unsigned short chan, float temperature){
@@ -45,5 +45,5 @@ int setSVCN7500(unsigned short chan, float temperature){
 
 	status=write_Modbus_RTU(chan,SV_REG, (unsigned int) (temperature*10));
 
-return status;
+	return status;
 }

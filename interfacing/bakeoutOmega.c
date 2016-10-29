@@ -15,7 +15,7 @@ int main (int argc, char* argv[]){
 
 	float tempTarg;
 	float tempRes;
-	float returnRes, returnTarg;
+	float returnRes, returnTarg, returnTargSet;
 	int changed =0;
 	float temperatureStep=100;
 	float modTemperature=10;
@@ -32,6 +32,7 @@ if reservoir < 30 set target to 100
 
 getPVCN7500(CN_RESERVE,&returnRes);
 getPVCN7500(CN_TARGET,&returnTarg);
+getSVCN7500(CN_TARGET,&returnTargSet);
 if (returnRes == 0  || returnRes > 120){ 
 	delay(5000); // This pause is used in the case that the program is being run from crontab
 				 // and there is another program that caused an error in the reading of the 
@@ -40,11 +41,28 @@ if (returnRes == 0  || returnRes > 120){
 	getPVCN7500(CN_TARGET,&returnTarg);
 }
 
+modTemperature=(returnRes>35)?10:5;
+if (temperatureStep < 30 && returnTarg < 85){
+	setSVCN7500(CN_RESERVE, 20.0);
+	setSVCN7500(CN_TARGET, 85);
+} else {
+	setSVCN7500(CN_RESERVE, 20.0);
+	setSVCN7500(CN_TARGET, returnRes+modTemperature);
+}
+
+printf("temperature %f > %f, setting to %f and 20\n",returnRes,temperatureStep,temperatureStep+modTemperature);
+changed=1;
+/**
 while(!changed){
 	if (returnRes > temperatureStep){
-		modTemperature=(returnRes>40)?10:5;
-		setSVCN7500(CN_RESERVE, 20.0);
-		setSVCN7500(CN_TARGET, temperatureStep+modTemperature);
+		modTemperature=(returnRes>35)?10:5;
+		if (temperatureStep < 30 && returnTarg < 85){
+			setSVCN7500(CN_RESERVE, 20.0);
+			setSVCN7500(CN_TARGET, 85);
+		} else {
+			setSVCN7500(CN_RESERVE, 20.0);
+			setSVCN7500(CN_TARGET, temperatureStep+modTemperature);
+		}
 		
 		printf("temperature %f > %f, setting to %f and 20\n",returnRes,temperatureStep,temperatureStep+modTemperature);
 		changed=1;
@@ -52,6 +70,7 @@ while(!changed){
 	printf("%f\n",temperatureStep);
 	temperatureStep-=5;
 }
+**/
 /**
 if (returnRes > 90.0){
 	setSVCN7500(CN_RESERVE, 20.0);
