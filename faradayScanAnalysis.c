@@ -49,7 +49,8 @@ int main (int argc, char **argv)
 	int dataPointsPerRev=14;
 	int revolutions=1;
 	printf("Processing Data...\n");
-	analyzeData(fileName,dataPointsPerRev,revolutions);
+	float probeOffset = 52.0;
+	analyzeData(fileName, probeOffset, dataPointsPerRev,revolutions);
 
 	printf("Plotting Data...\n");
 	char* extensionStart=strstr(fileName,".dat");
