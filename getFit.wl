@@ -1,5 +1,6 @@
 faradayData=Import["/home/pi/RbData/2016-08-11/FDayScan2016-08-11_122000.dat","Data"]
 (*Remove lines from the file. This one gets rid of comments.*)
+(* I need to first extract the magnetic field and probe offset information *)
 faradayData=Delete[faradayData,{{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}}]
 (*Remove columns from the file. This one gets rid of unneeded fourier coefficients*)
 faradayData=Drop[faradayData,None,{2}]

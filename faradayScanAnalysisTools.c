@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <asm/types.h>
 #include "mathTools.h" //includes stdDeviation
+#include "fileTools.h" 
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350	
@@ -36,9 +37,9 @@
 #define BUFSIZE 1024
 
 int plotData(char* fileName);
-int calculateNumberDensity(char* fileName);
+float calculateBdotL(float mag1Volt, float mag2Volt);
 int recordNumberDensity(char* fileName);
-int analyzeData(char* fileName,int dataPtsPerRev, int revolutions);
+int analyzeData(char* fileName, int dataPtsPerRev, int revolutions);
 int	readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, int* steps, float* intensity, float* inensityErr);
 float calculateOneSumTerm(int trigFunc, int dataPointsPerRevolution,int revolutions,float intensity, float i,int k);
 float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevolution, int revolutions, float intensity,float intensityErr, float i, float iErr, int k);
@@ -50,12 +51,28 @@ int getNumberOfDataLines(char* fileName);
 // (not giving me "reasonable" answers), so I'm hacking together
 // a quick automated data fitting scheme. It involves using Wolfram,
 // so it's going to be kind of messy.
-int calculateNumberDensity(char* fileName){
+int calculateNumberDensity(char* fileName, int leftDataExclude, int rightDataExclude){
+	float probeOffset,magnet1Volt,magnet2Volt;
+	float aoutConv,aoutInt;
+	float bDotL;
 	int i=0;
 	char buffer[BUFSIZE];
 	//char script[BUFSIZE]="\\home\\pi\\RbControl\\shortGetFit.wl";
 	FILE *wolfram;
+	//wolfram = popen("wolfram","w"); 
 	wolfram = popen("wolfram >> /dev/null","w"); 
+
+	getCommentLineFromFile(fileName,"#ProbeOffset:",buffer);
+	probeOffset=atof(buffer);
+	getCommentLineFromFile(fileName,"#Mag1Voltage:",buffer);
+	magnet1Volt=atof(buffer);
+	getCommentLineFromFile(fileName,"#Mag2Voltage:",buffer);
+	magnet2Volt=atof(buffer);
+
+	aoutConv=9e-6*pow(probeOffset,2)+.0012*probeOffset-.0651;
+	aoutInt=.6516*probeOffset-22.851;
+	bDotL=calculateBdotL(magnet1Volt,magnet2Volt);
+
 
 	if (wolfram != NULL){
 		sprintf(buffer, "faradayData=Import[\"%s\",\"Data\"]\n", fileName);
@@ -64,8 +81,8 @@ int calculateNumberDensity(char* fileName){
 		//sprintf(buffer, "Get[\"%s\"]",script);
 		//Removes lines from the file (This one gets rid of the comments)
 		//fprintf(wolfram, "faradayData=Delete[faradayData,{{1},{2},{3},{4},{5},{6},{7},{8}}]\n");			
-		for(i=0;i<1;i++){
-			fprintf(wolfram, "faradayData=Delete[faradayData,{{1}}]\n");			
+		for(i=0;i<13;i++){
+			fprintf(wolfram, "faradayData=Delete[faradayData,{{1}}];\n");			
 			
 		}
 		//Removes unneccesary columns from the file
@@ -74,26 +91,35 @@ int calculateNumberDensity(char* fileName){
 		}
 		fprintf(wolfram, "faradayData=Drop[faradayData,None,{3}]\n");
 		fprintf(wolfram, "faradayData=Drop[faradayData,None,{3}]\n");
-		//Removes lines from the file (This one gets rid of the data close to resonance)
-		//fprintf(wolfram, "faradayData=Delete[faradayData,{{8},{9},{10},{11}}]\n");
+		//Removes lines from the file (This one gets rid of the lower frequency)
+		for(i=0;i<leftDataExclude;i++){
+			fprintf(wolfram, "faradayData=Delete[faradayData,Dimensions[faradayData][[1]]]\n");
+		}
+		//Removes lines from the file (This one gets rid of the higher frequency)
+		for(i=0;i<rightDataExclude;i++){
+			fprintf(wolfram, "faradayData=Delete[faradayData,{{1}}]\n");
+		}
 		fprintf(wolfram, "c=2.9979*^10\n");
 		fprintf(wolfram, "re=2.8179*^-13\n");
 		fprintf(wolfram, "fge=0.34231\n");
 		fprintf(wolfram, "k=4/3\n");
 		fprintf(wolfram, "Mb=9.2740*^-24\n");
-		fprintf(wolfram, "BdotL=2.08*^-2\n");
+		fprintf(wolfram, "BdotL=%f\n",bDotL);
 		fprintf(wolfram, "h=6.6261*^-34\n");
 		fprintf(wolfram, "vo=3.77107*^14\n");
-		fprintf(wolfram, "pi=3.14.159265\n");
-		fprintf(wolfram, "aoutConv=-.0266\n");
-		fprintf(wolfram, "aoutIntercept=14.961\n");
+		fprintf(wolfram, "pi=3.14159265\n");
+		fprintf(wolfram, "aoutConv=%f\n",aoutConv);
+		fprintf(wolfram, "aoutIntercept=%f\n",aoutInt);
 		fprintf(wolfram, "const=c*re*fge*k*Mb*BdotL/(4*pi*h*vo)\n");
 		fprintf(wolfram, "model=a+b*const*(vo+(aoutConv*detune+aoutIntercept)*1*^9)/((aoutConv*detune+aoutIntercept)*1*^9)^2+d*(vo+(aoutConv*detune+aoutIntercept))^5/((aoutConv*detune+aoutIntercept))^4\n");
 		fprintf(wolfram, "modelResult=NonlinearModelFit[faradayData,model,{a,b,d},detune]\n");
-		fprintf(wolfram, "modelResult['BestFitParameters']>>fitParams.txt\n");
-		fprintf(wolfram, "modelResult['BestFitParameters']\n");
-		fprintf(wolfram, "modelResult['ParameterErrors']>>>fitParams.txt\n");
-		fprintf(wolfram, "modelResult['ParameterErrors']\n");
+		fprintf(wolfram, "initialAngle=Replace[a,modelResult[\"BestFitParameters\"][[1]]]\n");
+		fprintf(wolfram, "detuneSquare=Replace[b,modelResult[\"BestFitParameters\"][[2]]]\n");
+		fprintf(wolfram, "detuneFourth=Replace[d,modelResult[\"BestFitParameters\"][[3]]]\n");
+		fprintf(wolfram, "initialAngle>>fitParams.txt\n");
+		fprintf(wolfram, "detuneSquare>>>fitParams.txt\n");
+		fprintf(wolfram, "detuneFourth>>>fitParams.txt\n");
+		//fprintf(wolfram, "modelResult[\"ParameterErrors\"]>>>fitParams.txt\n");
 	}
 	return pclose(wolfram);
 }
@@ -101,8 +127,8 @@ int calculateNumberDensity(char* fileName){
 int recordNumberDensity(char* fileName){
 	char analysisFileName[1024];
 	strcpy(analysisFileName,fileName);
-	char* extensionStart=strstr(analysisFileName,".dat");
-	strcpy(extensionStart,"Analysis.dat");
+	char* extensionStart=strstr(analysisFileName,"RotationAnalysis.dat");
+	strcpy(extensionStart,"DensityAnalysis.dat");
 	float a,b,c;
 	int bExp,cExp;
 
@@ -176,7 +202,6 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 	int numberOfDataLines = getNumberOfDataLines(fileName);
 	int numAouts= numberOfDataLines/(dataPointsPerRevolution*revolutions); 
 
-
 	int* aouts=calloc(totalDatapoints*numAouts,sizeof(float)); 
 	float* intensity=calloc(totalDatapoints*numAouts,sizeof(float));
 	float* intensityErr=calloc(totalDatapoints*numAouts,sizeof(float));
@@ -188,7 +213,7 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 
 	strcpy(fileNameCopy,fileName);
 	extensionStart=strstr(fileNameCopy,".dat");
-	strcpy(extensionStart,"Analysis.dat");
+	strcpy(extensionStart,"RotationAnalysis.dat");
 
 	FILE* analysis = fopen(fileNameCopy,"w");
 	if (!analysis) {
@@ -378,4 +403,43 @@ int getNumberOfDataLines(char* fileName){
 	fclose(rawData);
 
 	return numberOfLines;
+}
+
+/** 
+ * Returns the integrated magnetic field across the target cell in units of Tesla
+ *
+ * Inputs: The voltage across the first magnet, the voltage across the second magnet
+ *
+ * Ouput: The value of B dot L
+ * */
+float calculateBdotL(float mag1Volt, float mag2Volt){
+	float numberOfMagnets=2;
+	float quadDep[2]={0.085,0.153};
+	float linDep[2]={-1.907,1.866};
+	float offset[2]={17.24,15.594};
+	float volt[2]={mag1Volt,mag2Volt};
+	float voltToCurrConv[2] = {0.0504,0.0488};
+	float voltToCurrOffset[2] = {-0.0113,-0.0069};
+	float current[2];
+	
+	float totalQuadDep,totalLinDep,totalOffset;
+	float targetCellEnd=2.794; // Measured in cm
+	int i;
+
+	for (i=0;i<numberOfMagnets;i++)
+		current[i]=voltToCurrConv[i]*volt[i]+voltToCurrOffset[i];
+
+	totalQuadDep=current[0]*quadDep[0]+current[1]*quadDep[1];
+	totalLinDep=current[0]*linDep[0]+current[1]*linDep[1];
+	totalOffset=current[0]*offset[0]+current[1]*offset[1];
+
+	// We divide each of the above variables by the next higher order of their dependence,
+	// these will be the coefficients after integration
+	totalQuadDep=totalQuadDep/3;
+	totalLinDep=totalLinDep/2;
+	totalOffset=totalOffset/1;
+
+	// Then we evaluate the integral at the end  points, since I set the front edge of the
+	// target cell to zero, this means just evaluating at the end of the targetCell
+	return (totalQuadDep*pow(targetCellEnd,3) + totalLinDep*pow(targetCellEnd,2) + totalOffset*targetCellEnd)/1e4;
 }

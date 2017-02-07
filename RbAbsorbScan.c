@@ -21,36 +21,38 @@
 #include <asm/types.h>
 #include "interfacing/interfacing.h"
 #include "mathTools.h"
+#include "fileTools.h"
 
 #define BUFSIZE 1024
 #define NUMCHANNELS 3
 
 void graphData(char* fileName);
+void writeFileHeader(char* fileName, char* comments, float probeOffset);
+void writeTextToFile(char* fileName, char* line);
+void collectAndRecordData(char* fileName, int startvalue, int endvalue, int stepsize);
 float stdDeviation(float* values, int numValues);
 void findAndSetProbeMaxTransmission();
 
 int main (int argc, char **argv)
 {
-	int i,startvalue,endvalue,stepsize,nSamples;
+	int startvalue,endvalue,stepsize,piOver2StepLocation,probeStepsPerRevolution;
 	time_t rawtime;
 	struct tm * timeinfo;
 	char fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
-	__u16 value;
 
-	float involts[3];
-	float returnFloat;
-	int k=0;
+	float probeOffset;
 
-	FILE *fp, *dataCollectionFlagFile;
+	FILE *dataCollectionFlagFile, *fp;
 
-	if (argc==5) {
+	if (argc==6) {
 		startvalue=atoi(argv[1]);
 		endvalue=atoi(argv[2]);
 		stepsize=atoi(argv[3]);
-		strcpy(comments,argv[4]);
+		probeOffset=atof(argv[4]);
+		strcpy(comments,argv[5]);
 	} else {
-		printf("Usage:\n$ sudo ./RbAbsorbScan <begin> <end> <step> <comments>\n");
+		printf("Usage:\n$ sudo ./RbAbsorbScan <begin> <end> <step> <probeOffset> <comments>\n");
 		printf("                              ( 0 - 1023 )                   \n");
 		return 0;
 	}
@@ -85,59 +87,38 @@ int main (int argc, char **argv)
 
 	printf("\n%s\n",fileName);
 
-	fp=fopen(fileName,"w");
+	writeFileHeader(fileName, comments, probeOffset);
+	fp=fopen(fileName,"a");
 	if (!fp) {
 		printf("unable to open file: %s\n",fileName);
 		exit(1);
 	}
-
-	fprintf(fp,"#Filename:\t%s\n",fileName);
-	fprintf(fp,"#Comments:\t%s\n",comments);
-	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
-	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
-	fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-
-	// Allocate some memory to store measurements for calculating
-	// error bars.
-	nSamples = 32;
-	float* measurement = malloc(nSamples*sizeof(float));
 	
+	probeStepsPerRevolution=350;
+	piOver2StepLocation=probeStepsPerRevolution/4;
 	printf("Homing linear polarizer...\n");
+	//findAndSetProbeMaxTransmission();
+	homeMotor(PROBE_MOTOR);
+	writeTextToFile(fileName,"#HomeTransmission\n");
+	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
+	/**
+
+	stepMotor(PROBE_MOTOR,CLK,piOver2StepLocation/3);
+	writeTextToFile(fileName,"#30Transmission\n");
+	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
+
+	stepMotor(PROBE_MOTOR,CLK,piOver2StepLocation/3);
+	writeTextToFile(fileName,"#60Transmission\n");
+	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
+
+	stepMotor(PROBE_MOTOR,CLK,piOver2StepLocation/3);
+	writeTextToFile(fileName,"#90Transmission\n");
+	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
+	**/
+
 	homeMotor(PROBE_MOTOR);
 
-	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
-		setUSB1208AnalogOut(PROBEOFFSET,value);
-		printf("Aout %d \t",value);
-		fprintf(fp,"%d\t",value);
-
-		// delay to allow transients to settle
-		delay(100);
-		for(k=0;k<NUMCHANNELS;k++){
-			involts[k]=0.0;	
-		}
-
-		// grab several readings and average
-		for(k=1;k<NUMCHANNELS+1;k++){
-			for (i=0;i<nSamples;i++){
-				getUSB1208AnalogIn(k,&measurement[i]);
-				involts[k-1]=involts[k-1]+measurement[i];
-				delay(1);
-			}
-			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
-			fprintf(fp,"%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
-			printf("%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
-		}
-		fprintf(fp,"\n");
-		printf("\n");
-	}
-	free(measurement);
-
-	value=(int)(1.325*617.0);
-	setUSB1208AnalogOut(PROBEOFFSET,value);//sets vout such that 0 v at the probe laser
-
-	fclose(fp);
+	setUSB1208AnalogOut(PROBEOFFSET,0);//sets vout such that 0 v at the probe laser
 
 	closeUSB1208();
 
@@ -156,6 +137,11 @@ void graphData(char* fileName){
 	// how this process works.
 	gnuplot = popen("gnuplot","w"); 
 
+	//getCommentLineFromFile(fileName,"#ProbeOffset:",buffer);
+	//probeOffset=atof(buffer);
+	//aoutConv=9e-6*pow(probeOffset,2)+.0012*probeOffset-.0651;
+	//aoutInt=.6516*probeOffset-22.851;
+
 	if (gnuplot != NULL){
 		fprintf(gnuplot, "set terminal dumb size 158,32\n");
 		fprintf(gnuplot, "set output\n");			
@@ -168,6 +154,9 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
 		fprintf(gnuplot, "set yrange [-.1:*]\n");			
 		fprintf(gnuplot, "set xrange [*:*] reverse\n");			
+		//fprintf(gnuplot, "set x2range [*:*] reverse\n");			
+		fprintf(gnuplot, "set x2tics nomirror\n");
+		//sprintf(buffer, "plot '%s' using 1:6:7 with errorbars, '%s' using ($1*%f+%f):6:7 axes x2y1\n",fileName,fileName,aoutConv,aoutInt);
 		sprintf(buffer, "plot '%s' using 1:6:7 with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		sprintf(buffer, "plot '%s' using 1:4:5 with errorbars\n",fileName);
@@ -218,4 +207,82 @@ void findAndSetProbeMaxTransmission(){
 			foundMax=1;
 		}
 	}while(!foundMax);
+}
+
+void writeFileHeader(char* fileName, char* comments, float probeOffset){
+	FILE* fp;
+	float returnFloat;
+	fp=fopen(fileName,"w");
+	if (!fp) {
+		printf("unable to open file: %s\n",fileName);
+		exit(1);
+	}
+
+	fprintf(fp,"#Filename:\t%s\n",fileName);
+	fprintf(fp,"#Comments:\t%s\n",comments);
+	getPVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
+	getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
+	fprintf(fp,"#ProbeOffset:\t%f\n",probeOffset);
+	fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
+	fclose(fp);
+}
+
+void writeTextToFile(char* fileName, char* line){
+	FILE* fp;
+	fp=fopen(fileName,"a");
+	if (!fp) {
+		printf("unable to open file: %s\n",fileName);
+		exit(1);
+	}
+	fprintf(fp,"%s",line);
+	fclose(fp);
+}
+
+void collectAndRecordData(char* fileName, int startvalue, int endvalue, int stepsize){
+	__u16 value;
+	FILE* fp;
+	int k=0,i;
+	int nSamples;
+	float involts[NUMCHANNELS];
+
+	fp=fopen(fileName,"a");
+	if (!fp) {
+		printf("unable to open file: %s\n",fileName);
+		exit(1);
+	}
+	// Allocate some memory to store measurements for calculating
+	// error bars.
+	nSamples = 32;
+	float* measurement = malloc(nSamples*sizeof(float));
+
+	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
+		setUSB1208AnalogOut(PROBEOFFSET,value);
+		printf("Aout %d \t",value);
+		fprintf(fp,"%d\t",value);
+
+		// delay to allow transients to settle
+		delay(100);
+		for(k=0;k<NUMCHANNELS;k++){
+			involts[k]=0.0;	
+		}
+
+		// grab several readings and average
+		for(k=1;k<NUMCHANNELS+1;k++){
+			for (i=0;i<nSamples;i++){
+				getUSB1208AnalogIn(k,&measurement[i]);
+				involts[k-1]=involts[k-1]+measurement[i];
+				delay(1);
+			}
+			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
+			fprintf(fp,"%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
+			printf("%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
+		}
+		fprintf(fp,"\n");
+		printf("\n");
+	}
+	fprintf(fp,"\n");
+	fclose(fp);
+	free(measurement);
 }

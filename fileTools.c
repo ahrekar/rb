@@ -38,3 +38,21 @@ int appendFiles(FILE* head, FILE* tail)
 	fclose(tail);
 	exit(EXIT_SUCCESS);
 }
+
+int getCommentLineFromFile(char* inputFile, char* commentDescText, char* returnString){
+	FILE* data = fopen(inputFile,"r");
+	char* pointer;
+	if (!data) {
+		printf("Unable to open file %s\n",inputFile);
+		exit(1);
+	}
+	do{
+		fgets(returnString,1024,data);
+	} while(strncmp(returnString,commentDescText,strlen(commentDescText)));
+	pointer = strtok(returnString,"\t");
+	pointer = strtok(NULL,"\t");
+	strcpy(returnString,pointer);
+	returnString[strcspn(returnString,"\n")]=0;
+
+	return 0;
+}

@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c 
 
 INTDIR=interfacing
 _INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c
@@ -71,13 +71,20 @@ all: ${BINARIES}
 $(ODIR)/%.o: %.c
 		$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
 
+$(ODIR)/fileTools.o: fileTools.c
+		$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
+
+$(ODIR)/faradayScanAnalysisTools.o: faradayScanAnalysisTools.c
+	$(CC) -c -o $@ $^ $(CFLAGS) $(PIFLAGS)
+
+
 getcounts: obj/getcounts.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-RbAbsorbScan: obj/RbAbsorbScan.o obj/mathTools.o $(INTOBJECTS)
+RbAbsorbScan: obj/RbAbsorbScan.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 excitationfn: obj/excitationfn.o obj/mathTools.o $(INTOBJECTS) 
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayScan: obj/faradayScan.o obj/mathTools.o obj/faradayScanAnalysisTools.o $(INTOBJECTS)
+faradayScan: obj/faradayScan.o obj/mathTools.o obj/faradayScanAnalysisTools.o obj/fileTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 polarization: obj/polarization.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS) obj/polarizationAnalysisTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
@@ -103,9 +110,9 @@ homeWavePlate: homeWavePlate.c 		$(INTOBJECTS)
 setWavePlate: setWavePlate.c 		$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
-polarizationAnalysis: obj/polarizationAnalysis.o obj/polarizationAnalysisTools.o obj/mathTools.o
+polarizationAnalysis: obj/polarizationAnalysis.o obj/polarizationAnalysisTools.o obj/mathTools.o obj/fileTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-polarizationScriptAnalysis: obj/polarizationScriptAnalysis.o obj/polarizationAnalysisTools.o obj/mathTools.o
+polarizationScriptAnalysis: obj/polarizationScriptAnalysis.o obj/polarizationAnalysisTools.o obj/mathTools.o obj/fileTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayScanAnalysis: obj/faradayScanAnalysis.o obj/faradayScanAnalysisTools.o obj/mathTools.o
+faradayScanAnalysis: obj/faradayScanAnalysis.o obj/faradayScanAnalysisTools.o obj/mathTools.o obj/fileTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)

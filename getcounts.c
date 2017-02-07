@@ -52,6 +52,10 @@ int main (int argc, char *argv[])
 	if (argc==3){
 		numit = atoi(argv[1]); //number of interations
 		dwell = atoi(argv[2]);
+	}else if (argc==1){
+		printf("Usage:\n\n ~$ sudo ./getcounts xx yyy \n\nwhere xx is the number of yyy-tenth of second iterations to aquire before exiting\n\n");
+		numit=3;
+		dwell=10;
 	}else{
 		printf("Usage:\n\n ~$ sudo ./getcounts xx yyy \n\nwhere xx is the number of yyy-tenth of second iterations to aquire before exiting\n\n");
 		return(1);

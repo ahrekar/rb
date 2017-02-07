@@ -28,6 +28,6 @@
 #include "mathTools.h" //includes stdDeviation
 
 int plotData(char* fileName);
-int calculateNumberDensity(char* fileName);
+int calculateNumberDensity(char* fileName,int leftDataExclude, int rightDataExclude);
 int recordNumberDensity(char* fileName);
-int analyzeData(char* fileName,int dataPtsPerRev, int revolutions);
+int analyzeData(char* fileName, int dataPtsPerRev, int revolutions);

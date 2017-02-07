@@ -27,7 +27,6 @@
 
 int processFile(char* backgroundFileName, char* comments);
 int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFile, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent);
-int getCommentLineFromFile(char* inputFile, char* returnString);
 
 int calculateFourierCoefficients(char* fileName, int dataPointsPerRevolution, int Revolutions, int normalizeWithCurrent, float* fcCosRet, float* fcCosErrRet, float* fcSinRet, float* fcSinErrRet, float* avgCurrentReturn, float* avgCurrentStdDevReturn);
 float calculateOneSumTerm(char trigFunc, float intensity, float i,int k);
@@ -295,24 +294,6 @@ int printOutFloatArrayWithError(float* array, float* errorArray, int n){
 	return 0;
 }
 
-int getCommentLineFromFile(char* inputFile, char* returnString){
-	FILE* data = fopen(inputFile,"r");
-	char* pointer;
-	if (!data) {
-		printf("Unable to open file %s\n",inputFile);
-		exit(1);
-	}
-	do{
-		fgets(returnString,1024,data);
-	} while(strncmp(returnString,"#Comments",9));
-	pointer = strtok(returnString,"\t");
-	pointer = strtok(NULL,"\t");
-	strcpy(returnString,pointer);
-	returnString[strcspn(returnString,"\n")]=0;
-
-	return 0;
-}
-
 int processFileWithBackground(char* analysisFileName, char* backgroundFileName, char* dataFileName, int dataPointsPerRevolution, int revolutions, int normalizeWithCurrent){
 	char comments[1024];
 
@@ -380,7 +361,7 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	printOutSP(stokesParameters,spErr);
 	printf("\n");
 
-	getCommentLineFromFile(dataFileName,comments);
+	getCommentLineFromFile(dataFileName,"#Comments",comments);
 
 	printf("Writing analysis to file...\n");
 	writeDataSummaryToFile(analysisFileName,backgroundFileName,dataFileName,

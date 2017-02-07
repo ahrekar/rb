@@ -41,12 +41,19 @@ if (returnRes == 0  || returnRes > 120){
 	getPVCN7500(CN_TARGET,&returnTarg);
 }
 
-modTemperature=(returnRes>35)?10:5;
-if (temperatureStep < 30 && returnTarg < 85){
-	setSVCN7500(CN_RESERVE, 20.0);
-	setSVCN7500(CN_TARGET, 85);
+modTemperature=(returnRes>40)?10:5;
+if (returnRes>40)
+	modTemperature=10;
+else if (returnRes > 37)
+	modTemperature=5;
+else
+	modTemperature=2;
+
+if (returnRes < 30 && returnTarg < 80){
+	setSVCN7500(CN_RESERVE, 5.0);
+	setSVCN7500(CN_TARGET, 130);
 } else {
-	setSVCN7500(CN_RESERVE, 20.0);
+	setSVCN7500(CN_RESERVE, 5.0);
 	setSVCN7500(CN_TARGET, returnRes+modTemperature);
 }
 

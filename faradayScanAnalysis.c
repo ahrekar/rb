@@ -30,7 +30,6 @@
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350	
-#define STEPSIZE 25
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -38,27 +37,36 @@
 
 int main (int argc, char **argv)
 {
+	int leftDataExclude=0, rightDataExclude=0;
+	int interactive;
 	char fileName[1024];
-	if (argc==2){
+	if (argc==3){
 		strcpy(fileName,argv[1]);
+		interactive = atoi(argv[2]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscan <fileName>'\n");
+		printf("usage '~$ sudo ./faradayscanAnalysis <fileName> <0 or 1 (1 to remove datapoints)>'\n");
 		return 1;
 	}
 
-	int dataPointsPerRev=14;
+	int dataPointsPerRev=25;
 	int revolutions=1;
 	printf("Processing Data...\n");
-	float probeOffset = 52.0;
-	analyzeData(fileName, probeOffset, dataPointsPerRev,revolutions);
+	analyzeData(fileName, dataPointsPerRev,revolutions);
 
 	printf("Plotting Data...\n");
 	char* extensionStart=strstr(fileName,".dat");
-	strcpy(extensionStart,"Analysis.dat");
+	strcpy(extensionStart,"DensityAnalysis.dat");
 	plotData(fileName);
 
+	if (interactive){
+		printf("How many data points on left to exclude?\n");
+		scanf("%d",&leftDataExclude);
+		printf("How many data points on right to exclude?\n");
+		scanf("%d",&rightDataExclude);
+	}
+
 	printf("Calculating number density...\n");
-	calculateNumberDensity(fileName);
+	calculateNumberDensity(fileName,leftDataExclude,rightDataExclude);
 
 	printf("Recording number density to file...\n");
 	recordNumberDensity(fileName);

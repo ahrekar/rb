@@ -34,7 +34,7 @@
 #include "faradayScanAnalysisTools.h"
 
 #define PI 3.14159265358979
-#define NUMSTEPS 350	
+#define NUMSTEPS 350
 #define STEPSIZE 25
 #define STEPSPERREV 350.0
 #define WAITTIME 2
@@ -42,7 +42,6 @@
 #define BUFSIZE 1024
 
 int plotData(char* fileName);
-int calculateNumberDensity(char* fileName);
 int recordNumberDensity(char* fileName);
 
 int main (int argc, char **argv)
@@ -50,7 +49,10 @@ int main (int argc, char **argv)
 	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
 	int numAouts=0;
 	time_t rawtime;
-	float returnFloat;
+	float returnFloat, angle;
+	float sumSin, sumCos;
+	float f3, f4;
+	float probeOffset,mag1Voltage,mag2Voltage;
 	struct tm * timeinfo;
 	char fileName[BUFSIZE], comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
@@ -59,13 +61,16 @@ int main (int argc, char **argv)
 	FILE *fp,*dataCollectionFlagFile;
 
 
-	if (argc==5){
+	if (argc==8){
 		AoutStart= atoi(argv[1]);
 		AoutStop=atoi(argv[2]);
 		deltaAout=atoi(argv[3]);
-		strcpy(comments,argv[4]);
+		probeOffset=atof(argv[4]);
+		mag1Voltage=atof(argv[5]);
+		mag2Voltage=atof(argv[6]);
+		strcpy(comments,argv[7]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments in quotes>'\n");
+		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
 		return 1;
 	}
 
@@ -126,13 +131,20 @@ int main (int argc, char **argv)
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
+	fprintf(fp,"#ProbeOffset:\t%f\n",probeOffset);
+	fprintf(fp,"#Mag1Voltage:\t%f\n",mag1Voltage);
+	fprintf(fp,"#Mag2Voltage:\t%f\n",mag2Voltage);
+
 	// Write the header for the data to the file.
 	fprintf(fp,"Aout\tstep\tintensity\n");
 
 	printf("Homing motor...\n");
 	homeMotor(PROBE_MOTOR);
+	int count=0;
 	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
-		printf("Aout %d\n",Aout);
+		sumSin=0;
+		sumCos=0;
+		count=0;
 
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 
@@ -149,18 +161,28 @@ int main (int argc, char **argv)
 			involts=involts/(float)nsamples; 
 
 			fprintf(fp,"%d\t%d\t%f\t%f\n",Aout,steps,involts,stdDeviation(measurement,nsamples));
+			angle=2.0*PI*(steps)/STEPSPERREV;
+			sumSin+=involts*sin(2*angle);
+			sumCos+=involts*cos(2*angle);
 
+			count++;
 			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
 		}
+		f3=sumSin/count;
+		f4=sumCos/count;
+		angle = 0.5*atan2(f4,f3);
+		printf("Aout %d: %3.2f\n",Aout,angle*180/PI);
+
 		numAouts++;
 	}//end for Aout
+	setUSB1208AnalogOut(PROBEOFFSET,0);
 	fclose(fp);
 
 
 	int dataPointsPerRev=STEPSPERREV/STEPSIZE;
 	int revolutions=1;
 	printf("Processing Data...\n");
-	analyzeData(fileName,dataPointsPerRev,revolutions);
+	analyzeData(fileName, dataPointsPerRev, revolutions);
 
 	char* extensionStart;
 	extensionStart=strstr(fileName,".dat");
@@ -169,7 +191,7 @@ int main (int argc, char **argv)
 	printf("Plotting Data...\n");
 	plotData(fileName);
 	printf("Calculating number density...\n");
-	calculateNumberDensity(fileName);
+	calculateNumberDensity(fileName, 0, 0);
 	printf("Recording number density to file...\n");
 	recordNumberDensity(fileName);
 
