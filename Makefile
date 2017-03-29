@@ -68,14 +68,21 @@ all: ${BINARIES}
 # represents the binary file's name. 
 #$(BINARIES):$@.o
 #	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-$(ODIR)/%.o: %.c
-		$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
 
-$(ODIR)/fileTools.o: fileTools.c
-		$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
+# Create the object directory to store the object
+# files in if it doesn't already exist.
+$(ODIR): 
+	mkdir -p $(ODIR)
+	mkdir -p $(ODIR)/$(INTDIR)
 
-$(ODIR)/faradayScanAnalysisTools.o: faradayScanAnalysisTools.c
-	$(CC) -c -o $@ $^ $(CFLAGS) $(PIFLAGS)
+$(ODIR)/%.o: %.c | $(ODIR)
+	$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
+
+#$(ODIR)/fileTools.o: fileTools.c
+#	$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
+#
+#$(ODIR)/faradayScanAnalysisTools.o: faradayScanAnalysisTools.c
+#	$(CC) -c -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
 
 getcounts: obj/getcounts.o $(INTOBJECTS)
@@ -116,3 +123,4 @@ polarizationScriptAnalysis: obj/polarizationScriptAnalysis.o obj/polarizationAna
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 faradayScanAnalysis: obj/faradayScanAnalysis.o obj/faradayScanAnalysisTools.o obj/mathTools.o obj/fileTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+

@@ -118,7 +118,7 @@ int main (int argc, char **argv)
 
 	homeMotor(PROBE_MOTOR);
 
-	setUSB1208AnalogOut(PROBEOFFSET,0);//sets vout such that 0 v at the probe laser
+	setUSB1208AnalogOut(PROBEOFFSET,512);//sets vout such that 0 v offset at the probe laser
 
 	closeUSB1208();
 
@@ -257,12 +257,18 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 	nSamples = 32;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
+	value=startvalue;
+	setUSB1208AnalogOut(PROBEOFFSET,value);
+	//delay(60000);
+	/** Reverse the start and end point **/
+	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
+//	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
 		setUSB1208AnalogOut(PROBEOFFSET,value);
 		printf("Aout %d \t",value);
 		fprintf(fp,"%d\t",value);
 
 		// delay to allow transients to settle
+		//delay(10000);
 		delay(100);
 		for(k=0;k<NUMCHANNELS;k++){
 			involts[k]=0.0;	
