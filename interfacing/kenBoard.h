@@ -53,12 +53,14 @@ MODBUS RTU LAYER::
 */
 int initializeBoard();
 //wiring pi setup , initialyze global variables
+int closeBoard();
 
 int getADC(unsigned short chan, unsigned int * returndata);
 // uses MCP3008 ADC conected to SPI channel 0.
 
 int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps);
 int homeMotor(unsigned short mtr);
+int quickHomeMotor(unsigned short mtr);
 int setMotor(unsigned short mtr, int newLocation);
 // bit-bangs clock and direction for stepper motor driver.
 
@@ -79,7 +81,8 @@ int writeDigital(unsigned short chan, unsigned short writedata);
  RS485 I/O
 */
 void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho);
-void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho);
+//void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho);
+void write_rs485ASCII(char* cmd, char* pszEcho);
 // uses RaspiUART and one GPIO pin to control serial IO through RS485
 
 /*

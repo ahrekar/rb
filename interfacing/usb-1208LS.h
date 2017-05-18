@@ -1,21 +1,20 @@
 /*
  *
- *  Copyright (c) 2004-2005  Warren Jasper <wjasper@tx.ncsu.edu>
+ *  Copyright (c) 2014 Warren J. Jasper <wjasper@tx.ncsu.edu>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+*/
 
 #ifndef USB_1208LS_H
 #define USB_1208LS_H
@@ -89,26 +88,25 @@ extern "C" {
 #define AIN_TRANSFER      0x4  // 1 = Block Transfer Mode
 #define AIN_TRIGGER       0x8  // 1 = Use External Trigger
 
-
 /* function prototypes for the USB-1208LS */
-void usbDConfigPort_USB1208LS(HIDInterface* hid, __u8 port, __u8 direction);
-void usbDIn_USB1208LS(HIDInterface* hid, __u8 port, __u8* din_value);
-void usbDOut_USB1208LS(HIDInterface* hid, __u8 port, __u8 value);
-__u8 usbDBitIn_USB1208LS(HIDInterface* hid, __u8 port, __u8 bit);
-void usbDBitOut_USB1208LS(HIDInterface* hid, __u8 port, __u8 bit, __u8 value);
-signed short usbAIn_USB1208LS(HIDInterface* hid, __u8 channel, __u8 range);
-void usbAInScan_USB1208LS(HIDInterface* hid, __u16 count, int rate, __u8 low_channel, __u8 high_channel, __u8 options, __s16 value[], __u8 gainLoadQueue[]);
-void usbAInLoadQueue_USB1208LS(HIDInterface* hid, __u8 chanCount, __u8 chanLoadQueue[], __u8 gainLoadQueue[]);
-void usbAOut_USB1208LS(HIDInterface* hid, __u8 channel, __u16 value);
-void usbAInStop_USB1208LS(HIDInterface* hid);
-void usbInitCounter_USB1208LS(HIDInterface* hid);
-__u32 usbReadCounter_USB1208LS(HIDInterface* hid);
-void usbReadMemory_USB1208LS(HIDInterface* hid, __u16 address, __u8 *data, __u8 count);
-void usbBlink_USB1208LS(HIDInterface* hid);
-void usbReset_USB1208LS(HIDInterface* hid);
-void usbSetTrigger_USB1208LS(HIDInterface* hid, __u8 type, __u8 chan);
-__u8 usbGetID_USB1208LS(HIDInterface* hid);
-void usbSetID_USB1208LS(HIDInterface* hid, __u8 id);
+void usbDConfigPort_USB1208LS(hid_device *hid, uint8_t port, uint8_t direction);
+void usbDIn_USB1208LS(hid_device *hid, uint8_t port, uint8_t* din_value);
+void usbDOut_USB1208LS(hid_device *hid, uint8_t port, uint8_t value);
+uint8_t usbDBitIn_USB1208LS(hid_device *hid, uint8_t port, uint8_t bit);
+void usbDBitOut_USB1208LS(hid_device *hid, uint8_t port, uint8_t bit, uint8_t value);
+signed short usbAIn_USB1208LS(hid_device *hid, uint8_t channel, uint8_t range);
+void usbAInScan_USB1208LS(hid_device *hid, uint16_t count, int rate, uint8_t low_channel, uint8_t high_channel, uint8_t options, int16_t value[], uint8_t gainLoadQueue[]);
+void usbAInLoadQueue_USB1208LS(hid_device *hid, uint8_t chanCount, uint8_t chanLoadQueue[], uint8_t gainLoadQueue[]);
+void usbAOut_USB1208LS(hid_device *hid, uint8_t channel, uint16_t value);
+void usbAInStop_USB1208LS(hid_device *hid);
+void usbInitCounter_USB1208LS(hid_device *hid);
+uint32_t usbReadCounter_USB1208LS(hid_device *hid);
+void usbReadMemory_USB1208LS(hid_device *hid, uint16_t address, uint8_t *data, uint8_t count);
+void usbBlink_USB1208LS(hid_device *hid);
+void usbReset_USB1208LS(hid_device *hid);
+void usbSetTrigger_USB1208LS(hid_device *hid, uint8_t type, uint8_t chan);
+uint8_t usbGetID_USB1208LS(hid_device *hid);
+void usbSetID_USB1208LS(hid_device *hid, uint8_t id);
 float volts_LS(const int gain, const signed short num);
 
 #ifdef __cplusplus

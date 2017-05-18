@@ -28,7 +28,7 @@ int initializeBK1696(int address){
 		add[2]=13;//the B&K expects a CR at the end of each command
 		add[3]='\0';
 	strcat(command,add);
-	write_rs485ASCII(command,chardata, sizeof(chardata));
+	write_rs485ASCII(command,chardata);
 	j=-1;
 	//j=strncmp(chardata,"OK",2);
 	if (strstr(chardata,"OK") != NULL){ // found "OK"
@@ -59,7 +59,7 @@ int setOutputBK1696(int address,int status){
 		add[3]=13;//the B&K expects a CR at the end of each command
 		add[4]='\0';
 	strcat(command,add);
-	write_rs485ASCII(command,chardata, sizeof(chardata));
+	write_rs485ASCII(command,chardata);
 	j=-1;
 	//j=strncmp(chardata,"OK",2);
 	if (strstr(chardata,"OK") != NULL){ // found "OK"
@@ -89,7 +89,7 @@ int getVoltsAmpsBK1696(int address, float* volts, float* amps){
 
 	strcat(command,add);
 
-	write_rs485ASCII(command,chardata, sizeof(chardata));
+	write_rs485ASCII(command,chardata);
 	j=-1;
 	if ((strstr(chardata,"OK") != NULL)&(strlen(chardata)==11)){
 		for (i=0;i<4;i++){
@@ -156,7 +156,7 @@ if (volts<0.0) volts=0.0;
 //	printf("%s\n",command);
 
 
-	write_rs485ASCII(command,chardata, sizeof(chardata));
+	write_rs485ASCII(command,chardata);
 	j=-1;
 	//j=strncmp(chardata,"OK",2);
 	if (strstr(chardata,"OK") != NULL){ // found "OK"
@@ -218,7 +218,7 @@ printf("i= %d\n",i);
 	printf("%s\n",command);
 
 
-	write_rs485ASCII(command,chardata, sizeof(chardata));
+	write_rs485ASCII(command,chardata);
 	j=-1;
 	//j=strncmp(chardata,"OK",2);
 	if (strstr(chardata,"OK") != NULL){ // found "OK"

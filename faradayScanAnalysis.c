@@ -48,7 +48,7 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	int dataPointsPerRev=25;
+	int dataPointsPerRev=14;
 	int revolutions=1;
 	printf("Processing Data...\n");
 	analyzeData(fileName, dataPointsPerRev,revolutions);
@@ -65,11 +65,11 @@ int main (int argc, char **argv)
 		scanf("%d",&rightDataExclude);
 	}
 
-	printf("Calculating number density...\n");
-	calculateNumberDensity(fileName,leftDataExclude,rightDataExclude);
+    //printf("Calculating number density...\n");
+	//calculateNumberDensity(fileName,leftDataExclude,rightDataExclude);
 
-	printf("Recording number density to file...\n");
-	recordNumberDensity(fileName);
+	//printf("Recording number density to file...\n");
+	//recordNumberDensity(fileName);
 
 	return 0;
 }

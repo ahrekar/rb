@@ -30,7 +30,6 @@
 #include "tempControl.h"
 #include "interfacing/interfacing.h"
 #include "faradayScanAnalysisTools.h"
-#include "interfacing/waveMeter.h"
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
@@ -45,15 +44,13 @@ int recordNumberDensity(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
+	int i,steps,nsamples;
     int revolutions,dataPointsPerRevolution;
     int homeFlag;
-	int numAouts=0;
 	time_t rawtime;
 	float returnFloat, angle;
 	float sumSin, sumCos;
 	float f3, f4;
-	float wavelength;
 	float probeOffset,mag1Voltage,mag2Voltage;
 	struct tm * timeinfo;
 	char fileName[BUFSIZE], comments[BUFSIZE];
@@ -64,16 +61,13 @@ int main (int argc, char **argv)
 	FILE *fp,*dataCollectionFlagFile;
 
 
-	if (argc==8){
-		AoutStart= atoi(argv[1]);
-		AoutStop=atoi(argv[2]);
-		deltaAout=atoi(argv[3]);
-		probeOffset=atof(argv[4]);
-		mag1Voltage=atof(argv[5]);
-		mag2Voltage=atof(argv[6]);
-		strcpy(comments,argv[7]);
+	if (argc==5){
+		probeOffset=atof(argv[1]);
+		mag1Voltage=atof(argv[2]);
+		mag2Voltage=atof(argv[3]);
+		strcpy(comments,argv[4]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
+		printf("usage '~$ sudo ./faradayscan <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
 		return 1;
 	}
 
@@ -84,7 +78,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-    revolutions=1;
+    revolutions=2;
     dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
 	nsamples=32;
 	float* measurement = malloc(nsamples*sizeof(float));
@@ -115,8 +109,6 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
-    /** Record System Stats to File **/
-    /** Pressure Gauges **/
 	getIonGauge(&returnFloat);
 	printf("IonGauge %2.2E Torr \n",returnFloat);
 	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
@@ -129,7 +121,6 @@ int main (int argc, char **argv)
 	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
-    /** Temperature Controllers **/
 	getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#CurrTemp(Res):\t%f\n",returnFloat);
 	getSVCN7500(CN_RESERVE,&returnFloat);
@@ -141,83 +132,59 @@ int main (int argc, char **argv)
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
 	fprintf(fp,"#ProbeOffset:\t%f\n",probeOffset);
-
 	fprintf(fp,"#Mag1Voltage:\t%f\n",mag1Voltage);
 	fprintf(fp,"#Mag2Voltage:\t%f\n",mag2Voltage);
-    /** End System Stats Recording **/
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"Aout\tWavelength\tstep\tintensity\tStd.Dev\tHadToHomeFlag\n");
+	fprintf(fp,"step\tintensity\tStd.Dev\tHadToHomeFlag\n");
 
-	printf("Homing motor...\n");
-	homeMotor(PROBE_MOTOR);
+    int j=0;
 	int count=0;
     homeFlag=0;
-	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
-	//for(Aout=AoutStop;Aout>AoutStart;Aout-=deltaAout){
-		sumSin=0;
-		sumCos=0;
-		count=0;
+    sumSin=0;
+    sumCos=0;
+    count=0;
 
-		setUSB1208AnalogOut(PROBEOFFSET,Aout);
-		delay(1000); 
+    if(quickHomeMotor(PROBE_MOTOR)>0)
+        homeFlag=1;
+    else
+        homeFlag=0;
 
-        //printf("Getting wavelength from wavemeter...\n");
-		wavelength=getWaveMeter();
-        //printf("Wavelength obtained!\n");
-
-		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
-			// (NUMSTEPS) in increments of STEPSIZE
-			delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
-			//get samples and average
-			involts=0.0;	
-			for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
-				getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
-				involts=involts+measurement[i];
-				delay(WAITTIME);
-			}
-			involts=involts/(float)nsamples; 
+    for (j=0;j<revolutions;j++){
+    for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
+        // (NUMSTEPS) in increments of STEPSIZE
+        delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
+        //get samples and average
+        involts=0.0;	
+        for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
+            getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
+            involts=involts+measurement[i];
+            delay(WAITTIME);
+        }
+        involts=involts/(float)nsamples; 
 
 
-			fprintf(fp,"%d\t%f\t%d\t%f\t%f\t%d\n",Aout,wavelength,steps,involts,stdDeviation(measurement,nsamples),homeFlag);
-			angle=2.0*PI*(steps)/STEPSPERREV;
-			sumSin+=involts*sin(2*angle);
-			sumCos+=involts*cos(2*angle);
+        fprintf(fp,"%d\t%d\t%d\t%f\t%f\t%d\n",512,-1,steps,involts,stdDeviation(measurement,nsamples),homeFlag);
+        angle=2.0*PI*(steps)/STEPSPERREV;
+        sumSin+=involts*sin(2*angle);
+        sumCos+=involts*cos(2*angle);
 
-			count++;
-			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
-		}
-		f3=sumSin/count;
-		f4=sumCos/count;
-		angle = 0.5*atan2(f4,f3);
-		printf("Aout %d(%f): %3.2f\n",Aout,wavelength,angle*180/PI);
+        count++;
+        stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
+    }
+    }
+    f3=sumSin/count;
+    f4=sumCos/count;
+    angle = 0.5*atan2(f4,f3);
+    printf("Angle: %3.2f\n",angle*180/PI);
 
-		numAouts++;
-        if(quickHomeMotor(PROBE_MOTOR)>0)
-            homeFlag=1;
-        else
-            homeFlag=0;
-	}//end for Aout
-	setUSB1208AnalogOut(PROBEOFFSET,512);
 	fclose(fp);
-
 
 	printf("Processing Data...\n");
 	analyzeData(fileName, dataPointsPerRevolution, revolutions);
-
-	char* extensionStart;
-	extensionStart=strstr(fileName,".dat");
-	strcpy(extensionStart,"RotationAnalysis.dat");
-
-	printf("Plotting Data...\n");
-	plotData(fileName);
-	//printf("Calculating number density...\n");
-	//calculateNumberDensity(fileName, 0, 0);
-	//printf("Recording number density to file...\n");
-	//recordNumberDensity(fileName);
 
 	closeUSB1208();
 

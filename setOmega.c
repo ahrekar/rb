@@ -16,6 +16,8 @@ int main (int argc, char* argv[]){
 	float tempTarg;
 	float tempRes;
 	float returnFloat;
+	
+	initializeBoard();
 
 	if(argc==2){
 		tempRes=atof(argv[1]);
@@ -36,5 +38,6 @@ int main (int argc, char* argv[]){
 		printf("   $ sudo ./setOmega <float temperature> --- Automatically sets RbTarget Reservoir to set temperature and Target +3.0°C higher\n");
 		printf("   $ sudo ./setOmega <float targTemp> <float resTemp>\n");
 	}
+	closeBoard();
 	return 0 ;
 }

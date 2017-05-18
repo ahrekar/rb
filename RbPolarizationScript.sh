@@ -25,8 +25,8 @@ else
 	sudo /home/pi/RbControl/faradayScan "$1" "$2" "$3" "$6" "$7" "$8" "$9, no pump"
 
 	# Absorption Scan
-	echo "Running Absorption Scan..."
-	sudo /home/pi/RbControl/RbAbsorbScan "$4" "$5" 5 "$6" "$9"
+	#echo "Running Absorption Scan..."
+	#sudo /home/pi/RbControl/RbAbsorbScan "$4" "$5" 5 "$6" "$9"
 
 	# Unblock pump beam for sure
 	echo "Unblocking pump beam..."
@@ -38,14 +38,14 @@ else
 
 	# set QWP for s+ light
 	echo "Setting QWP for S+ light..."
-	sudo /home/pi/RbControl/setWavePlate 17
+	sudo /home/pi/RbControl/setWavePlate 33
 	echo "Faraday Scan: S+ pump..."
 	sudo /home/pi/RbControl/faradayScan "$1" "$2" "$3" "$6" "$7" "$8" "$9, s+ pump"
 	#sudo /home/pi/RbControl/faradayScan "$1" "$2" "$3" "$6" "$magVolt1" "$magVolt2" "$9, s+ pump"
 
 	# set QWP for s- light
 	echo "Setting QWP for S- light..."
-	sudo /home/pi/RbControl/setWavePlate 105
+	sudo /home/pi/RbControl/setWavePlate 120
 	echo "Faraday Scan: S- pump..."
 	sudo /home/pi/RbControl/faradayScan "$1" "$2" "$3" "$6" "$7" "$8" "$9, s- pump"
 	#sudo /home/pi/RbControl/faradayScan "$1" "$2" "$3" "$6" "$magVolt1" "$magVolt2" "$9, s- pump"

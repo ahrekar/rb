@@ -14,7 +14,7 @@
 int getPVCN7500(unsigned short chan, float* temperature){
 	unsigned int returndata;
 	int status;
-	initialize_rs485(9600,25);
+//	initialize_rs485(9600,25);
 	status=read_Modbus_RTU(chan,PV_REG,&returndata); //register4096 is PV
 
 	if(status==0){
@@ -28,7 +28,7 @@ int getPVCN7500(unsigned short chan, float* temperature){
 int getSVCN7500(unsigned short chan, float* temperature){
 	unsigned int returndata;
 	int status;
-	initialize_rs485(9600,25);
+//	initialize_rs485(9600,25);
 
 	status=read_Modbus_RTU(chan,SV_REG,&returndata); //register4096 is SV
 	if(status==0){
@@ -41,7 +41,7 @@ int getSVCN7500(unsigned short chan, float* temperature){
 
 int setSVCN7500(unsigned short chan, float temperature){
 	int status;
-	initialize_rs485(9600,25);
+//	initialize_rs485(9600,25);
 
 	status=write_Modbus_RTU(chan,SV_REG, (unsigned int) (temperature*10));
 

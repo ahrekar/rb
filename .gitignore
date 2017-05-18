@@ -35,6 +35,24 @@ waitForOmega
 stepperMotorDiagnose
 fitParams.txt
 toggleLaserFlag
+MonitorPhotodiode
+RbAbsorbScanSlow
+faradayRotation
+faradayScan
+faradayScanAnalysis
+faradayScanNoAoutMove
+interfacing/bakeoutOmega
+interfacing/controlledCooldown
+interfacing/systemStatus
+io/
+polarizationScriptAnalysis
+remoteProgramRun
+setHeliumTarget
+test
+test.c
+test.sh
+txt.txt
+interfacing/mainTemplate
 
 *.data
 *~

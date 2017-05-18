@@ -6,6 +6,7 @@
 */
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <time.h>
 #include "kenBoard.h"
 #include "omegaCN7500.h"
@@ -27,10 +28,9 @@ int main (int argc, char* argv[]){
 		// any of the instruments. 
 		return 1;
 	} else{
-		int i;
+        int i;
 		float myTemp;
 		char buffer[BUFSIZE];
-		unsigned int rdata;
 		float volts, amps;
 		FILE* fp;
 

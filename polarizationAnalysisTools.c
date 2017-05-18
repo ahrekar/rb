@@ -17,7 +17,6 @@
 #include <sys/types.h>
 #include <asm/types.h>
 
-#include "pmd.h"
 #include "fileTools.h"
 #include "polarizationAnalysisTools.h"
 #ifndef DEFINITIONS_H

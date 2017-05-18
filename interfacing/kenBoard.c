@@ -1,6 +1,8 @@
 
 #include <mcp3004.h>
 #include "kenBoard.h"
+#include <wiringPi.h>
+#include <wiringSerial.h>
 
 // ADC variables
 #define BASE 100
@@ -51,6 +53,7 @@ int initializeBoard(){
 	    return 1 ;
 	  }
 	mcp3004Setup(BASE,SPI_CHAN);// for ADC
+	initialize_rs485(9600,25);
 
 // stepper motor clock MUST be set to low at the begining and end of each function call. 
 	pinMode(MTR0CLK,OUTPUT);
@@ -68,6 +71,10 @@ return 0;
 }
 
 
+int closeBoard(){
+	serialClose(fd);
+	return 0;
+}
 int getADC(unsigned short chan, unsigned int * returndata){
 /*
 uses MCP3004 chip attached to SPI channel 0 of RasPi GPIO
@@ -115,6 +122,7 @@ int homeMotor(unsigned short mtr){
 		default:
 			return -1;
 	}
+
 	if(digitalRead(p_home)){//Already in home
 		// Then move away from home and allow it 
 		// to re-find it.
@@ -130,6 +138,37 @@ int homeMotor(unsigned short mtr){
         stepsTaken++;
 	}
 	printf("Found home in %d steps\n",stepsTaken);
+	return stepsTaken;
+}
+
+/* Same as homeMotor, except it will not reverse and find home again
+ * if it's already there. */
+int quickHomeMotor(unsigned short mtr){
+	int stepsTaken=0;
+	unsigned int p_home,p_stepsPerRev;
+	switch(mtr){
+		case 0:
+			p_home=MTR0HOME;
+			p_stepsPerRev=MTR0SPR;
+			break;
+		case 1:
+			p_home=MTR1HOME;
+			p_stepsPerRev=MTR1SPR;
+			break;
+		case 2:
+			p_home=MTR2HOME;
+			p_stepsPerRev=MTR2SPR;
+			break;
+		default:
+			return -1;
+	}
+
+	while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){
+		stepMotor(mtr,CCLK,1);
+        stepsTaken++;
+	}
+    if(stepsTaken>0)
+        printf("Found home in %d steps\n",stepsTaken);
 	return stepsTaken;
 }
 
@@ -186,11 +225,15 @@ int x_stepMotor(unsigned int clkpin, unsigned int steps, unsigned int dirpin,uns
 int setMotor(unsigned short motor, int newLocation){
 	int returnValue;
 	returnValue=homeMotor(motor);
-	if(returnValue==-1)
+	if(returnValue==-1){
+        printf("Error finding Home\n");
 		return returnValue;
+    }
 	returnValue=stepMotor(motor,CCLK,newLocation);
-	if(returnValue!=0)
+	if(returnValue!=0){
+        printf("Error stepping to new location\n");
 		return returnValue;
+    }
 	return 0;
 }
 
@@ -361,11 +404,11 @@ return j;
 
 
 int initialize_rs485(int baud,int pin){
-	if (wiringPiSetup () == -1) 
-	  {
-	    fprintf (stdout, "Unable to start wiringPi: %s\n", strerror (errno)) ;
-	    return 1 ;
-	  }
+//	if (wiringPiSetup () == -1) 
+//	  {
+//	    fprintf (stdout, "Unable to start wiringPi: %s\n", strerror (errno)) ;
+//	    return 1 ;
+//	  }
 	bd = baud;
 	wp=pin;
   if ((fd = serialOpen ("/dev/ttyAMA0", bd)) < 0)
@@ -413,7 +456,8 @@ void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho){
 }
 
 
-void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho){
+//void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho){
+void write_rs485ASCII(char* cmd, char* pszEcho){
 	/* routine to write  ASCII data to the rs485 serial port. If a device
 	requires a CR or LF in the instruction, it must be in the cmd array. it is not
 	apended in this function. Because different devices have difffernt expectations*/
@@ -429,9 +473,10 @@ void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho){
 
 
 	digitalWrite(wp,LOW);// sets the control signal WRITE to the RS 485 buss
+//	delay(1);
 	delayMicrosecondsHard(10);// minor wait to allow signals to settle
+//	serialPuts (fd, cmd);
 
-	//serialPuts (fd, cmd);
 	for (j=0;j<length;j++){
 		serialPutchar(fd,cmd[j]);
 	}
@@ -441,7 +486,7 @@ void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho){
 
 	digitalWrite(wp,HIGH);// now set control to READ (i.e. LISTEN)
 
-	delay(100); // wait some more so that the external device has time to transmitt.  Data fills the UART buffer.
+	delay(200); // wait some more so that the external device has time to transmitt.  Data fills the UART buffer.
 	// this could be calculated based on what is expected.  usually, a delay of 30 works fine for 4 to 8 chars returned. 
 	// it doesnt hurt if data sets in the UART buffer until it is read.
 	i=0;
@@ -455,6 +500,7 @@ void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho){
 	    }
 	buffer[i]='\0';  //because this is treated as a string, must manually
 		// append the NULL terminator
-	strncpy(pszEcho,buffer,sizeEcho);
-
+	strncpy(pszEcho,buffer,i+1);
+	//strncpy(pszEcho,buffer,sizeEcho);
+	delay(100);
 }//end write_rs485

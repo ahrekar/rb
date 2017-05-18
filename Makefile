@@ -7,11 +7,11 @@
 # CC will be used to specify the compiler we will be using
 CC=gcc
 
-# SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c 
+# SOURCES are the names of the executable files that we are combiling
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c MonitorPhotodiode.c
 
 INTDIR=interfacing
-_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
 # The directory to put object files into.
@@ -43,7 +43,7 @@ CFLAGS= -O3 -g -Wall -I. -lm
 
 # PIFLAGS are flags that are needed for the raspberryPi
 # code.
-PIFLAGS= -l wiringPi -l mcchid -L. -L/usr/local/lib -lhid -lusb
+PIFLAGS= -l wiringPi -l mccusb -L. -L/usr/local/lib -lhidapi-libusb -lusb-1.0
 
 # What follows is the code to actually compile the code.
 # it is always of the form
@@ -58,8 +58,9 @@ PIFLAGS= -l wiringPi -l mcchid -L. -L/usr/local/lib -lhid -lusb
 # 				the "$^" refers to the dependencies
 
 # Everything depends on the binaries. If any of the 
-# binaries are edited, we should do stuff. I don't really
-# get why this is necessary.
+# binaries are edited, we should do stuff. If this
+# isn't included, the makefile only looks at the first
+# rule?
 all: ${BINARIES}
 
 # Each binary needs to be compiled. In this command, each
@@ -89,9 +90,13 @@ getcounts: obj/getcounts.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 RbAbsorbScan: obj/RbAbsorbScan.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+MonitorPhotodiode: obj/MonitorPhotodiode.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 excitationfn: obj/excitationfn.o obj/mathTools.o $(INTOBJECTS) 
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 faradayScan: obj/faradayScan.o obj/mathTools.o obj/faradayScanAnalysisTools.o obj/fileTools.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+faradayRotation: obj/faradayRotation.o obj/mathTools.o obj/faradayScanAnalysisTools.o obj/fileTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 polarization: obj/polarization.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS) obj/polarizationAnalysisTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
@@ -101,6 +106,8 @@ setProbeLaser: obj/setProbeLaser.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 toggleLaserFlag: obj/toggleLaserFlag.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+setLaserFlag: obj/setLaserFlag.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 setHeliumTarget: obj/setHeliumTarget.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 waitForOmega: obj/waitForOmega.o $(INTOBJECTS)
@@ -109,8 +116,6 @@ waitForOmega: obj/waitForOmega.o $(INTOBJECTS)
 stepmotor: obj/stepmotor.o 				$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 homemotor: obj/homemotor.o 				$(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayrotation: obj/faradayrotation.o	$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 homeWavePlate: homeWavePlate.c 		$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
