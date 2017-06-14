@@ -11,18 +11,21 @@ in a different program that you write.
 #include "interfacing/interfacing.h"
 #define AA 23
 #define BB 24
+#define UNBLOCKED 0
+#define BLOCKED 1
 
 int main (int argc, char *argv[])
 {
 	unsigned short device;
 	//unsigned short value;
 	int value;
+    int state;
 
 	if (argc==2) {
 		device = atoi(argv[1]);
 	}else{
 
-		printf("Usage ./setLaserFlag <device 0,1> <Orientation 0,1>\n");
+		printf("Usage ./toggleLaserFlag <device 0,1>\n");
 		printf("Device\n");
 		printf("======\n");
 		printf("Probe = 0\n");
@@ -35,22 +38,26 @@ int main (int argc, char *argv[])
 
 	switch (device) {
 	case 1:
-		printf("Pin state: %d\n",digitalRead(AA));
-		if (digitalRead(AA) & 0b0001)
-			value=0;
+		printf("Toggling Pump Laser\n");
+        state=digitalRead(AA);
+		if (state & 0b0001)
+			value=UNBLOCKED;
 		else
-			value=1;
+			value=BLOCKED;
 		pinMode(AA,OUTPUT);
 		digitalWrite(AA, value);
+		printf("Pin state changed to: %d (%s)\n",value,(value==BLOCKED)?"BLOCKED":"UNBLOCKED");
 		break;
 	case 0:
-		printf("Pin state: %d\n",digitalRead(BB));
-		if (digitalRead(BB) & 0b0001)
-			value=0;
+		printf("Toggling Probe Laser\n");
+        state=digitalRead(BB);
+		if (state & 0b0001)
+			value=UNBLOCKED;
 		else
-			value=1;
+			value=BLOCKED;
 		pinMode(BB,OUTPUT);
 		digitalWrite(BB, value);
+		printf("Pin state changed to: %d (%s)\n",value,(value==BLOCKED)?"BLOCKED":"UNBLOCKED");
 		break;
 	default:
 		printf("invalid device number\n");

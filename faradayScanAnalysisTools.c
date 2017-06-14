@@ -176,15 +176,13 @@ int plotData(char* fileName){
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Theta'\n");			
 		fprintf(gnuplot, "set xrange [0:1024] reverse\n");			
-		fprintf(gnuplot, "set x2range [1024*(-.022)+18.448:0*(-.022)+18.448]\n");			
-		//sprintf(buffer, "plot '%s' using 1:9:($9+$10):($9+$11) with errorbars, '' u ($1*(-.022)+18.448):9\n",fileName);
 		sprintf(buffer, "plot '%s' using 1:10:($10+$11):($10+$12) with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileName);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:10:($10+$11):($10+$12) with errorbars, '' u ($1*(-.022)+18.448):9\n",fileName);
+		sprintf(buffer, "plot '%s' using 1:10:($10+$11):($10+$12) with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 	}
 	return pclose(gnuplot);
@@ -275,7 +273,7 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 		angle = angle*180.0/PI;
 		angleErrUp = angleErrUp*180.0/PI;
 		angleErrDown = angleErrDown*180.0/PI;
-		printf("c0 = %f\ts2 = %f\tc2 = %f\tangle = %f (%f)\n",c0,s2,c2,angle,angleErrUp);
+		printf("c0 = %f\ts2 = %f\ts2Err = %f\tc2 = %f\tc2Err = %f\tangle = %f (%f)\n",c0,s2,fcErr[sin+pos+2],c2,fcErr[cos+pos+2],angle,angleErrUp);
 		fprintf(analysis,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",aouts[totalDatapoints*i],wavelength[totalDatapoints*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapoints*i]);
 		fprintf(daily,"%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",fileName,aouts[totalDatapoints*i],wavelength[totalDatapoints*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapoints*i]);
 	}

@@ -28,7 +28,7 @@
 #define NUMCHANNELS 3
 
 void graphData(char* fileName);
-void writeFileHeader(char* fileName, char* comments, float probeOffset);
+void writeFileHeader(char* fileName, char* comments, float probeOffset, float mag1volt, float mag2volt);
 void writeTextToFile(char* fileName, char* line);
 void collectAndRecordData(char* fileName, int startvalue, int endvalue, int stepsize);
 float stdDeviation(float* values, int numValues);
@@ -43,17 +43,22 @@ int main (int argc, char **argv)
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
 	float probeOffset;
+    float mag1volt,mag2volt;
 	FILE *dataCollectionFlagFile, *fp;
 
-	if (argc==6) {
+	if (argc==8) {
 		startvalue=atoi(argv[1]);
 		endvalue=atoi(argv[2]);
 		stepsize=atoi(argv[3]);
 		probeOffset=atof(argv[4]);
-		strcpy(comments,argv[5]);
+		mag1volt=atof(argv[5]);
+		mag2volt=atof(argv[6]);
+
+		strcpy(comments,argv[7]);
 	} else {
-		printf("Usage:\n$ sudo ./RbAbsorbScan <begin> <end> <step> <probeOffset> <comments>\n");
-		printf("                              ( 0 - 1023 )                   \n");
+		printf("Usage:\n");
+		printf("$ sudo ./RbAbsorbScan <begin> <end> <step> <probeOffset> <mag1 Volt> <mag2 volt> <comments>\n");
+		printf("                      (  0  - 1023)                   \n");
 		return 0;
 	}
 	// Indicate that data is being collected.
@@ -87,7 +92,7 @@ int main (int argc, char **argv)
 
 	printf("\n%s\n",fileName);
 
-	writeFileHeader(fileName, comments, probeOffset);
+	writeFileHeader(fileName, comments, probeOffset, mag1volt, mag2volt);
 	fp=fopen(fileName,"a");
 	if (!fp) {
 		printf("unable to open file: %s\n",fileName);
@@ -192,7 +197,7 @@ void findAndSetProbeMaxTransmission(){
 	}while(!foundMax);
 }
 
-void writeFileHeader(char* fileName, char* comments, float probeOffset){
+void writeFileHeader(char* fileName, char* comments, float probeOffset, float mag1volt, float mag2volt){
 	FILE* fp;
 	float returnFloat;
 	fp=fopen(fileName,"w");
@@ -230,10 +235,12 @@ void writeFileHeader(char* fileName, char* comments, float probeOffset){
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
 	fprintf(fp,"#ProbeOffset:\t%f\n",probeOffset);
+	fprintf(fp,"#Magnet1(V):\t%f\n",mag1volt);
+	fprintf(fp,"#Magnet2(V):\t%f\n",mag2volt);
     /** End System Stats Recording **/
 
 	//fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"Aout\tWavelength\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
+	fprintf(fp,"AOUT\tWAV\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
 	fclose(fp);
 }
 
@@ -280,7 +287,8 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 		// delay to allow transients to settle
 		//delay(30000);
 		delay(100);
-		kensWaveLength = getWaveMeter();
+		//kensWaveLength = getWaveMeter();
+		kensWaveLength = -1; 
 		fprintf(fp,"%f\t",kensWaveLength);
 		printf("%f\t",kensWaveLength);
 		for(k=0;k<NUMCHANNELS;k++){
@@ -295,8 +303,8 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 				delay(1);
 			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
-			fprintf(fp,"%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
-			printf("%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
+			fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
+			printf("%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
 		}
 		fprintf(fp,"\n");
 		printf("\n");

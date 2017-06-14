@@ -30,13 +30,13 @@
 void graphData(char* fileName);
 void writeFileHeader(char* fileName, char* comments, float probeOffset);
 void writeTextToFile(char* fileName, char* line);
-void collectAndRecordData(char* fileName, int seconds);
+void collectAndRecordData(char* fileName, int seconds, int totalDataPoints);
 float stdDeviation(float* values, int numValues);
 void findAndSetProbeMaxTransmission();
 
 int main (int argc, char **argv)
 {
-	int seconds;
+	int seconds,totalDataPoints;
 	time_t rawtime;
 	struct tm * timeinfo;
 	char fileName[BUFSIZE],comments[BUFSIZE];
@@ -45,12 +45,13 @@ int main (int argc, char **argv)
 	float probeOffset;
 	FILE *dataCollectionFlagFile, *fp;
 
-	if (argc==4) {
+	if (argc==5) {
         seconds=atoi(argv[1]);
-		probeOffset=atof(argv[2]);
-		strcpy(comments,argv[3]);
+        totalDataPoints=atoi(argv[2]);
+		probeOffset=atof(argv[3]);
+		strcpy(comments,argv[4]);
 	} else {
-		printf("Usage:\n$ sudo ./MonitorPhotodiodes <timeToMonitor> <probeOffset> <comments>\n");
+		printf("Usage:\n$ sudo ./MonitorPhotodiodes <timeToMonitor> <total datapoints> <probeOffset> <comments>\n");
 		printf("                                    (meas. in sec.)                         \n");
 		return 0;
 	}
@@ -86,7 +87,7 @@ int main (int argc, char **argv)
 	//printf("Finding Max Transistion...\n");
 	//findAndSetProbeMaxTransmission();
 	//homeMotor(PROBE_MOTOR);
-	collectAndRecordData(fileName, seconds);
+	collectAndRecordData(fileName, seconds, totalDataPoints);
 
 	homeMotor(PROBE_MOTOR);
 
@@ -236,10 +237,11 @@ void writeTextToFile(char* fileName, char* line){
 	fclose(fp);
 }
 
-void collectAndRecordData(char* fileName,int evaluationTime){
+void collectAndRecordData(char* fileName,int evaluationTime, int totalDataPoints){
 	FILE* fp;
 	int k=0,i;
-    int timeCounter;
+    char input;
+    int timeCounter,dataPoints;
     int delta=1;
 	int nSamples;
 	float involts[NUMCHANNELS];
@@ -254,27 +256,31 @@ void collectAndRecordData(char* fileName,int evaluationTime){
 	nSamples = 32;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	for (timeCounter=0;timeCounter < evaluationTime; timeCounter+=delta){
-		fprintf(fp,"%d\t",timeCounter);
-		for(k=0;k<NUMCHANNELS;k++){
-			involts[k]=0.0;	
-		}
+    for (dataPoints=0;dataPoints < totalDataPoints; dataPoints+=1){
+        printf("Press Enter when ready to take the next data point.");
+        scanf("%c",&input);
+        for (timeCounter=0;timeCounter < evaluationTime; timeCounter+=delta){
+            fprintf(fp,"%d\t",dataPoints);
+            for(k=0;k<NUMCHANNELS;k++){
+                involts[k]=0.0;	
+            }
 
-		// grab several readings and average
-		for(k=1;k<NUMCHANNELS+1;k++){
-			for (i=0;i<nSamples;i++){
-				getUSB1208AnalogIn(k,&measurement[i]);
-				involts[k-1]=involts[k-1]+measurement[i];
-				delay(1);
-			}
-			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
-			fprintf(fp,"%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
-			printf("%f\t%f\t",involts[k-1],stdDeviation(measurement,nSamples));
-		}
-		fprintf(fp,"\n");
-		printf("\n");
-		delay(delta*1000);
-	}
+            // grab several readings and average
+            for(k=1;k<NUMCHANNELS+1;k++){
+                for (i=0;i<nSamples;i++){
+                    getUSB1208AnalogIn(k,&measurement[i]);
+                    involts[k-1]=involts[k-1]+measurement[i];
+                    delay(1);
+                }
+                involts[k-1]=fabs(involts[k-1])/(float)nSamples;
+                fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
+                printf("%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
+            }
+            fprintf(fp,"\n");
+            printf("\n");
+            delay(delta*1000);
+        }
+    }
 	fprintf(fp,"\n");
 	fclose(fp);
 	free(measurement);

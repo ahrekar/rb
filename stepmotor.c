@@ -38,11 +38,14 @@ int main (int argc, char *argv[]){
 		steps = atoi(argv[2]); // get steps from command line
 		dir = atoi(argv[3]);  // get dir from command line
 	} else {
-
-	printf("Ussage:  ~$sudo ./stepmotor <motor(0,1,2)> <steps> <dir(0,1)>\n");
-		motor = 3;// not part of the switch statment, so nuthing happens
-		steps=0;
-		dir=0;
+        printf("Usage:  ~$sudo ./stepmotor <motor(0,1,2)> <steps> <dir(0,1)>\n");
+        printf("Motor: 0->Polarimeter\n");
+        printf("       1->Probe      \n");
+        printf("       2->Pump       \n");
+        motor = 3;// not part of the switch statment, so nuthing happens
+        steps=0;
+        dir=0;
+        return 0;
 	}
 
 	initializeBoard();

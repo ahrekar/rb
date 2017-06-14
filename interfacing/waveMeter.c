@@ -19,7 +19,7 @@ float getWaveMeter(void){
     //printf("Running the remote program...\n");
 	program = popen("ssh -i /home/pi/.ssh/id_rsa pi@irpi 'sudo /home/pi/karlCode/uart/getWaveMeterWavelength'","w");
 	pclose(program);
-    //printf("Remote program run!\n");
+    //printf("Remote program ran!\n");
 
 	delay(100);
 	FILE* wavelengthFile;
@@ -27,7 +27,7 @@ float getWaveMeter(void){
 
 	if(!wavelengthFile) {
 		// unable to open. 
-        printf("Unable to open wavelength file!\n");
+        //printf("Unable to open wavelength file!\n");
 	} else {
         //while(waves<7900000 && tries > 0){
            // printf("Tries remaining: %d\n",tries);

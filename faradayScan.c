@@ -45,7 +45,8 @@ int recordNumberDensity(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int AoutStart,AoutStop,deltaAout,i,steps,Aout,nsamples;
+	int AoutStart1,AoutStop1,deltaAout,i,steps,Aout,nsamples;
+	int AoutStart2,AoutStop2;
     int revolutions,dataPointsPerRevolution;
     int homeFlag;
 	int numAouts=0;
@@ -64,16 +65,13 @@ int main (int argc, char **argv)
 	FILE *fp,*dataCollectionFlagFile;
 
 
-	if (argc==8){
-		AoutStart= atoi(argv[1]);
-		AoutStop=atoi(argv[2]);
-		deltaAout=atoi(argv[3]);
-		probeOffset=atof(argv[4]);
-		mag1Voltage=atof(argv[5]);
-		mag2Voltage=atof(argv[6]);
-		strcpy(comments,argv[7]);
+	if (argc==5){
+		probeOffset=atof(argv[1]);
+		mag1Voltage=atof(argv[2]);
+		mag2Voltage=atof(argv[3]);
+		strcpy(comments,argv[4]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
+		printf("usage '~$ sudo ./faradayscan <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
 		return 1;
 	}
 
@@ -150,14 +148,71 @@ int main (int argc, char **argv)
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"Aout\tWavelength\tstep\tintensity\tStd.Dev\tHadToHomeFlag\n");
+	fprintf(fp,"AOUT\tWAV\tSTEP\tINT\tINTsd\tHadToHomeFlag\n");
 
 	printf("Homing motor...\n");
 	homeMotor(PROBE_MOTOR);
 	int count=0;
     homeFlag=0;
-	for(Aout=AoutStart;Aout<AoutStop;Aout+=deltaAout){
-	//for(Aout=AoutStop;Aout>AoutStart;Aout-=deltaAout){
+    deltaAout=25;
+    if(probeOffset<45){
+        AoutStart1=0;
+        AoutStop1=375;
+        AoutStart2=875;
+        AoutStop2=1000;
+    }else{
+        AoutStart1=0;
+        AoutStop1=125;
+        AoutStart2=625;
+        AoutStop2=1000;
+    }
+	for(Aout=AoutStart1;Aout<AoutStop1;Aout+=deltaAout){
+		sumSin=0;
+		sumCos=0;
+		count=0;
+
+		setUSB1208AnalogOut(PROBEOFFSET,Aout);
+		delay(1000); 
+
+	//	wavelength=getWaveMeter();
+        wavelength=-1;
+
+		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
+			// (NUMSTEPS) in increments of STEPSIZE
+			delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
+			//get samples and average
+			involts=0.0;	
+			for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
+				getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
+				involts=involts+measurement[i];
+				delay(WAITTIME);
+			}
+			involts=involts/(float)nsamples; 
+
+
+			fprintf(fp,"%d\t%f\t%d\t%f\t%f\t%d\n",Aout,wavelength,steps,involts,stdDeviation(measurement,nsamples),homeFlag);
+			angle=2.0*PI*(steps)/STEPSPERREV;
+			sumSin+=involts*sin(2*angle);
+			sumCos+=involts*cos(2*angle);
+
+			count++;
+			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
+		}
+		f3=sumSin/count;
+		f4=sumCos/count;
+		angle = 0.5*atan2(f4,f3);
+		printf("Aout %d(%f): %3.2f\n",Aout,wavelength,angle*180/PI);
+
+		numAouts++;
+        if(quickHomeMotor(PROBE_MOTOR)>0){
+            homeFlag=1;
+            printf("The stepper motor slipped in the last run, re-running...\n");
+            Aout-=deltaAout;
+        }else
+            homeFlag=0;
+	}//end for Aout
+
+	for(Aout=AoutStart2;Aout<AoutStop2;Aout+=deltaAout){
 		sumSin=0;
 		sumCos=0;
 		count=0;
@@ -166,7 +221,8 @@ int main (int argc, char **argv)
 		delay(1000); 
 
         //printf("Getting wavelength from wavemeter...\n");
-		wavelength=getWaveMeter();
+		//wavelength=getWaveMeter();
+		wavelength=-1;
         //printf("Wavelength obtained!\n");
 
 		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
@@ -196,9 +252,11 @@ int main (int argc, char **argv)
 		printf("Aout %d(%f): %3.2f\n",Aout,wavelength,angle*180/PI);
 
 		numAouts++;
-        if(quickHomeMotor(PROBE_MOTOR)>0)
+        if(quickHomeMotor(PROBE_MOTOR)>0){
             homeFlag=1;
-        else
+            printf("The stepper motor slipped in the last run, re-running...\n");
+            Aout-=deltaAout;
+        }else
             homeFlag=0;
 	}//end for Aout
 	setUSB1208AnalogOut(PROBEOFFSET,512);

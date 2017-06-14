@@ -30,10 +30,11 @@
 #include "tempControl.h"
 #include "interfacing/interfacing.h"
 #include "faradayScanAnalysisTools.h"
+#include "interfacing/waveMeter.h"
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
-#define STEPSIZE 7
+#define STEPSIZE 2
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -78,7 +79,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-    revolutions=2;
+    revolutions=1;
     dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
 	nsamples=32;
 	float* measurement = malloc(nsamples*sizeof(float));
@@ -139,10 +140,11 @@ int main (int argc, char **argv)
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"step\tintensity\tStd.Dev\tHadToHomeFlag\n");
+	fprintf(fp,"STEP\tINT\tINTsd\tHadToHomeFlag\n");
 
     int j=0;
 	int count=0;
+    float wavelength=-1;
     homeFlag=0;
     sumSin=0;
     sumCos=0;
@@ -153,6 +155,9 @@ int main (int argc, char **argv)
     else
         homeFlag=0;
 
+	//wavelength=getWaveMeter();
+	wavelength=-1;
+
     for (j=0;j<revolutions;j++){
     for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
         // (NUMSTEPS) in increments of STEPSIZE
@@ -160,20 +165,20 @@ int main (int argc, char **argv)
         //get samples and average
         involts=0.0;	
         for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
-            getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
+            getUSB1208AnalogIn(PUMP_LASER,&measurement[i]);
             involts=involts+measurement[i];
             delay(WAITTIME);
         }
-        involts=involts/(float)nsamples; 
+        involts=fabs(involts/(float)nsamples); 
 
 
-        fprintf(fp,"%d\t%d\t%d\t%f\t%f\t%d\n",512,-1,steps,involts,stdDeviation(measurement,nsamples),homeFlag);
+        fprintf(fp,"%d\t%f\t%d\t%f\t%f\t%d\n",512,wavelength,steps,involts,stdDeviation(measurement,nsamples),homeFlag);
         angle=2.0*PI*(steps)/STEPSPERREV;
         sumSin+=involts*sin(2*angle);
         sumCos+=involts*cos(2*angle);
 
         count++;
-        stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
+        stepMotor(PUMP_MOTOR,CLK,STEPSIZE);
     }
     }
     f3=sumSin/count;

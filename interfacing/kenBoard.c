@@ -167,8 +167,18 @@ int quickHomeMotor(unsigned short mtr){
 		stepMotor(mtr,CCLK,1);
         stepsTaken++;
 	}
-    if(stepsTaken>0)
+    if(stepsTaken>3){
         printf("Found home in %d steps\n",stepsTaken);
+    }else if(stepsTaken>0){
+		printf("Steps taken too small, reversing 100 steps...\n");
+		stepMotor(mtr,CLK,100);
+        stepsTaken=0;
+        while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){
+            stepMotor(mtr,CCLK,1);
+            stepsTaken++;
+        }
+        printf("Found home in %d steps\n",stepsTaken);
+    }
 	return stepsTaken;
 }
 

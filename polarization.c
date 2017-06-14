@@ -192,7 +192,7 @@ int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurren
 	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTSPERREV; // The number of steps to take between readings.
 
-	fprintf(rawData,"Steps\tCount\tCurrent\tCurrent Error\tAngle\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
+	fprintf(rawData,"STEP\tCOUNT\tCURRENT\tCURRENTsd\tANGLE\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
 	printf("Steps\tCounts\tCurrent\n");
 
 	for (steps=0;steps<nsteps;steps+=ninc){
