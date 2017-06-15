@@ -127,14 +127,14 @@ int homeMotor(unsigned short mtr){
 		// Then move away from home and allow it 
 		// to re-find it.
 		printf("Already in home, reversing 100 steps...\n");
-		stepMotor(mtr,CLK,100);
+		stepMotor(mtr,CCLK,100);
 		if(digitalRead(p_home)){
 			printf("Error: Home state not changing\n");
 			return -1;
 		}
 	}
 	while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){
-		stepMotor(mtr,CCLK,1);
+		stepMotor(mtr,CLK,1);
         stepsTaken++;
 	}
 	printf("Found home in %d steps\n",stepsTaken);
@@ -164,17 +164,17 @@ int quickHomeMotor(unsigned short mtr){
 	}
 
 	while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){
-		stepMotor(mtr,CCLK,1);
+		stepMotor(mtr,CLK,1);
         stepsTaken++;
 	}
     if(stepsTaken>3){
         printf("Found home in %d steps\n",stepsTaken);
     }else if(stepsTaken>0){
 		printf("Steps taken too small, reversing 100 steps...\n");
-		stepMotor(mtr,CLK,100);
+		stepMotor(mtr,CCLK,100);
         stepsTaken=0;
         while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){
-            stepMotor(mtr,CCLK,1);
+            stepMotor(mtr,CLK,1);
             stepsTaken++;
         }
         printf("Found home in %d steps\n",stepsTaken);

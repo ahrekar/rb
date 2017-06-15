@@ -165,7 +165,7 @@ int main (int argc, char **argv)
         //get samples and average
         involts=0.0;	
         for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
-            getUSB1208AnalogIn(PUMP_LASER,&measurement[i]);
+            getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
             involts=involts+measurement[i];
             delay(WAITTIME);
         }
