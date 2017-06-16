@@ -42,18 +42,15 @@
 
 int plotData(char* fileName);
 int recordNumberDensity(char* fileName);
+void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions);
 
 int main (int argc, char **argv)
 {
-	int AoutStart1,AoutStop1,deltaAout,i,steps,Aout,nsamples;
+	int AoutStart1,AoutStop1,deltaAout,Aout;
 	int AoutStart2,AoutStop2;
     int revolutions,dataPointsPerRevolution;
-    int homeFlag;
-	int numAouts=0;
 	time_t rawtime;
-	float returnFloat, angle;
-	float sumSin, sumCos;
-	float f3, f4;
+	float returnFloat;
 	float wavelength;
 	float probeOffset,mag1Voltage,mag2Voltage;
 	struct tm * timeinfo;
@@ -61,7 +58,6 @@ int main (int argc, char **argv)
 	char dailyFileName[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
-	float involts; 	// The amount of light that is entering into the sensor. 
 	FILE *fp,*dataCollectionFlagFile;
 
 
@@ -84,8 +80,6 @@ int main (int argc, char **argv)
 
     revolutions=1;
     dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
-	nsamples=32;
-	float* measurement = malloc(nsamples*sizeof(float));
 
 	// Set up interfacing devices
 	initializeBoard();
@@ -110,6 +104,24 @@ int main (int argc, char **argv)
 		printf("Unable to open file: %s\n",fileName);
 		exit(1);
 	}
+
+    int totalAouts=0;
+    deltaAout=25;
+    if(probeOffset<45){
+        AoutStart1=0;
+        AoutStop1=375;
+        totalAouts+=(AoutStop1-AoutStart1)/deltaAout;
+        AoutStart2=875;
+        AoutStop2=1000;
+        totalAouts+=(AoutStop2-AoutStart2)/deltaAout;
+    }else{
+        AoutStart1=0;
+        AoutStop1=125;
+        totalAouts+=(AoutStop1-AoutStart1)/deltaAout;
+        AoutStart2=625;
+        AoutStop2=1000;
+        totalAouts+=(AoutStop2-AoutStart2)/deltaAout;
+    }
 
 	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
@@ -146,118 +158,43 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
+	fprintf(fp,"#NumAouts:\t%d\n",dataPointsPerRevolution);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"AOUT\tWAV\tSTEP\tINT\tINTsd\tHadToHomeFlag\n");
+	fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\n");
+    fclose(fp);
 
 	printf("Homing motor...\n");
 	homeMotor(PROBE_MOTOR);
-	int count=0;
-    homeFlag=0;
-    deltaAout=25;
-    if(probeOffset<45){
-        AoutStart1=0;
-        AoutStop1=375;
-        AoutStart2=875;
-        AoutStop2=1000;
-    }else{
-        AoutStart1=0;
-        AoutStop1=125;
-        AoutStart2=625;
-        AoutStop2=1000;
-    }
-	for(Aout=AoutStart1;Aout<AoutStop1;Aout+=deltaAout){
-		sumSin=0;
-		sumCos=0;
-		count=0;
 
+    int pd[] = {PROBE_LASER,PUMP_LASER};
+
+	fp=fopen(fileName,"a");
+
+	for(Aout=AoutStart1;Aout<=AoutStop1;Aout+=deltaAout){
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 		delay(1000); 
 
 	//	wavelength=getWaveMeter();
         wavelength=-1;
 
-		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
-			// (NUMSTEPS) in increments of STEPSIZE
-			delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
-			//get samples and average
-			involts=0.0;	
-			for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
-				getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
-				involts=involts+measurement[i];
-				delay(WAITTIME);
-			}
-			involts=involts/(float)nsamples; 
+        fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
+        printf("AOUT:%d(%f)\t",Aout,wavelength);
 
-
-			fprintf(fp,"%d\t%f\t%d\t%f\t%f\t%d\n",Aout,wavelength,steps,involts,stdDeviation(measurement,nsamples),homeFlag);
-			angle=2.0*PI*(steps)/STEPSPERREV;
-			sumSin+=involts*sin(2*angle);
-			sumCos+=involts*cos(2*angle);
-
-			count++;
-			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
-		}
-		f3=sumSin/count;
-		f4=sumCos/count;
-		angle = 0.5*atan2(f4,f3);
-		printf("Aout %d(%f): %3.2f\n",Aout,wavelength,angle*180/PI);
-
-		numAouts++;
-        if(quickHomeMotor(PROBE_MOTOR)>0){
-            homeFlag=1;
-            printf("The stepper motor slipped in the last run, re-running...\n");
-            Aout-=deltaAout;
-        }else
-            homeFlag=0;
+        collectDiscreteFourierData(fp,pd,2 /*numPhotoDet*/,PROBE_MOTOR,1);
 	}//end for Aout
 
-	for(Aout=AoutStart2;Aout<AoutStop2;Aout+=deltaAout){
-		sumSin=0;
-		sumCos=0;
-		count=0;
-
+	for(Aout=AoutStart2;Aout<=AoutStop2;Aout+=deltaAout){
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 		delay(1000); 
 
-        //printf("Getting wavelength from wavemeter...\n");
 		//wavelength=getWaveMeter();
 		wavelength=-1;
-        //printf("Wavelength obtained!\n");
 
-		for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
-			// (NUMSTEPS) in increments of STEPSIZE
-			delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
-			//get samples and average
-			involts=0.0;	
-			for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
-				getUSB1208AnalogIn(PROBE_LASER,&measurement[i]);
-				involts=involts+measurement[i];
-				delay(WAITTIME);
-			}
-			involts=involts/(float)nsamples; 
+        fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
+        printf("AOUT:%d(%f)\t",Aout,wavelength);
 
-
-			fprintf(fp,"%d\t%f\t%d\t%f\t%f\t%d\n",Aout,wavelength,steps,involts,stdDeviation(measurement,nsamples),homeFlag);
-			angle=2.0*PI*(steps)/STEPSPERREV;
-			sumSin+=involts*sin(2*angle);
-			sumCos+=involts*cos(2*angle);
-
-			count++;
-			stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
-		}
-		f3=sumSin/count;
-		f4=sumCos/count;
-		angle = 0.5*atan2(f4,f3);
-		printf("Aout %d(%f): %3.2f\n",Aout,wavelength,angle*180/PI);
-
-		numAouts++;
-        if(quickHomeMotor(PROBE_MOTOR)>0){
-            homeFlag=1;
-            printf("The stepper motor slipped in the last run, re-running...\n");
-            Aout-=deltaAout;
-        }else
-            homeFlag=0;
+        collectDiscreteFourierData(fp,pd,2 /*numPhotoDet*/,PROBE_MOTOR,1);
 	}//end for Aout
 	setUSB1208AnalogOut(PROBEOFFSET,512);
 	fclose(fp);
@@ -284,4 +221,60 @@ int main (int argc, char **argv)
 	remove(dataCollectionFileName);
 
 	return 0;
+}
+
+void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions)
+{
+    float sumSin=0;
+    float sumCos=0;
+    int count=0;
+    int steps,i,j,k;
+    float f3,f4,angle;
+
+
+    int nSamples=32;
+	float* measurement = malloc(nSamples*sizeof(float));
+
+    
+    float* involts = calloc(numPhotoDetectors,sizeof(float));
+    float* stdDev = calloc(numPhotoDetectors,sizeof(float));
+
+    for (k=0;k<revolutions;k++){ //revolutions
+        for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // steps
+            // (NUMSTEPS) in increments of STEPSIZE
+            delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
+            //get samples and average
+            for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
+                involts[j]=0.0;	
+                for (i=0;i<nSamples;i++){ // nSamples
+                        getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+                        involts[j]=involts[j]+measurement[i];
+                        delay(WAITTIME);
+                } // nSamples
+                involts[j]=involts[j]/(float)nSamples; 
+                stdDev[j]=stdDeviation(measurement,nSamples);
+            } // numPhotoDet1
+
+            fprintf(fp,"%d\t",steps+NUMSTEPS*k);
+            for(j=0;j<numPhotoDetectors;j++){
+                if(j!=numPhotoDetectors-1)
+                    fprintf(fp,"%f\t%f\t",involts[j],stdDev[j]);
+                else
+                    fprintf(fp,"%f\t%f\n",involts[j],stdDev[j]);
+            }
+            angle=2.0*PI*(steps)/STEPSPERREV;
+            sumSin+=involts[0]*sin(2*angle);
+            sumCos+=involts[0]*cos(2*angle);
+
+            count++;
+            stepMotor(motor,CLK,STEPSIZE);
+        } // steps
+    } // revolutions
+    f3=sumSin/count;
+    f4=sumCos/count;
+    angle = 0.5*atan2(f4,f3);
+    printf("Angle: %0.4f\n",angle*180/PI);
+    free(measurement);
+    free(stdDev);
+    free(involts);
 }

@@ -2,12 +2,12 @@
    Program to record polarization.
    RasPi connected to USB 1208LS.
 
-   FARADAY SCAN
+   FARADAY ROTATION
 
 
    use Aout 0 to set laser wavelength. see page 98-100
    usage
-   $ sudo ./faradayscan <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>
+   $ sudo ./faradayRotation <aoutstart> <aoutstop> <deltaaout> <comments_no_spaces>
 
 
    2015-12-31
@@ -34,7 +34,8 @@
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
-#define STEPSIZE 2
+//#define STEPSIZE 2
+#define STEPSIZE 35
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -42,33 +43,32 @@
 
 int plotData(char* fileName);
 int recordNumberDensity(char* fileName);
+void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions, int stepSize);
 
 int main (int argc, char **argv)
 {
-    int i,steps,nSamples;
     int revolutions,dataPointsPerRevolution;
-    int homeFlag;
     time_t rawtime;
-    float returnFloat, angle;
-    float sumSin, sumCos;
-    float f3, f4;
+    float returnFloat;
     float probeOffset,mag1Voltage,mag2Voltage;
     struct tm * timeinfo;
     char fileName[BUFSIZE], comments[BUFSIZE];
     char dailyFileName[BUFSIZE];
     char dataCollectionFileName[] = "/home/pi/.takingData"; 
-
-    float involts,involts2; 	// The amount of light that is entering into the sensor. 
     FILE *fp,*dataCollectionFlagFile;
+    int stepSize;
 
+    printf("Arguments: %d\n",argc);
 
-    if (argc==5){
+    if (argc==7){
         probeOffset=atof(argv[1]);
         mag1Voltage=atof(argv[2]);
         mag2Voltage=atof(argv[3]);
-        strcpy(comments,argv[4]);
+        revolutions=atoi(argv[4]);
+        stepSize=atoi(argv[5]);
+        strcpy(comments,argv[6]);
     } else { 
-        printf("usage '~$ sudo ./faradayscan <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
+        printf("usage '~$ sudo ./faradayRotation <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
         return 1;
     }
 
@@ -79,11 +79,7 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-    revolutions=1;
-    dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
-    nSamples=32;
-    float* measurement = malloc(nSamples*sizeof(float));
-    float* measurement2 = malloc(nSamples*sizeof(float));
+    dataPointsPerRevolution=NUMSTEPS/stepSize;
 
     // Set up interfacing devices
     initializeBoard();
@@ -139,57 +135,21 @@ int main (int argc, char **argv)
 
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
+	fprintf(fp,"#NumAouts:\t%d\n",1);
 
     // Write the header for the data to the file.
-    fprintf(fp,"AOUT\tWAVE\tSTEP\tPRB\tPRBstd\tPUMP\tPUMPstd\tHadToHomeFlag\n");
+    fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\n");
+    fclose(fp);
 
-    int j=0;
-    int count=0;
-    float wavelength=-1;
-    homeFlag=0;
-    sumSin=0;
-    sumCos=0;
-    count=0;
+    int photoDetectors[] = {PROBE_LASER,PUMP_LASER};
 
-    if(quickHomeMotor(PROBE_MOTOR)>0)
-        homeFlag=1;
-    else
-        homeFlag=0;
+    int aout=512;
+    float wavelength=-1.0;
+    fp=fopen(fileName,"a");
+    fprintf(fp,"\n\n#AOUT:%d(%f)\n",aout,wavelength);
 
-    //wavelength=getWaveMeter();
-    wavelength=-1;
-
-    for (j=0;j<revolutions;j++){
-        for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // We want to go through a full revolution of the linear polarizer
-            // (NUMSTEPS) in increments of STEPSIZE
-            delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
-            //get samples and average
-            involts=0.0;	
-            involts2=0.0;	
-            for (i=0;i<nSamples;i++){ // Take several samples of the voltage and average them.
-                getUSB1208AnalogIn(PUMP_LASER,&measurement[i]);
-                getUSB1208AnalogIn(PROBE_LASER,&measurement2[i]);
-                involts=involts+measurement[i];
-                involts2=involts2+measurement2[i];
-                delay(WAITTIME);
-            }
-            involts=fabs(involts/(float)nSamples); 
-            involts2=fabs(involts2/(float)nSamples); 
-
-
-            fprintf(fp,"%d\t%f\t%d\t%f\t%f\t%f\t%f\t%d\n",512,wavelength,steps,involts,stdDeviation(measurement,nSamples),involts2,stdDeviation(measurement2,nSamples),homeFlag);
-            angle=2.0*PI*(steps)/STEPSPERREV;
-            sumSin+=involts*sin(2*angle);
-            sumCos+=involts*cos(2*angle);
-
-            count++;
-            stepMotor(PROBE_MOTOR,CLK,STEPSIZE);
-        }
-    }
-    f3=sumSin/count;
-    f4=sumCos/count;
-    angle = 0.5*atan2(f4,f3);
-    printf("Angle: %3.2f\n",angle*180/PI);
+	quickHomeMotor(PROBE_MOTOR);
+    collectDiscreteFourierData(fp, photoDetectors, 2, PROBE_MOTOR, revolutions, stepSize);
 
     fclose(fp);
 
@@ -203,4 +163,60 @@ int main (int argc, char **argv)
     remove(dataCollectionFileName);
 
     return 0;
+}
+
+void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions, int stepSize)
+{
+    float sumSin=0;
+    float sumCos=0;
+    int count=0;
+    int steps,i,j,k;
+    float f3,f4,angle;
+
+
+    int nSamples=8;
+	float* measurement = malloc(nSamples*sizeof(float));
+
+    
+    float* involts = calloc(numPhotoDetectors,sizeof(float));
+    float* stdDev = calloc(numPhotoDetectors,sizeof(float));
+
+    for (k=0;k<revolutions;k++){ //revolutions
+        for (steps=0;steps < NUMSTEPS;steps+=stepSize){ // steps
+            // (NUMSTEPS) in increments of stepSize
+            delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
+            //get samples and average
+            for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
+                involts[j]=0.0;	
+                for (i=0;i<nSamples;i++){ // nSamples
+                        getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+                        involts[j]=involts[j]+measurement[i];
+                        delay(WAITTIME);
+                } // nSamples
+                involts[j]=involts[j]/(float)nSamples; 
+                stdDev[j]=stdDeviation(measurement,nSamples);
+            } // numPhotoDet1
+
+            fprintf(fp,"%d\t",steps+NUMSTEPS*k);
+            for(j=0;j<numPhotoDetectors;j++){
+                if(j!=numPhotoDetectors-1)
+                    fprintf(fp,"%f\t%f\t",involts[j],stdDev[j]);
+                else
+                    fprintf(fp,"%f\t%f\n",involts[j],stdDev[j]);
+            }
+            angle=2.0*PI*(steps)/STEPSPERREV;
+            sumSin+=involts[0]*sin(2*angle);
+            sumCos+=involts[0]*cos(2*angle);
+
+            count++;
+            stepMotor(motor,CLK,stepSize);
+        } // steps
+    } // revolutions
+    f3=sumSin/count;
+    f4=sumCos/count;
+    angle = 0.5*atan2(f4,f3);
+    printf("Angle: %0.4f\n",angle*180/PI);
+    free(measurement);
+    free(involts);
+    free(stdDev);
 }

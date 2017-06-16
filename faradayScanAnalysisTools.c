@@ -47,6 +47,7 @@ float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevol
 int fourierAnalysis(int dataPointsPerRevolution, int revolutions, int* steps, float* intensity, float* intensityErr, float* fourierCoefficients, float* fcErr);
 float calculateAngleError(float c2, float c2Err, float s2, float s2Err);
 int getNumberOfDataLines(char* fileName);
+int getNumberOfAouts(char* fileName);
 
 // Okay, so gnuplot's fitting function isn't behaving like I want it to
 // (not giving me "reasonable" answers), so I'm hacking together
@@ -201,7 +202,7 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 
 	int numberOfDataLines = getNumberOfDataLines(fileName);
     printf("Number of DataLines: %d\n",numberOfDataLines);
-	int numAouts= numberOfDataLines/(dataPointsPerRevolution*revolutions); 
+	int numAouts= getNumberOfAouts(fileName); 
     printf("Number of Aouts: %d\n",numAouts);
 
 	int* aouts=calloc(totalDatapoints*numAouts,sizeof(float)); 
@@ -288,6 +289,8 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 
 int readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, float* wavelength, int* steps, float* intensity, float* intensityErr,int* homeFlag){
 	FILE* data = fopen(fileName,"r");
+    int dataPointsPerAout=totalDatapoints/numAouts;
+    float discard;
 
 	char trash[1024];
 	if (!data) {
@@ -301,11 +304,16 @@ int readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, flo
 		//printf("Skipped a line\n");
 	}while(trash[0]=='#');
 
-	int i;
-	for (i=0; i < totalDatapoints*numAouts; i++){
-		fscanf(data,"%d\t%f\t%d\t%f\t%f\t%d\n",&aouts[i],&wavelength[i],&steps[i],&intensity[i],&intensityErr[i],&homeFlag[i]);
-		//printf("%d\t%f\t%d\t%f\t%f\n",aouts[i],wavelength[i],steps[i],intensity[i],intensityErr[i]);
-	}
+	int i,j;
+    for(j=0;j< numAouts; j++){
+        fscanf(data,"\n\n#AOUT:%d(%f)\n",&aouts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
+        for (i=0; i < dataPointsPerAout; i++){
+            fscanf(data,"%d\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard);
+            aouts[j*dataPointsPerAout+i]=aouts[j*dataPointsPerAout];
+            wavelength[j*dataPointsPerAout+i]=wavelength[j*dataPointsPerAout];
+            //fscanf(data,"%d\t%f\t%d\t%f\t%f\t%d\n",&aouts[i],&wavelength[i],&steps[i],&intensity[i],&intensityErr[i],&homeFlag[i]);
+        }
+    }
 
 	fclose(data);
 	return 0;
@@ -395,24 +403,24 @@ float calculateAngleError(float c2, float c2Err, float s2, float s2Err){
 	return angleErr;
 }
 
-int getNumberOfDataLines(char* fileName){
+int getNumberOfDataLines(char* filename){
 	char trash[1024];
 	int numberOfLines=0;
 	char* line = NULL;
 	size_t len =0;
 	ssize_t read;
 
-	FILE* rawData = fopen(fileName,"r");
+	FILE* rawData = fopen(filename,"r");
 
 	if (!rawData) {
-		printf("Unable to open file %s\n",fileName);
+		printf("unable to open file %s\n",filename);
 		exit(1);
 	}
 
-	// Skips over comment lines and the header.
+	// skips over comment lines and the header.
 	do{
 		fgets(trash,1024,rawData);
-		//printf("Skipped a line\n");
+		//printf("skipped a line\n");
 	}while(trash[0]=='#');
 
 	while((read=getline(&line, &len,rawData)) != -1){
@@ -422,6 +430,32 @@ int getNumberOfDataLines(char* fileName){
 	fclose(rawData);
 
 	return numberOfLines;
+}
+
+int getNumberOfAouts(char* filename){
+	char line[1024];
+    char* colon;
+    int numAouts=0;
+
+	FILE* rawData = fopen(filename,"r");
+
+	if (!rawData) {
+		printf("unable to open file %s\n",filename);
+		exit(1);
+	}
+
+	// Goes through comments lines then stops
+	do{
+		fgets(line,1024,rawData);
+        if(strstr(line,"#NumAouts:")!=NULL){
+            colon=strstr(line,":");
+            numAouts=atoi((colon+1));
+        }
+	}while(line[0]=='#');
+
+	fclose(rawData);
+
+	return numAouts;
 }
 
 /** 
