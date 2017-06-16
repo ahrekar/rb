@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c MonitorPhotodiode.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorPhotodiodes.c
 
 INTDIR=interfacing
 _INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c
@@ -90,7 +90,7 @@ getcounts: obj/getcounts.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 RbAbsorbScan: obj/RbAbsorbScan.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-MonitorPhotodiode: obj/MonitorPhotodiode.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
+monitorPhotodiodes: obj/monitorPhotodiodes.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 excitationfn: obj/excitationfn.o obj/mathTools.o $(INTOBJECTS) 
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
