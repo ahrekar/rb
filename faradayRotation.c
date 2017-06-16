@@ -45,7 +45,7 @@ int recordNumberDensity(char* fileName);
 
 int main (int argc, char **argv)
 {
-    int i,steps,nsamples;
+    int i,steps,nSamples;
     int revolutions,dataPointsPerRevolution;
     int homeFlag;
     time_t rawtime;
@@ -81,9 +81,9 @@ int main (int argc, char **argv)
 
     revolutions=1;
     dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
-    nsamples=32;
-    float* measurement = malloc(nsamples*sizeof(float));
-    float* measurement2 = malloc(nsamples*sizeof(float));
+    nSamples=32;
+    float* measurement = malloc(nSamples*sizeof(float));
+    float* measurement2 = malloc(nSamples*sizeof(float));
 
     // Set up interfacing devices
     initializeBoard();
@@ -141,7 +141,7 @@ int main (int argc, char **argv)
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 
     // Write the header for the data to the file.
-    fprintf(fp,"STEP\tINT\tINTsd\tHadToHomeFlag\n");
+    fprintf(fp,"AOUT\tWAVE\tSTEP\tPRB\tPRBstd\tPUMP\tPUMPstd\tHadToHomeFlag\n");
 
     int j=0;
     int count=0;
@@ -166,18 +166,18 @@ int main (int argc, char **argv)
             //get samples and average
             involts=0.0;	
             involts2=0.0;	
-            for (i=0;i<nsamples;i++){ // Take several samples of the voltage and average them.
+            for (i=0;i<nSamples;i++){ // Take several samples of the voltage and average them.
                 getUSB1208AnalogIn(PUMP_LASER,&measurement[i]);
                 getUSB1208AnalogIn(PROBE_LASER,&measurement2[i]);
                 involts=involts+measurement[i];
                 involts2=involts2+measurement2[i];
                 delay(WAITTIME);
             }
-            involts=fabs(involts/(float)nsamples); 
-            involts2=fabs(involts2/(float)nsamples); 
+            involts=fabs(involts/(float)nSamples); 
+            involts2=fabs(involts2/(float)nSamples); 
 
 
-            fprintf(fp,"%d\t%f\t%d\t%f\t%f\t%d\n",512,wavelength,steps,involts,involts2,homeFlag);
+            fprintf(fp,"%d\t%f\t%d\t%f\t%f\t%f\t%f\t%d\n",512,wavelength,steps,involts,stdDeviation(measurement,nSamples),involts2,stdDeviation(measurement2,nSamples),homeFlag);
             angle=2.0*PI*(steps)/STEPSPERREV;
             sumSin+=involts*sin(2*angle);
             sumCos+=involts*cos(2*angle);
