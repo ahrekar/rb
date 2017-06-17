@@ -34,8 +34,7 @@
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
-//#define STEPSIZE 2
-#define STEPSIZE 35
+#define STEPSIZE 25
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -43,7 +42,7 @@
 
 int plotData(char* fileName);
 int recordNumberDensity(char* fileName);
-void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions, int stepSize);
+void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions);
 
 int main (int argc, char **argv)
 {
@@ -56,17 +55,13 @@ int main (int argc, char **argv)
     char dailyFileName[BUFSIZE];
     char dataCollectionFileName[] = "/home/pi/.takingData"; 
     FILE *fp,*dataCollectionFlagFile;
-    int stepSize;
 
-    printf("Arguments: %d\n",argc);
 
-    if (argc==7){
+    if (argc==5){
         probeOffset=atof(argv[1]);
         mag1Voltage=atof(argv[2]);
         mag2Voltage=atof(argv[3]);
-        revolutions=atoi(argv[4]);
-        stepSize=atoi(argv[5]);
-        strcpy(comments,argv[6]);
+        strcpy(comments,argv[4]);
     } else { 
         printf("usage '~$ sudo ./faradayRotation <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
         return 1;
@@ -79,7 +74,8 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-    dataPointsPerRevolution=NUMSTEPS/stepSize;
+    revolutions=4;
+    dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
 
     // Set up interfacing devices
     initializeBoard();
@@ -149,7 +145,7 @@ int main (int argc, char **argv)
     fprintf(fp,"\n\n#AOUT:%d(%f)\n",aout,wavelength);
 
 	quickHomeMotor(PROBE_MOTOR);
-    collectDiscreteFourierData(fp, photoDetectors, 2, PROBE_MOTOR, revolutions, stepSize);
+    collectDiscreteFourierData(fp, photoDetectors, 2, PROBE_MOTOR, revolutions);
 
     fclose(fp);
 
@@ -182,8 +178,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     float* stdDev = calloc(numPhotoDetectors,sizeof(float));
 
     for (k=0;k<revolutions;k++){ //revolutions
-        for (steps=0;steps < NUMSTEPS;steps+=stepSize){ // steps
-            // (NUMSTEPS) in increments of stepSize
+        for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // steps
+            // (NUMSTEPS) in increments of STEPSIZE
             delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
             //get samples and average
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
@@ -209,7 +205,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             sumCos+=involts[0]*cos(2*angle);
 
             count++;
-            stepMotor(motor,CLK,stepSize);
+            stepMotor(motor,CLK,STEPSIZE);
         } // steps
     } // revolutions
     f3=sumSin/count;
