@@ -2,37 +2,54 @@
 #
 # Usage:
 #
-#		sudo ./ElectronPolarizationScript <aout background> <aout Helium Excited> <dwell> <additional comments>
+#		./ElectronPolarizationScript <aout background> <aout Helium Excited> <dwell> <additional comments>
 #
 
 if [ "$#" -ne 5 ]; then
-	echo "usage: sudo ./ElectronPolarizationScript.sh <aout background> <aout Helium Excited> <dwell> <leakageCurrent> <additional comments>"
+	echo "usage: ./ElectronPolarizationScript.sh <aout background> <aout Helium Excited> <dwell> <leakageCurrent> <additional comments>"
 	echo "                                                 (400)               (0)           	(2)   (0 if not used)                       "
 else
+    AOUTBACK=$1
+    AOUTEXCITE=$2
+    DWELL=$3
+    LEAKCURRENT=$4
+    COMMENTS=$5
+
+    PIPOS=93
+    SPLUSPOS=49
+    SMINUSPOS=137
+
+    PUMP=1
+    PROBE=0
+
+    BLOCKED=1
+    UNBLOCKED=0
+    RBC=/home/pi/RbControl
+
 	# Unblock the beam
 	echo "Unblocking pump beam..."
-	sudo /home/pi/RbControl/setLaserFlag 1 0
+	$RBC/setLaserFlag $PUMP $UNBLOCKED
 
 	echo "Blocking probe beam..."
-	sudo /home/pi/RbControl/setLaserFlag 0 1
+	$RBC/setLaserFlag $PROBE $BLOCKED
 
 	echo "Setting pump to Pi..."
-	sudo /home/pi/RbControl/setWavePlate 61
+	$RBC/setWavePlate $PIPOS
 	echo "Pi Polarized light (Background)..."
-	sudo /home/pi/RbControl/polarization "$1" "$3" "$4" "$5, pump=pi"
+	$RBC/polarization "$AOUTBACK" "$DWELL" "$LEAKCURRENT" "$COMMENTS, pump=pi"
 	echo "Pi Polarized light (Excited He)..."
-	sudo /home/pi/RbControl/polarization "$2" "$3" "$4" "$5, pump=pi"
+	$RBC/polarization "$AOUTEXCITE" "$DWELL" "$LEAKCURRENT" "$COMMENTS, pump=pi"
 
 	echo "Setting pump to S+..."
-	sudo /home/pi/RbControl/setWavePlate 17
+	$RBC/setWavePlate $SPLUSPOS
 	echo "Polarization Run with S+ light..."
-	sudo /home/pi/RbControl/polarization "$2" "$3" "$4" "$5, pump=s+"
+	$RBC/polarization "$AOUTEXCITE" "$DWELL" "$LEAKCURRENT" "$COMMENTS, pump=s+"
 
 	echo "Setting pump to S-..."
-	sudo /home/pi/RbControl/setWavePlate 105
+	$RBC/setWavePlate $SMINUSPOS
 	echo "Polarization Run with S- light..."
-	sudo /home/pi/RbControl/polarization "$2" "$3" "$4" "$5, pump=s-"
+	$RBC/polarization "$AOUTEXCITE" "$DWELL" "$LEAKCURRENT" "$COMMENTS, pump=s-"
 
 	echo "Unblocking probe beam..."
-	sudo /home/pi/RbControl/setLaserFlag 0 0
+	$RBC/setLaserFlag $PROBE $UNBLOCKED
 fi

@@ -34,7 +34,7 @@
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
-#define STEPSIZE 7
+#define STEPSIZE 25
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -78,7 +78,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-    revolutions=1;
+    revolutions=4;
     dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
 
 	// Set up interfacing devices
@@ -158,7 +158,7 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
-	fprintf(fp,"#NumAouts:\t%d\n",dataPointsPerRevolution);
+	fprintf(fp,"#NumAouts:\t%d\n",totalAouts);
 
 	// Write the header for the data to the file.
 	fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\n");
@@ -171,7 +171,7 @@ int main (int argc, char **argv)
 
 	fp=fopen(fileName,"a");
 
-	for(Aout=AoutStart1;Aout<=AoutStop1;Aout+=deltaAout){
+	for(Aout=AoutStart1;Aout<AoutStop1;Aout+=deltaAout){
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 		delay(1000); 
 
@@ -181,10 +181,10 @@ int main (int argc, char **argv)
         fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
         printf("AOUT:%d(%f)\t",Aout,wavelength);
 
-        collectDiscreteFourierData(fp,pd,2 /*numPhotoDet*/,PROBE_MOTOR,1);
+        collectDiscreteFourierData(fp,pd,2 /*numPhotoDet*/,PROBE_MOTOR,revolutions);
 	}//end for Aout
 
-	for(Aout=AoutStart2;Aout<=AoutStop2;Aout+=deltaAout){
+	for(Aout=AoutStart2;Aout<AoutStop2;Aout+=deltaAout){
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 		delay(1000); 
 
@@ -194,7 +194,7 @@ int main (int argc, char **argv)
         fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
         printf("AOUT:%d(%f)\t",Aout,wavelength);
 
-        collectDiscreteFourierData(fp,pd,2 /*numPhotoDet*/,PROBE_MOTOR,1);
+        collectDiscreteFourierData(fp,pd,2 /*numPhotoDet*/,PROBE_MOTOR,revolutions);
 	}//end for Aout
 	setUSB1208AnalogOut(PROBEOFFSET,512);
 	fclose(fp);
@@ -232,7 +232,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     float f3,f4,angle;
 
 
-    int nSamples=32;
+    int nSamples=8;
 	float* measurement = malloc(nSamples*sizeof(float));
 
     

@@ -16,25 +16,31 @@ else
     PUMP=1
     PROBE=0
 
+    PIPOS=93
+    SPLUSPOS=49
+    SMINUSPOS=137
+
     BLOCKED=1
     UNBLOCKED=0
+
+    RBC=/home/pi/RbControl
 
     echo "Unblocking both beams."
     $RBC/setLaserFlag $PUMP $UNBLOCKED
     $RBC/setLaserFlag $PROBE $UNBLOCKED
     
 	echo "Setting QWP for Pi light..."
-	sudo /home/pi/RbControl/setWavePlate 93
+	sudo /home/pi/RbControl/setWavePlate $PIPOS
 
     $RBC/faradayRotation $PROBEOFFSET $MAG1VOLT $MAG2VOLT "$COMMENTS, no beams blocked, Pi Light"
 
 	echo "Setting QWP for S+ light..."
-	sudo /home/pi/RbControl/setWavePlate 49
+	sudo /home/pi/RbControl/setWavePlate $SPLUSPOS
 
     $RBC/faradayRotation $PROBEOFFSET $MAG1VOLT $MAG2VOLT "$COMMENTS, no beams blocked, S+ Light"
 
 	echo "Setting QWP for S- light..."
-	sudo /home/pi/RbControl/setWavePlate 137
+	sudo /home/pi/RbControl/setWavePlate $SMINUSPOS
 
     $RBC/faradayRotation $PROBEOFFSET $MAG1VOLT $MAG2VOLT "$COMMENTS, no beams blocked, S- Light"
 
@@ -42,17 +48,17 @@ else
     $RBC/setLaserFlag $PROBE $BLOCKED
 
 	echo "Setting QWP for Pi light..."
-	sudo /home/pi/RbControl/setWavePlate 93
+	sudo /home/pi/RbControl/setWavePlate $PIPOS
 
     $RBC/faradayRotation $PROBEOFFSET $MAG1VOLT $MAG2VOLT "$COMMENTS, probe beam blocked, Pi Light"
 
 	echo "Setting QWP for S+ light..."
-	sudo /home/pi/RbControl/setWavePlate 49
+	sudo /home/pi/RbControl/setWavePlate $SPLUSPOS
 
     $RBC/faradayRotation $PROBEOFFSET $MAG1VOLT $MAG2VOLT "$COMMENTS, probe beam blocked, S+ Light"
 
 	echo "Setting QWP for S- light..."
-	sudo /home/pi/RbControl/setWavePlate 137
+	sudo /home/pi/RbControl/setWavePlate $SMINUSPOS
 
     $RBC/faradayRotation $PROBEOFFSET $MAG1VOLT $MAG2VOLT "$COMMENTS, probe beam blocked, S- Light"
 

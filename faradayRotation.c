@@ -161,7 +161,7 @@ int main (int argc, char **argv)
     return 0;
 }
 
-void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions, int stepSize)
+void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions)
 {
     float sumSin=0;
     float sumCos=0;
@@ -213,6 +213,6 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     angle = 0.5*atan2(f4,f3);
     printf("Angle: %0.4f\n",angle*180/PI);
     free(measurement);
-    free(involts);
     free(stdDev);
+    free(involts);
 }

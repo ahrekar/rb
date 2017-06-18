@@ -200,10 +200,7 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 
 	char* extensionStart;
 
-	int numberOfDataLines = getNumberOfDataLines(fileName);
-    printf("Number of DataLines: %d\n",numberOfDataLines);
 	int numAouts= getNumberOfAouts(fileName); 
-    printf("Number of Aouts: %d\n",numAouts);
 
 	int* aouts=calloc(totalDatapoints*numAouts,sizeof(float)); 
 	int* homeFlag=calloc(totalDatapoints*numAouts,sizeof(float)); 
