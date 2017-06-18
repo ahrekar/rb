@@ -99,9 +99,6 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 	
-	//printf("Finding Max Transistion...\n");
-	//findAndSetProbeMaxTransmission();
-	//homeMotor(PROBE_MOTOR);
 	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
 
 	homeMotor(PROBE_MOTOR);
@@ -260,6 +257,7 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 	FILE* fp;
 	int k=0,i;
 	int nSamples;
+    int count=0;
 	float involts[NUMCHANNELS];
 	float kensWaveLength;
 
@@ -270,18 +268,17 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 	}
 	// Allocate some memory to store measurements for calculating
 	// error bars.
-	nSamples = 32;
+	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
 	value=startvalue;
 	setUSB1208AnalogOut(PROBEOFFSET,value);
-	//delay(60000);
 	delay(10000);
-	/** Reverse the start and end point **/
+
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
-//	for (value=endvalue;value > startvalue && value <= endvalue;value-=stepsize){
+        if(count%15==0) printf("          \t       \t PUMP       |        PROBE      |        REFERENCE\n");
 		setUSB1208AnalogOut(PROBEOFFSET,value);
-		printf("Aout %d \t",value);
+		printf("Aout %04d \t",value);
 		fprintf(fp,"%d\t",value);
 
 		// delay to allow transients to settle
@@ -289,11 +286,12 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 		delay(100);
 		//kensWaveLength = getWaveMeter();
 		kensWaveLength = -1; 
-		fprintf(fp,"%f\t",kensWaveLength);
+		fprintf(fp,"%07f\t",kensWaveLength);
 		printf("%f\t",kensWaveLength);
 		for(k=0;k<NUMCHANNELS;k++){
 			involts[k]=0.0;	
 		}
+
 
 		// grab several readings and average
 		for(k=1;k<NUMCHANNELS+1;k++){
@@ -304,10 +302,12 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
 			fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
-			printf("%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
+			printf("  %0.4f %0.4f  ",involts[k-1],stdDeviation(measurement,nSamples));
+            if(k<NUMCHANNELS) printf(" | ");
 		}
 		fprintf(fp,"\n");
 		printf("\n");
+        count++;
 	}
 	fprintf(fp,"\n");
 	fclose(fp);
