@@ -232,7 +232,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     float f3,f4,angle;
 
 
-    int nSamples=8;
+    int nSamples=16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
     

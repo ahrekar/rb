@@ -276,7 +276,7 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 	delay(10000);
 
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
-        if(count%15==0) printf("          \t       \t PUMP       |        PROBE      |        REFERENCE\n");
+        if(count%15==0) printf("          \t       \t\t\tPUMP      |        PROBE      |        REFERENCE\n");
 		setUSB1208AnalogOut(PROBEOFFSET,value);
 		printf("Aout %04d \t",value);
 		fprintf(fp,"%d\t",value);
