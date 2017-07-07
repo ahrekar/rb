@@ -53,6 +53,8 @@ test.c
 test.sh
 txt.txt
 interfacing/mainTemplate
+interfacing/getAnalogIn
+interfacing/waveMeter
 
 *.data
 *~
