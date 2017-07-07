@@ -30,13 +30,13 @@
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350	
-#define STEPSPERREV 350.0
 #define WAITTIME 2
 
 #define BUFSIZE 1024
 
 int main (int argc, char **argv)
 {
+    int runs, revolutions, dataPointsPerRev;
 	int leftDataExclude=0, rightDataExclude=0;
 	int interactive;
 	char fileName[1024];
@@ -48,14 +48,17 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	int dataPointsPerRev=14;
-	int revolutions=1;
+    runs=getRuns(fileName);
+    revolutions=getRevPerRun(fileName);
+    dataPointsPerRev=getStepsPerRev(fileName);
+  
+
 	printf("Processing Data...\n");
-	analyzeData(fileName, dataPointsPerRev,revolutions);
+	analyzeData(fileName, runs,revolutions,dataPointsPerRev);
 
 	printf("Plotting Data...\n");
 	char* extensionStart=strstr(fileName,".dat");
-	strcpy(extensionStart,"DensityAnalysis.dat");
+	strcpy(extensionStart,"RotationAnalysis.dat");
 	plotData(fileName);
 
 	if (interactive){

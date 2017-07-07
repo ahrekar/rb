@@ -1,9 +1,14 @@
 /*
-
-
+ *
 */
+#define K617 0
+#define PUMP_LASER 1
+#define PROBE_LASER 2
+#define REF_LASER 3
 
-//#include <wiringPi.h>
+#define PROBEOFFSET 0
+#define HETARGET 1
+
 #include "USB1208.h"
 
 void delayMicrosecondsHard(unsigned int howLong);
@@ -27,7 +32,7 @@ int initializeUSB1208(){
     }
 
     if ((hid = hid_open(MCC_VID, USB1208LS_PID, NULL)) >  0) {
-        printf("USB-1208LS Device is found!\n");
+        //printf("USB-1208LS Device is found!\n");
     } else {
         fprintf(stderr, "USB-1208LS not found.\n");
         exit(1);
@@ -38,7 +43,14 @@ int initializeUSB1208(){
 
 int getUSB1208AnalogIn(unsigned short chan, float* returnvalue){
     signed short svalue;
-    int gain = BP_2_50V;
+    int gain;
+    if(chan==PROBE_LASER){
+        gain = BP_5_00V;
+        //gain = BP_2_00V;
+    }else{
+        gain = BP_2_50V;
+    }
+
 
     svalue = usbAIn_USB1208LS(hid,chan,gain);  //channel = 0 for k617
 

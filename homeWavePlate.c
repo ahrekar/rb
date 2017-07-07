@@ -8,16 +8,15 @@
 #include <stdio.h>
 #include <wiringPi.h>
 #include <stdlib.h>
-#include "stepperMotorControl.h"
-
-#define DIR0 0
-#define CLK0 1
-#define INP0 2
-#define DELAY 1500 //move slower
-
+#include "interfacing/interfacing.h"
 
 int main (int argc, char *argv[]) {
-	wiringPiSetup();
-	homeMotor(2);
+	initializeBoard();
+	initializeUSB1208();
+
+	homeMotor(PUMP_MOTOR);
+
+	closeUSB1208();
+
 	return 0;
 }

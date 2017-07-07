@@ -78,7 +78,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-    revolutions=4;
+    revolutions=1;
     dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
 
 	// Set up interfacing devices
@@ -159,6 +159,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 	fprintf(fp,"#NumAouts:\t%d\n",totalAouts);
+	fprintf(fp,"#StepSize:\t%d\n",STEPSIZE);
 
 	// Write the header for the data to the file.
 	fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\n");
@@ -201,7 +202,7 @@ int main (int argc, char **argv)
 
 
 	printf("Processing Data...\n");
-	analyzeData(fileName, dataPointsPerRevolution, revolutions);
+	analyzeData(fileName, totalAouts, revolutions, dataPointsPerRevolution);
 
 	char* extensionStart;
 	extensionStart=strstr(fileName,".dat");

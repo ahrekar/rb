@@ -283,7 +283,7 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 
 		// delay to allow transients to settle
 		//delay(30000);
-		delay(100);
+		delay(300);
 		//kensWaveLength = getWaveMeter();
 		kensWaveLength = -1; 
 		fprintf(fp,"%07f\t",kensWaveLength);
@@ -298,7 +298,7 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 			for (i=0;i<nSamples;i++){
 				getUSB1208AnalogIn(k,&measurement[i]);
 				involts[k-1]=involts[k-1]+measurement[i];
-				delay(1);
+				delay(10);
 			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
 			fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));

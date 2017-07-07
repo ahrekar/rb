@@ -40,14 +40,17 @@ int plotData(char* fileName);
 int plotRawData(char* fileName);
 float calculateBdotL(float mag1Volt, float mag2Volt);
 int recordNumberDensity(char* fileName);
-int analyzeData(char* fileName, int dataPtsPerRev, int revolutions);
+int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevolution);
 int	readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, float* wavelength, int* steps, float* intensity, float* inensityErr,int* homeFlag);
 float calculateOneSumTerm(int trigFunc, int dataPointsPerRevolution,int revolutions,float intensity, float i,int k);
 float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevolution, int revolutions, float intensity,float intensityErr, float i, float iErr, int k);
 int fourierAnalysis(int dataPointsPerRevolution, int revolutions, int* steps, float* intensity, float* intensityErr, float* fourierCoefficients, float* fcErr);
 float calculateAngleError(float c2, float c2Err, float s2, float s2Err);
 int getNumberOfDataLines(char* fileName);
-int getNumberOfAouts(char* fileName);
+int getComment(char* fileName, char* returnString);
+int getRevPerRun(char* filename);
+int getRuns(char* filename);
+int getStepsPerRev(char* filename);
 
 // Okay, so gnuplot's fitting function isn't behaving like I want it to
 // (not giving me "reasonable" answers), so I'm hacking together
@@ -161,15 +164,20 @@ int recordNumberDensity(char* fileName){
 
 int plotData(char* fileName){
 	char buffer[BUFSIZE];
+	char fileNameBase[1024];
+	char* extension;
+	strcpy(fileNameBase,fileName);
+	extension = strstr(fileNameBase,".dat");
+	strcpy(extension,"");
+
 	FILE *gnuplot;
 	gnuplot = popen("gnuplot","w"); 
 
+    int aoutColumnNumber=1,angleColumnNumber=10;
 	if (gnuplot != NULL){
 		fprintf(gnuplot, "set terminal dumb size 100,28\n");
 		fprintf(gnuplot, "set output\n");			
 
-		fprintf(gnuplot, "set x2tics nomirror\n");
-		fprintf(gnuplot, "set xtics nomirror\n");
 		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 
@@ -177,22 +185,58 @@ int plotData(char* fileName){
 		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Theta'\n");			
 		fprintf(gnuplot, "set xrange [0:1024] reverse\n");			
-		sprintf(buffer, "plot '%s' using 1:10:($10+$11):($10+$12) with errorbars\n",fileName);
+		sprintf(buffer, "plot '%s' using %d:%d:($%d+$%d):($%d+$%d) with errorbars\n",fileName,aoutColumnNumber,angleColumnNumber,angleColumnNumber,angleColumnNumber+1,angleColumnNumber,angleColumnNumber+2);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s.png'\n", fileName);
+		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:10:($10+$11):($10+$12) with errorbars\n",fileName);
+		sprintf(buffer, "plot '%s' using %d:%d:($%d+$%d):($%d+$%d) with errorbars\n",fileName,aoutColumnNumber,angleColumnNumber,angleColumnNumber,angleColumnNumber+1,angleColumnNumber,angleColumnNumber+2);
 		fprintf(gnuplot, buffer);
 	}
 	return pclose(gnuplot);
 }
 
-int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
+int plotRawData(char* fileName){
+	char buffer[BUFSIZE];
+	char fileNameBase[1024];
+	char* extension;
+	strcpy(fileNameBase,fileName);
+	extension = strstr(fileNameBase,".dat");
+	strcpy(extension,"");
+
+	FILE *gnuplot;
+	gnuplot = popen("gnuplot","w"); 
+
+    int stepColumnNumber=1;
+    int intensityColumnNumber=2;
+	if (gnuplot != NULL){
+		fprintf(gnuplot, "set terminal dumb size 100,28\n");
+		fprintf(gnuplot, "set output\n");			
+
+		sprintf(buffer, "set title '%s'\n", fileName);
+		fprintf(gnuplot, buffer);
+
+		fprintf(gnuplot, "set key autotitle columnheader\n");
+		fprintf(gnuplot, "set xlabel 'Angle (Step #)'\n");			
+		fprintf(gnuplot, "set ylabel 'Intensity'\n");			
+		sprintf(buffer, "plot '%s' using %d:%d\n",fileName,stepColumnNumber,intensityColumnNumber);
+		fprintf(gnuplot, buffer);
+		fprintf(gnuplot, "unset output\n"); 
+		fprintf(gnuplot, "set terminal png\n");
+		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
+		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s' using %d:%d\n",fileName,stepColumnNumber,intensityColumnNumber);
+		fprintf(gnuplot, buffer);
+	}
+	return pclose(gnuplot);
+}
+
+int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevolution){
 	char fileNameCopy[1024];
+    char comments[1024];
     int fileExists=0;
-	int totalDatapoints=dataPointsPerRevolution*revolutions;
+	int totalDatapointsPerRun=dataPointsPerRevolution*revolutions;
 	int cos=0;
 	int sin=dataPointsPerRevolution/2;
 	int pos=0;
@@ -200,17 +244,17 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 
 	char* extensionStart;
 
-	int numAouts= getNumberOfAouts(fileName); 
+	int numAouts= runs; 
 
-	int* aouts=calloc(totalDatapoints*numAouts,sizeof(float)); 
-	int* homeFlag=calloc(totalDatapoints*numAouts,sizeof(float)); 
-	float* wavelength=calloc(totalDatapoints*numAouts,sizeof(float)); 
-	float* intensity=calloc(totalDatapoints*numAouts,sizeof(float));
-	float* intensityErr=calloc(totalDatapoints*numAouts,sizeof(float));
-	int* steps=calloc(totalDatapoints*numAouts,sizeof(float)); 
+	int* aouts=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
+	int* homeFlag=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
+	float* wavelength=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
+	float* intensity=calloc(totalDatapointsPerRun*numAouts,sizeof(float));
+	float* intensityErr=calloc(totalDatapointsPerRun*numAouts,sizeof(float));
+	int* steps=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
 
 	printf("Reading in data...\n");
-	readInData(fileName,totalDatapoints,numAouts,aouts,wavelength,steps,intensity,intensityErr,homeFlag);
+	readInData(fileName,totalDatapointsPerRun*numAouts,numAouts,aouts,wavelength,steps,intensity,intensityErr,homeFlag);
 	printf("Data read in.\n");
 
 	strcpy(fileNameCopy,fileName);
@@ -234,6 +278,8 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 		exit(1);
 	}
 
+	getCommentLineFromFile(fileName,"#Comments:",comments);
+
 	FILE* rawData = fopen(fileName,"r");
 	if (!rawData) {
 		printf("Unable to open file %s\n",fileName);
@@ -252,16 +298,16 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 
 	fprintf(analysis,"Aout\tWavelength\tc0\ts2\ts2Err+\ts2Err-\tc2\tc2Err+\tc2Err-\tangle\tangleErr+\tangleErr-\thomeFlag\n");
     if(fileExists==-1)
-        fprintf(daily,"Filename\tAout\tWavelength\tc0\ts2\ts2Err+\ts2Err-\tc2\tc2Err+\tc2Err-\tangle\tangleErr+\tangleErr-\thomeFlag\n");
+        fprintf(daily,"Filename\tComments\tAout\tWavelength\tc0\ts2\ts2Err+\ts2Err-\tc2\tc2Err+\tc2Err-\tangle\tangleErr+\tangleErr-\thomeFlag\n");
 
-	float* fourierCoefficients = calloc(totalDatapoints,sizeof(float));
-	float* fcErr = calloc(totalDatapoints*2,sizeof(float));
+	float* fourierCoefficients = calloc(totalDatapointsPerRun,sizeof(float));
+	float* fcErr = calloc(totalDatapointsPerRun*2,sizeof(float));
 	int i;
 	float c0,s2,c2,angle,angleErrUp,angleErrDown;
 
 	printf("Beginning Data Analysis...\n");
 	for(i=0;i<numAouts;i++){
-		fourierAnalysis(dataPointsPerRevolution,revolutions,&steps[totalDatapoints*i],&intensity[totalDatapoints*i],&intensityErr[totalDatapoints*i],fourierCoefficients,fcErr);
+		fourierAnalysis(dataPointsPerRevolution,revolutions,&steps[totalDatapointsPerRun*i],&intensity[totalDatapointsPerRun*i],&intensityErr[totalDatapointsPerRun*i],fourierCoefficients,fcErr);
 		c0=fourierCoefficients[cos+0];
 		s2=fourierCoefficients[sin+2];
 		c2=fourierCoefficients[cos+2];
@@ -272,8 +318,8 @@ int analyzeData(char* fileName, int dataPointsPerRevolution, int revolutions){
 		angleErrUp = angleErrUp*180.0/PI;
 		angleErrDown = angleErrDown*180.0/PI;
 		printf("c0 = %f\ts2 = %f\ts2Err = %f\tc2 = %f\tc2Err = %f\tangle = %f (%f)\n",c0,s2,fcErr[sin+pos+2],c2,fcErr[cos+pos+2],angle,angleErrUp);
-		fprintf(analysis,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",aouts[totalDatapoints*i],wavelength[totalDatapoints*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapoints*i]);
-		fprintf(daily,"%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",fileName,aouts[totalDatapoints*i],wavelength[totalDatapoints*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapoints*i]);
+		fprintf(analysis,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",aouts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
+		fprintf(daily,"%s\t%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",fileName,comments,aouts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
 	}
 	free(aouts);
 	free(intensity);
@@ -301,9 +347,10 @@ int readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, flo
 		//printf("Skipped a line\n");
 	}while(trash[0]=='#');
 
-	int i,j;
+	int i,j=0;
     for(j=0;j< numAouts; j++){
         fscanf(data,"\n\n#AOUT:%d(%f)\n",&aouts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
+        //printf("The aout is %d/%d and the code is %d and j is %d\n",aouts[j*dataPointsPerAout],numAouts,code,j);
         for (i=0; i < dataPointsPerAout; i++){
             fscanf(data,"%d\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard);
             aouts[j*dataPointsPerAout+i]=aouts[j*dataPointsPerAout];
@@ -311,6 +358,20 @@ int readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, flo
             //fscanf(data,"%d\t%f\t%d\t%f\t%f\t%d\n",&aouts[i],&wavelength[i],&steps[i],&intensity[i],&intensityErr[i],&homeFlag[i]);
         }
     }
+    /*
+        code=fscanf(data,"\n\n#AOUT:%d(%f)\n",&aouts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
+        printf("The aout is %d/%d and the code is %d and j is %d\n",aouts[j*dataPointsPerAout],numAouts,code,j);
+        for (i=0; i < dataPointsPerAout; i++){
+            code=fscanf(data,"%d\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard);
+            printf("code %d\n",code);
+            aouts[j*dataPointsPerAout+i]=aouts[j*dataPointsPerAout];
+            wavelength[j*dataPointsPerAout+i]=wavelength[j*dataPointsPerAout];
+        }
+        j++;
+        fscanf(data,"\n\n#AOUT:%d(%f)\n",&aouts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
+        printf("The aout is %d/%d and the code is %d and j is %d\n",aouts[j*dataPointsPerAout],numAouts,code,j);
+
+     */
 
 	fclose(data);
 	return 0;
@@ -429,7 +490,7 @@ int getNumberOfDataLines(char* filename){
 	return numberOfLines;
 }
 
-int getNumberOfAouts(char* filename){
+int getRuns(char* filename){
 	char line[1024];
     char* colon;
     int numAouts=0;
@@ -453,6 +514,83 @@ int getNumberOfAouts(char* filename){
 	fclose(rawData);
 
 	return numAouts;
+}
+
+int getComment(char* filename, char* returnString){
+	char line[1024];
+    char* colon;
+
+	FILE* rawData = fopen(filename,"r");
+
+	if (!rawData) {
+		printf("unable to open file %s\n",filename);
+		exit(1);
+	}
+
+	// Goes through comments lines then stops
+	do{
+		fgets(line,1024,rawData);
+        if(strstr(line,"#NumAouts:")!=NULL){
+            colon=strstr(line,":");
+            returnString=strcpy(returnString,colon+1);
+        }
+	}while(line[0]=='#');
+
+	fclose(rawData);
+
+	return 0;
+}
+
+int getRevPerRun(char* filename){
+	char line[1024];
+    char* colon;
+    int revolutions=0;
+
+	FILE* rawData = fopen(filename,"r");
+
+	if (!rawData) {
+		printf("unable to open file %s\n",filename);
+		exit(1);
+	}
+
+	// Goes through comments lines then stops
+	do{
+		fgets(line,1024,rawData);
+        if(strstr(line,"#Revolutions:")!=NULL){
+            colon=strstr(line,":");
+            revolutions=atoi((colon+1));
+        }
+	}while(line[0]=='#');
+
+	fclose(rawData);
+
+	return revolutions;
+}
+
+int getStepsPerRev(char* filename){
+	char line[1024];
+    char* colon;
+    int stepsPerRev=0;
+
+	FILE* rawData = fopen(filename,"r");
+
+	if (!rawData) {
+		printf("unable to open file %s\n",filename);
+		exit(1);
+	}
+
+	// Goes through comments lines then stops
+	do{
+		fgets(line,1024,rawData);
+        if(strstr(line,"#DataPointsPerRev:")!=NULL){
+            colon=strstr(line,":");
+            stepsPerRev=atoi((colon+1));
+        }
+	}while(line[0]=='#');
+
+	fclose(rawData);
+
+	return stepsPerRev;
 }
 
 /** 

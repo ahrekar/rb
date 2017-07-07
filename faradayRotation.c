@@ -34,13 +34,12 @@
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
-#define STEPSIZE 25
+#define STEPSIZE 7
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
 #define BUFSIZE 1024
 
-int plotData(char* fileName);
 int recordNumberDensity(char* fileName);
 void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions);
 
@@ -74,7 +73,7 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-    revolutions=4;
+    revolutions=1;
     dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
 
     // Set up interfacing devices
@@ -138,19 +137,22 @@ int main (int argc, char **argv)
     fclose(fp);
 
     int photoDetectors[] = {PROBE_LASER,PUMP_LASER};
+    int motor = PROBE_MOTOR;
+
 
     int aout=512;
     float wavelength=-1.0;
     fp=fopen(fileName,"a");
     fprintf(fp,"\n\n#AOUT:%d(%f)\n",aout,wavelength);
 
-	quickHomeMotor(PROBE_MOTOR);
-    collectDiscreteFourierData(fp, photoDetectors, 2, PROBE_MOTOR, revolutions);
+	quickHomeMotor(motor);
+    collectDiscreteFourierData(fp, photoDetectors, 2, motor, revolutions);
 
     fclose(fp);
 
     printf("Processing Data...\n");
-    analyzeData(fileName, dataPointsPerRevolution, revolutions);
+    analyzeData(fileName, 1, revolutions, dataPointsPerRevolution);
+    plotRawData(fileName);
 
     closeUSB1208();
 

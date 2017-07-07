@@ -39,9 +39,9 @@ float getWaveMeter(void){
             delay(1000);
         //}
 	}
-//	printf("FROM THE FILE: %f",wavelength/2.99000000);
+	//printf("FROM THE FILE: %f",wavelength/2.99000000);
 	fclose(wavelengthFile);
 
-return waves;
+    return waves;
 
 }
