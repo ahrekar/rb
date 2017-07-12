@@ -11,6 +11,14 @@
 #include "pmd.h"
 #include "usb-1208LS.h"
 
+#define K617 0
+#define PUMP_LASER 1
+#define PROBE_LASER 2
+#define REF_LASER 3
+
+#define PROBEOFFSET 0
+#define HETARGET 1
+
 
 int closeUSB1208();
 
