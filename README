@@ -1,5 +1,4 @@
-
-Author: Ken Trantham
+Authors: Ken Trantham and Karl Ahrendsen
 Maintainer Karl Ahrendsen (karl@huskers.unl.edu OR karl.ahrendsen@gmail.com)
 
 This code is used to assist in controlling and data aquisition
@@ -11,5 +10,7 @@ photomultiplier counter, and an analog controlled voltage supply.
 
 gnuplot is used for data visualization
 
-Note that for the shell scripts to actually change the authors, they need to
-be sourced, rather than just run as a shell script.
+system.cfg is a configuration file which stores variables
+related to the system and records them in every data file 
+recorded. system.cfg should be edited before each data 
+run is performed. 

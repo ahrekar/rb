@@ -14,7 +14,7 @@ the CRC is automatically appended to the end of the byte array.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rs485.h"
+#include "kenBoard.h"
 
 
 
@@ -29,7 +29,8 @@ unsigned short num;
 	unsigned short temp;
 
 
-	initialize_rs485(9600,25);
+initializeBoard();
+//	initialize_rs485(9600,25);
 	//9600 is the default for most equipment
 
 

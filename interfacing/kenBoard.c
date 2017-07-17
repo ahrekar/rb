@@ -438,7 +438,7 @@ void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho){
 	char buffer[64];
 
 	digitalWrite(wp,LOW);// sets the control signal WRITE to the RS 485 buss
-	delayMicrosecondsHard(10);// minor wait to allow signals to settle
+	delayMicrosecondsHard(30);// minor wait to allow signals to settle
 
 	for (j=0;j<numchar;j++){
 		serialPutchar(fd,cmd[j]);
