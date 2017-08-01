@@ -55,6 +55,8 @@ txt.txt
 interfacing/mainTemplate
 interfacing/getAnalogIn
 interfacing/waveMeter
+interfacing/manualRTU
+interfacing/mirrorTemplate
 
 *.data
 *~
