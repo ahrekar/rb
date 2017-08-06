@@ -120,8 +120,8 @@ void collectAndRecordData(char* fileName){
 	FILE* fp;
 	int k=0,i;
     int timeCounter;
-	int nSamples = 32; // The number of data points to collect
-    int evaluationTime=10;
+	int nSamples = 16; // The number of data points to collect
+    int evaluationTime=300;
 	float involts[NUMCHANNELS];
 
 	fp=fopen(fileName,"a");
@@ -147,6 +147,7 @@ void collectAndRecordData(char* fileName){
             for (i=0;i<nSamples;i++){
                 getUSB1208AnalogIn(k,&measurement[i]);
                 involts[k-1]=involts[k-1]+measurement[i];
+                delay(1000/NUMCHANNELS/nSamples);
             }
             involts[k-1]=fabs(involts[k-1])/(float)nSamples;
             fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
@@ -155,7 +156,6 @@ void collectAndRecordData(char* fileName){
         }
         fprintf(fp,"\n");
         printf("\n");
-        delay(1000);
     }
 
 	fprintf(fp,"\n");
