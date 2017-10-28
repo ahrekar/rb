@@ -41,7 +41,7 @@ int main (int argc, char **argv)
 	int i,stepsize,steprange;
 	long totalCounts;
 	int minstepsize,maxstepsize, nSamples;
-	int dwell;
+	int dwell,magnitude;
 	time_t rawtime;
 	struct tm * timeinfo;
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
@@ -55,21 +55,22 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
-	if (argc == 8){
+	if (argc == 9){
 		bias = atof(argv[1]);
 		N2Offset = atof(argv[2]);
 		HeOffset = atof(argv[3]);
 		scanrange =atof(argv[4]);
 		stepsize = atoi(argv[5]);
 		dwell= atoi(argv[6]);
-		strcpy(comments,argv[7]);
+		magnitude= atoi(argv[7]);
+		strcpy(comments,argv[8]);
 	} else{
 		printf("Hey, DUMBASS. you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
 		printf("...dumbass\n");
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
-		printf("           sudo ./excitationfn <filament bias> <N2 Offset> <He offset> <scan range> <step size> <dwell time> <comments>\n");
+		printf("           sudo ./excitationfn <filament bias> <N2 Offset> <He offset> <scan range> <step size> <dwell time> <orderOfMagnitudeOfCurrent> <comments>\n");
 		printf("                                (assumed neg.)            (assmd. neg) (   0-30   ) (  1-24   )    (1-5)s       \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
@@ -157,6 +158,8 @@ int main (int argc, char **argv)
 	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
 
+	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
+
 
 	// Print the header for the information in the datafile
 	fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");
@@ -176,11 +179,11 @@ int main (int argc, char **argv)
 		fprintf(fp,"%4.4f\t",N2Offset);
 		fprintf(fp,"%4.4f\t",HeOffset + HPcal*(float)value);
 
-		primaryEnergy = fabs(-bias - (-HeOffset - HPcal*(float)value));
+		primaryEnergy = bias + (-HeOffset - HPcal*(float)value);
 		printf("eV %4.2f\t",primaryEnergy);
 		fprintf(fp,"%4.4f\t",primaryEnergy);
 
-		secondaryEnergy =  fabs((-bias + N2Offset) - (-HeOffset - HPcal*(float)value));
+		secondaryEnergy =  (bias - N2Offset) + (-HeOffset - HPcal*(float)value);
 		printf("eV %4.2f\t",secondaryEnergy);
 		fprintf(fp,"%4.4f\t",secondaryEnergy);
 

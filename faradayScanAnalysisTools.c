@@ -46,11 +46,6 @@ float calculateOneSumTerm(int trigFunc, int dataPointsPerRevolution,int revoluti
 float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevolution, int revolutions, float intensity,float intensityErr, float i, float iErr, int k);
 int fourierAnalysis(int dataPointsPerRevolution, int revolutions, int* steps, float* intensity, float* intensityErr, float* fourierCoefficients, float* fcErr);
 float calculateAngleError(float c2, float c2Err, float s2, float s2Err);
-int getNumberOfDataLines(char* fileName);
-int getComment(char* fileName, char* returnString);
-int getRevPerRun(char* filename);
-int getRuns(char* filename);
-int getStepsPerRev(char* filename);
 
 // Okay, so gnuplot's fitting function isn't behaving like I want it to
 // (not giving me "reasonable" answers), so I'm hacking together
@@ -253,9 +248,9 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 	float* intensityErr=calloc(totalDatapointsPerRun*numAouts,sizeof(float));
 	int* steps=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
 
-	printf("Reading in data...\n");
+	printf("Reading in data...");
 	readInData(fileName,totalDatapointsPerRun*numAouts,numAouts,aouts,wavelength,steps,intensity,intensityErr,homeFlag);
-	printf("Data read in.\n");
+	printf("Data read in. ");
 
 	strcpy(fileNameCopy,fileName);
 	extensionStart=strstr(fileNameCopy,".dat");
@@ -303,7 +298,7 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 	float* fourierCoefficients = calloc(totalDatapointsPerRun,sizeof(float));
 	float* fcErr = calloc(totalDatapointsPerRun*2,sizeof(float));
 	int i;
-	float c0,s2,c2,angle,angleErrUp,angleErrDown;
+	float c0,s2,c2,angle,angleErrUp,angleErrDown,linearPart,linearPercent;
 
 	printf("Beginning Data Analysis...\n");
 	for(i=0;i<numAouts;i++){
@@ -311,13 +306,15 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 		c0=fourierCoefficients[cos+0];
 		s2=fourierCoefficients[sin+2];
 		c2=fourierCoefficients[cos+2];
+        linearPart=sqrt(pow(s2,2)+pow(c2,2));
+        linearPercent=linearPart/c0;
 		angle = 0.5*atan2(c2,s2);
 		angleErrUp=calculateAngleError(c2,fcErr[pos+cos+2],s2,fcErr[pos+sin+2]);
 		angleErrDown=calculateAngleError(c2,-fcErr[neg+cos+2],s2,-fcErr[neg+sin+2]);
 		angle = angle*180.0/PI;
 		angleErrUp = angleErrUp*180.0/PI;
 		angleErrDown = angleErrDown*180.0/PI;
-		printf("c0 = %f\ts2 = %f\ts2Err = %f\tc2 = %f\tc2Err = %f\tangle = %f (%f)\n",c0,s2,fcErr[sin+pos+2],c2,fcErr[cos+pos+2],angle,angleErrUp);
+		printf("c0 = %f\tlinearPercent= %f\ts2 = %f\ts2Err = %f\tc2 = %f\tc2Err = %f\tangle = %f (%f)\n",c0,linearPercent,s2,fcErr[sin+pos+2],c2,fcErr[cos+pos+2],angle,angleErrUp);
 		fprintf(analysis,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",aouts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
 		fprintf(daily,"%s\t%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",fileName,comments,aouts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
 	}
@@ -461,137 +458,6 @@ float calculateAngleError(float c2, float c2Err, float s2, float s2Err){
 	return angleErr;
 }
 
-int getNumberOfDataLines(char* filename){
-	char trash[1024];
-	int numberOfLines=0;
-	char* line = NULL;
-	size_t len =0;
-	ssize_t read;
-
-	FILE* rawData = fopen(filename,"r");
-
-	if (!rawData) {
-		printf("unable to open file %s\n",filename);
-		exit(1);
-	}
-
-	// skips over comment lines and the header.
-	do{
-		fgets(trash,1024,rawData);
-		//printf("skipped a line\n");
-	}while(trash[0]=='#');
-
-	while((read=getline(&line, &len,rawData)) != -1){
-		numberOfLines++;
-	}
-
-	fclose(rawData);
-
-	return numberOfLines;
-}
-
-int getRuns(char* filename){
-	char line[1024];
-    char* colon;
-    int numAouts=0;
-
-	FILE* rawData = fopen(filename,"r");
-
-	if (!rawData) {
-		printf("unable to open file %s\n",filename);
-		exit(1);
-	}
-
-	// Goes through comments lines then stops
-	do{
-		fgets(line,1024,rawData);
-        if(strstr(line,"#NumAouts:")!=NULL){
-            colon=strstr(line,":");
-            numAouts=atoi((colon+1));
-        }
-	}while(line[0]=='#');
-
-	fclose(rawData);
-
-	return numAouts;
-}
-
-int getComment(char* filename, char* returnString){
-	char line[1024];
-    char* colon;
-
-	FILE* rawData = fopen(filename,"r");
-
-	if (!rawData) {
-		printf("unable to open file %s\n",filename);
-		exit(1);
-	}
-
-	// Goes through comments lines then stops
-	do{
-		fgets(line,1024,rawData);
-        if(strstr(line,"#NumAouts:")!=NULL){
-            colon=strstr(line,":");
-            returnString=strcpy(returnString,colon+1);
-        }
-	}while(line[0]=='#');
-
-	fclose(rawData);
-
-	return 0;
-}
-
-int getRevPerRun(char* filename){
-	char line[1024];
-    char* colon;
-    int revolutions=0;
-
-	FILE* rawData = fopen(filename,"r");
-
-	if (!rawData) {
-		printf("unable to open file %s\n",filename);
-		exit(1);
-	}
-
-	// Goes through comments lines then stops
-	do{
-		fgets(line,1024,rawData);
-        if(strstr(line,"#Revolutions:")!=NULL){
-            colon=strstr(line,":");
-            revolutions=atoi((colon+1));
-        }
-	}while(line[0]=='#');
-
-	fclose(rawData);
-
-	return revolutions;
-}
-
-int getStepsPerRev(char* filename){
-	char line[1024];
-    char* colon;
-    int stepsPerRev=0;
-
-	FILE* rawData = fopen(filename,"r");
-
-	if (!rawData) {
-		printf("unable to open file %s\n",filename);
-		exit(1);
-	}
-
-	// Goes through comments lines then stops
-	do{
-		fgets(line,1024,rawData);
-        if(strstr(line,"#DataPointsPerRev:")!=NULL){
-            colon=strstr(line,":");
-            stepsPerRev=atoi((colon+1));
-        }
-	}while(line[0]=='#');
-
-	fclose(rawData);
-
-	return stepsPerRev;
-}
 
 /** 
  * Returns the integrated magnetic field across the target cell in units of Tesla

@@ -499,7 +499,7 @@ int plotDataFit(char* analysisDataFileName, float* fcCos, float* fcSin){
 	// Create rough graphs of data.
 	gnuplot = popen("gnuplot","w"); 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 158,72 enhanced\n");
+		fprintf(gnuplot, "set terminal dumb size 100,32 enhanced\n");
 		fprintf(gnuplot, "set output\n");			
 		
 		sprintf(buffer, "set title '%s'\n", rawDataFileNameBase);
@@ -507,7 +507,7 @@ int plotDataFit(char* analysisDataFileName, float* fcCos, float* fcSin){
 
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Angle'\n");			
-		fprintf(gnuplot, "set xtics (\"0\" 0,\"0.5{/Symbol p}\" pi/2,\"{/Symbol p}\" pi,\"1.5{/Symbol p}\" 1.5*pi,\"2{/Symbol p}\" 2*pi)\n");
+		fprintf(gnuplot, "set xtics (\"0\" 0,\"0.5pi\" pi/2,\"pi\" pi,\"1.5pi\" 1.5*pi,\"2pi\" 2*pi)\n");
 		//Begin plot command
 		fprintf(gnuplot, "set multiplot layout 2,1\n");
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
@@ -542,7 +542,7 @@ int plotStokesParameters(char* analysisFileName){
 	gnuplot = popen("gnuplot","w"); 
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 158,32\n");
+		fprintf(gnuplot, "set terminal dumb size 100,32\n");
 		fprintf(gnuplot, "set output\n");			
 		
 		sprintf(buffer, "set title '%s'\n", analysisFileName);

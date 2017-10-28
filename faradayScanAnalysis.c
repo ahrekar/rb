@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <asm/types.h>
 #include "mathTools.h" //includes stdDeviation
+#include "fileTools.h" //includes stdDeviation
 #include "faradayScanAnalysisTools.h"
 
 #define PI 3.14159265358979
@@ -37,42 +38,29 @@
 int main (int argc, char **argv)
 {
     int runs, revolutions, dataPointsPerRev;
-	int leftDataExclude=0, rightDataExclude=0;
-	int interactive;
-	char fileName[1024];
-	if (argc==3){
+	char fileName[1024],buffer[1024];
+	if (argc==2){
 		strcpy(fileName,argv[1]);
-		interactive = atoi(argv[2]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscanAnalysis <fileName> <0 or 1 (1 to remove datapoints)>'\n");
+		printf("usage '~$ sudo ./faradayscanAnalysis <fileName>'\n");
 		return 1;
 	}
 
-    runs=getRuns(fileName);
-    revolutions=getRevPerRun(fileName);
-    dataPointsPerRev=getStepsPerRev(fileName);
+    getCommentLineFromFile(fileName,"#NumAouts:",buffer);
+    runs=atoi(buffer);
+    getCommentLineFromFile(fileName,"#Revolutions:",buffer);
+    revolutions=atoi(buffer);
+    getCommentLineFromFile(fileName,"#DataPointsPerRev:",buffer);
+    dataPointsPerRev=atoi(buffer);
   
 
-	printf("Processing Data...\n");
+	printf("Processing Data...");
 	analyzeData(fileName, runs,revolutions,dataPointsPerRev);
 
 	printf("Plotting Data...\n");
 	char* extensionStart=strstr(fileName,".dat");
 	strcpy(extensionStart,"RotationAnalysis.dat");
 	plotData(fileName);
-
-	if (interactive){
-		printf("How many data points on left to exclude?\n");
-		scanf("%d",&leftDataExclude);
-		printf("How many data points on right to exclude?\n");
-		scanf("%d",&rightDataExclude);
-	}
-
-    //printf("Calculating number density...\n");
-	//calculateNumberDensity(fileName,leftDataExclude,rightDataExclude);
-
-	//printf("Recording number density to file...\n");
-	//recordNumberDensity(fileName);
 
 	return 0;
 }

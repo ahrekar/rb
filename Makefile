@@ -119,7 +119,7 @@ homemotor: obj/homemotor.o 				$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 homeWavePlate: homeWavePlate.c 		$(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setWavePlate: setWavePlate.c 		$(INTOBJECTS)
+setWavePlate: setWavePlate.c obj/fileTools.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
 polarizationAnalysis: obj/polarizationAnalysis.o obj/polarizationAnalysisTools.o obj/mathTools.o obj/fileTools.o

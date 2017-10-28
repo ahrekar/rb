@@ -8,22 +8,24 @@
 #define BASE 100
 #define SPI_CHAN 0
 // wiring pi GPIO pin assigments to stepper motor drivers
+#define MTRDLY 2500
+
 #define MTR0DIR 4
 #define MTR0CLK 3
 #define MTR0HOME 5
-#define MTR0DLY 1500
+#define MTR0DLY MTRDLY
 #define MTR0SPR 1200
 
 #define MTR1DIR 26
 #define MTR1CLK 21
 #define MTR1HOME 22
-#define MTR1DLY 1500
+#define MTR1DLY MTRDLY
 #define MTR1SPR 350
 
 #define MTR2DIR 0
 #define MTR2CLK 1
 #define MTR2HOME 2
-#define MTR2DLY 1500
+#define MTR2DLY MTRDLY
 #define MTR2SPR 350
 
 void delayMicrosecondsHard(unsigned int howLong);
@@ -126,23 +128,28 @@ int homeMotor(unsigned short mtr){
 	if(digitalRead(p_home)){//Already in home
 		// Then move away from home and allow it 
 		// to re-find it.
-		printf("Already in home, reversing 100 steps...\n");
+		printf("Already in home, reversing 100 steps...");
 		stepMotor(mtr,CCLK,100);
 		if(digitalRead(p_home)){
 			printf("Error: Home state not changing\n");
 			return -1;
 		}
 	}
-	while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){
+	while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev*2){
 		stepMotor(mtr,CLK,1);
         stepsTaken++;
 	}
-	printf("Found home in %d steps\n",stepsTaken);
+    if(!digitalRead(p_home)){
+        printf("Error: Home state not changing, trying once more...");
+        return homeMotor(mtr);
+    } else{
+        printf("Found home in %d steps\n",stepsTaken);
+    }
 	return stepsTaken;
 }
 
 /* Same as homeMotor, except it will not reverse and find home again
- * if it's already there. */
+ * if it's already there. Returns the steps taken to get to home.*/
 int quickHomeMotor(unsigned short mtr){
 	int stepsTaken=0;
 	unsigned int p_home,p_stepsPerRev;
@@ -163,14 +170,14 @@ int quickHomeMotor(unsigned short mtr){
 			return -1;
 	}
 
-	while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){
+	while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev+10){
 		stepMotor(mtr,CLK,1);
         stepsTaken++;
 	}
     if(stepsTaken>3){
         printf("Found home in %d steps\n",stepsTaken);
     }else if(stepsTaken>0){
-		printf("Steps taken too small, reversing 100 steps...\n");
+		printf("Steps taken too small, reversing 100 steps...");
 		stepMotor(mtr,CCLK,100);
         stepsTaken=0;
         while(!digitalRead(p_home) && stepsTaken < p_stepsPerRev){

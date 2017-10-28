@@ -56,3 +56,21 @@ int getCommentLineFromFile(char* inputFile, char* commentDescText, char* returnS
 
 	return 0;
 }
+
+int getLineNumberForComment(char* inputFile, char* commentDescText, char* returnPointer){
+    int i=-1;
+	FILE* data = fopen(inputFile,"r");
+    char buffer[1024];
+	if (!data) {
+		printf("Unable to open file %s\n",inputFile);
+		exit(1);
+	}
+	do{
+        i++;
+		fgets(buffer,1024,data);
+	} while(strncmp(buffer,commentDescText,strlen(commentDescText)));
+
+    fclose(data);
+
+	return i;
+}

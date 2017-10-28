@@ -19,7 +19,7 @@ int initializeBK1696(int address){
 	int j;
 
 	strncpy(command,"SESS",sizeof(command));
-	initialize_rs485(9600,25);
+//	initialize_rs485(9600,25);
 	// convert address to a two character string
 		j=address/10;
 		add[0]=48+j;
@@ -44,7 +44,7 @@ int setOutputBK1696(int address,int status){
 	int j;
 
 	strncpy(command,"SOUT",sizeof(command));
-	initialize_rs485(9600,25);
+//	initialize_rs485(9600,25);
 	// convert address to a two character string
 		j=address/10;
 		add[0]=48+j;
@@ -77,7 +77,7 @@ int getVoltsAmpsBK1696(int address, float* volts, float* amps){
 	int j,i;
 	float tempv;
 
-	initialize_rs485(9600,25);
+//	initialize_rs485(9600,25);
 
 	// convert address to a two character string
 		j=address/10;
@@ -122,7 +122,7 @@ int setVoltsBK1696(int address, float volts){
 if (volts>20.0) volts=20.0;
 if (volts<0.0) volts=0.0;
 
-	initialize_rs485(9600,25);
+//	initialize_rs485(9600,25);
 
 	// convert address to a two character string
 		j=address/10;
@@ -184,7 +184,7 @@ int setAmpsBK1696(int address, float amps){
 if (amps>10.0) amps=10.0;
 if (amps<0.0) amps=0.0;
 
-	initialize_rs485(9600,25);
+//	initialize_rs485(9600,25);
 
 	// convert address to a two character string
 		j=address/10;

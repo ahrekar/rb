@@ -21,11 +21,8 @@ int main (int argc, char* argv[]){
 		i = atoi(argv[1]);
 		z=setFlipMirror(0x22,i);
 		if (z>0) printf("error occured: %d\n");
-
 	} else {
-
 		printf("usage sudo ./mirrorTemplate <int 0 - 8>\n");
-
 	}
 
 	delay(300);
@@ -34,6 +31,8 @@ int main (int argc, char* argv[]){
 
 	if (z>0) printf("error occured: %d\n");
 
+	if(i==0)printf("Measuring Pump Beam\n");
+	if(i==8)printf("Measuring Probe Beam\n");
 	printf("current position %d\n",i);
 
 	return 0 ;

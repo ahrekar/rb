@@ -28,7 +28,7 @@
 #define NUMCHANNELS 3
 
 void graphData(char* fileName);
-void writeFileHeader(char* fileName, char* comments, float probeOffset, float mag1volt, float mag2volt);
+void writeFileHeader(char* fileName, char* comments);
 void writeTextToFile(char* fileName, char* line);
 void collectAndRecordData(char* fileName, int startvalue, int endvalue, int stepsize);
 float stdDeviation(float* values, int numValues);
@@ -42,22 +42,17 @@ int main (int argc, char **argv)
 	char fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
-	float probeOffset;
-    float mag1volt,mag2volt;
 	FILE *dataCollectionFlagFile, *fp;
 
-	if (argc==8) {
+	if (argc==5) {
 		startvalue=atoi(argv[1]);
 		endvalue=atoi(argv[2]);
 		stepsize=atoi(argv[3]);
-		probeOffset=atof(argv[4]);
-		mag1volt=atof(argv[5]);
-		mag2volt=atof(argv[6]);
 
-		strcpy(comments,argv[7]);
+		strcpy(comments,argv[4]);
 	} else {
 		printf("Usage:\n");
-		printf("$ sudo ./RbAbsorbScan <begin> <end> <step> <probeOffset> <mag1 Volt> <mag2 volt> <comments>\n");
+		printf("$ sudo ./RbAbsorbScan <begin> <end> <step>  <comments>\n");
 		printf("                      (  0  - 1023)                   \n");
 		return 0;
 	}
@@ -92,7 +87,7 @@ int main (int argc, char **argv)
 
 	printf("\n%s\n",fileName);
 
-	writeFileHeader(fileName, comments, probeOffset, mag1volt, mag2volt);
+	writeFileHeader(fileName, comments);
 	fp=fopen(fileName,"a");
 	if (!fp) {
 		printf("unable to open file: %s\n",fileName);
@@ -101,7 +96,7 @@ int main (int argc, char **argv)
 	
 	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
 
-	homeMotor(PROBE_MOTOR);
+	//homeMotor(PROBE_MOTOR);
 
 	setUSB1208AnalogOut(PROBEOFFSET,512);//sets vout such that 0 v offset at the probe laser
 
@@ -194,7 +189,7 @@ void findAndSetProbeMaxTransmission(){
 	}while(!foundMax);
 }
 
-void writeFileHeader(char* fileName, char* comments, float probeOffset, float mag1volt, float mag2volt){
+void writeFileHeader(char* fileName, char* comments){
 	FILE* fp;
 	float returnFloat;
 	fp=fopen(fileName,"w");
@@ -230,10 +225,6 @@ void writeFileHeader(char* fileName, char* comments, float probeOffset, float ma
 	fprintf(fp,"#CurrTemp(Targ):\t%f\n",returnFloat);
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
-
-	fprintf(fp,"#ProbeOffset:\t%f\n",probeOffset);
-	fprintf(fp,"#Magnet1(V):\t%f\n",mag1volt);
-	fprintf(fp,"#Magnet2(V):\t%f\n",mag2volt);
     /** End System Stats Recording **/
 
 	//fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");

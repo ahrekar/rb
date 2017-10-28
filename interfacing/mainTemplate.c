@@ -45,6 +45,7 @@ int main (int argc, char* argv[]){
 		initializeBoard();
 		initializeUSB1208();
 
+
 		time(&currentTime);
 		timeinfo=localtime(&currentTime);
 
@@ -72,6 +73,13 @@ int main (int argc, char* argv[]){
 		printf("Target T= %.1f\n",myTemp);
 		fprintf(fp,"%.2f\t",myTemp);
 
+
+		initializeBK1696(8);
+
+		getVoltsAmpsBK1696(8,&volts,&amps);
+		printf("BK  volts %.2f\tamps %.2f\n",volts,amps);
+		fprintf(fp,"%.2f\t%.2f\n",volts,amps);
+
 		getConvectron(GP_HE_CHAN,&myTemp);
 		printf("Helium %2.2E\n",myTemp);
 		fprintf(fp,"%2.2E\t",myTemp);
@@ -96,10 +104,6 @@ int main (int argc, char* argv[]){
 		getUSB1208AnalogIn(PROBELASER,&myTemp);
 		printf("Probe Laser%.2f\n",myTemp);
 		fprintf(fp,"%.2f\t",myTemp);
-
-		getVoltsAmpsBK1696(9,&volts,&amps);
-		printf("BK  volts %.2f\tamps %.2f\n",volts,amps);
-		fprintf(fp,"%.2f\t%.2f\n",volts,amps);
 
 		fclose(fp);
 

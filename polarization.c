@@ -27,7 +27,6 @@
 #define STEPSPERREV 1200
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
-#define HPCAL 28.1/960.0
 
 int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurrent);
 void plotCommand(FILE* gnuplot, char* fileName, char* buffer);
@@ -240,7 +239,7 @@ void plotData(char* fileName){
 	strcpy(extension,"");
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 158,32\n");
+		fprintf(gnuplot, "set terminal dumb size 100,32\n");
 		fprintf(gnuplot, "set output\n");			
 		sprintf(buffer, "set title '%s'\n", fileNameBase);
 		fprintf(gnuplot, buffer);

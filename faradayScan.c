@@ -34,7 +34,7 @@
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
-#define STEPSIZE 25
+#define STEPSIZE 7
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -58,16 +58,13 @@ int main (int argc, char **argv)
 	char dailyFileName[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
-	FILE *fp,*dataCollectionFlagFile;
+	FILE *fp,*dataCollectionFlagFile,*configFile;
 
 
-	if (argc==5){
-		probeOffset=atof(argv[1]);
-		mag1Voltage=atof(argv[2]);
-		mag2Voltage=atof(argv[3]);
-		strcpy(comments,argv[4]);
+	if (argc==2){
+		strcpy(comments,argv[1]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscan <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
+		printf("usage '~$ sudo ./faradayscan <comments in quotes>'\n");
 		return 1;
 	}
 
@@ -105,11 +102,18 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
+    configFile=fopen("/home/pi/RbControl/system.cfg","r");
+    if (!configFile) {
+        printf("Unable to open config file\n");
+        exit(1);
+    }
+
     int totalAouts=0;
-    deltaAout=25;
+    deltaAout=10;
+    probeOffset=40;
     if(probeOffset<45){
         AoutStart1=0;
-        AoutStop1=375;
+        AoutStop1=875;
         totalAouts+=(AoutStop1-AoutStart1)/deltaAout;
         AoutStart2=875;
         AoutStop2=1000;
@@ -150,11 +154,16 @@ int main (int argc, char **argv)
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
-	fprintf(fp,"#ProbeOffset:\t%f\n",probeOffset);
-
-	fprintf(fp,"#Mag1Voltage:\t%f\n",mag1Voltage);
-	fprintf(fp,"#Mag2Voltage:\t%f\n",mag2Voltage);
     /** End System Stats Recording **/
+
+    char line[1024];
+	fgets(line,1024,configFile);
+	while(line[0]=='#'){
+		fprintf(fp,"%s",line);
+		fgets(line,1024,configFile);
+	}
+
+	fclose(configFile);
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);

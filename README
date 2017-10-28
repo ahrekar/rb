@@ -14,3 +14,7 @@ system.cfg is a configuration file which stores variables
 related to the system and records them in every data file 
 recorded. system.cfg should be edited before each data 
 run is performed. 
+
+Analysis, or in general data that is collected and displayed in a file
+on a single line, should be presented with all relevant experimental 
+variables for easy data processing in the future.

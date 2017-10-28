@@ -45,24 +45,27 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
 int main (int argc, char **argv)
 {
-    int revolutions,dataPointsPerRevolution;
+    int revolutions,dataPointsPerRevolution,quickHomeResult;
     time_t rawtime;
     float returnFloat;
-    float probeOffset,mag1Voltage,mag2Voltage;
+    //float probeOffset,mag1Voltage,mag2Voltage;
     struct tm * timeinfo;
     char fileName[BUFSIZE], comments[BUFSIZE];
     char dailyFileName[BUFSIZE];
     char dataCollectionFileName[] = "/home/pi/.takingData"; 
-    FILE *fp,*dataCollectionFlagFile;
+    FILE *fp,*dataCollectionFlagFile,*configFile;
 
 
-    if (argc==5){
+    if (argc==2){
+        /*
         probeOffset=atof(argv[1]);
         mag1Voltage=atof(argv[2]);
         mag2Voltage=atof(argv[3]);
-        strcpy(comments,argv[4]);
+        strcpy(comments,argv[4]);*/
+        strcpy(comments,argv[1]);
     } else { 
-        printf("usage '~$ sudo ./faradayRotation <probeOffset> <mag. 1 volt> <mag. 2 volt> <comments in quotes>'\n");
+        printf("usage '~$ sudo ./faradayRotation <comments in quotes>'\n");
+        printf("    Don't forget to edit the config file!             \n");
         return 1;
     }
 
@@ -100,18 +103,24 @@ int main (int argc, char **argv)
         exit(1);
     }
 
+    configFile=fopen("/home/pi/RbControl/system.cfg","r");
+    if (!configFile) {
+        printf("Unable to open config file\n");
+        exit(1);
+    }
+
     fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
     getIonGauge(&returnFloat);
-    printf("IonGauge %2.2E Torr \n",returnFloat);
+    //printf("IonGauge %2.2E Torr \n",returnFloat);
     fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
 
     getConvectron(GP_N2_CHAN,&returnFloat);
-    printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
+    //printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
     fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
 
     getConvectron(GP_HE_CHAN,&returnFloat);
-    printf("CVGauge(He) %2.2E Torr\n", returnFloat);
+    //printf("CVGauge(He) %2.2E Torr\n", returnFloat);
     fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     getPVCN7500(CN_RESERVE,&returnFloat);
@@ -124,9 +133,14 @@ int main (int argc, char **argv)
     getSVCN7500(CN_TARGET,&returnFloat);
     fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
-    fprintf(fp,"#ProbeOffset:\t%f\n",probeOffset);
-    fprintf(fp,"#Mag1Voltage:\t%f\n",mag1Voltage);
-    fprintf(fp,"#Mag2Voltage:\t%f\n",mag2Voltage);
+    char line[1024];
+	fgets(line,1024,configFile);
+	while(line[0]=='#'){
+		fprintf(fp,"%s",line);
+		fgets(line,1024,configFile);
+	}
+
+	fclose(configFile);
 
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
@@ -136,7 +150,7 @@ int main (int argc, char **argv)
     fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\n");
     fclose(fp);
 
-    int photoDetectors[] = {PROBE_LASER,PUMP_LASER};
+    int photoDetectors[] = {PROBE_LASER,REF_LASER};
     int motor = PROBE_MOTOR;
 
 
@@ -145,8 +159,11 @@ int main (int argc, char **argv)
     fp=fopen(fileName,"a");
     fprintf(fp,"\n\n#AOUT:%d(%f)\n",aout,wavelength);
 
-	quickHomeMotor(motor);
-    collectDiscreteFourierData(fp, photoDetectors, 2, motor, revolutions);
+	homeMotor(motor);
+    do{
+        collectDiscreteFourierData(fp, photoDetectors, 2, motor, revolutions);
+        quickHomeResult=quickHomeMotor(motor);
+    } while(quickHomeResult!=0);
 
     fclose(fp);
 
@@ -188,7 +205,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 involts[j]=0.0;	
                 for (i=0;i<nSamples;i++){ // nSamples
                         getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
-                        involts[j]=involts[j]+measurement[i];
+                        involts[j]=involts[j]+fabs(measurement[i]);
                         delay(WAITTIME);
                 } // nSamples
                 involts[j]=involts[j]/(float)nSamples; 
