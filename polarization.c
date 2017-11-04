@@ -127,22 +127,22 @@ int main (int argc, char **argv)
 
 
 	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(rawData,"#CurrTemp(Res):\t%f\n",returnFloat);
+	fprintf(rawData,"#CURTEMP_R(degC):\t%f\n",returnFloat);
 	getSVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(rawData,"#SetTemp(Res):\t%f\n",returnFloat);
+	fprintf(rawData,"#SETTEMP_R(degC):\t%f\n",returnFloat);
 	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(rawData,"#CurrTemp(Targ):\t%f\n",returnFloat);
+	fprintf(rawData,"#CURTEMP_T(degC):\t%f\n",returnFloat);
 	getSVCN7500(CN_TARGET,&returnFloat);
-	fprintf(rawData,"#SetTemp(Targ):\t%f\n",returnFloat);
+	fprintf(rawData,"#SETTEMP_T(degC):\t%f\n",returnFloat);
 
-	fprintf(rawData,"#Aout\t%d\n",aout);
-	fprintf(rawData,"#LeakageCurrent\t%f\n",leakageCurrent);
-	fprintf(rawData,"#Assumed USB1208->HP3617A conversion\t%2.6f\n",HPCAL);
-	fprintf(rawData,"#REVOLUTIONS\t%d\n",REVOLUTIONS);
-	fprintf(rawData,"#DataPointsPerRev\t%d\n",DATAPOINTSPERREV);
-	fprintf(rawData,"#StepsPerRev\t%d\n",STEPSPERREV);
-	fprintf(rawData,"#Datapoints\t%d\n",DATAPOINTS);
-	fprintf(rawData,"#PMT dwell time (s)\t%d\n",dwell);
+	fprintf(rawData,"#AOUT:\t%d\n",aout);
+	fprintf(rawData,"#LEAKCURR:\t%f\n",leakageCurrent);
+	fprintf(rawData,"#AOUTCONV:\t%2.6f\n",HPCAL);
+	fprintf(rawData,"#REV:\t%d\n",REVOLUTIONS);
+	fprintf(rawData,"#DATAPPR:\t%d\n",DATAPOINTSPERREV);
+	fprintf(rawData,"#STPPERREV:\t%d\n",STEPSPERREV);
+	fprintf(rawData,"#DATPTS:\t%d\n",DATAPOINTS);
+	fprintf(rawData,"#DWELL(s):\t%d\n",dwell);
 
 	fclose(rawData);
 

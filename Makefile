@@ -8,7 +8,7 @@
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorPhotodiodes.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorPhotodiodes.c
 
 INTDIR=interfacing
 _INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c
@@ -84,6 +84,8 @@ $(ODIR)/%.o: %.c | $(ODIR)
 #
 #$(ODIR)/faradayScanAnalysisTools.o: faradayScanAnalysisTools.c
 #	$(CC) -c -o $@ $^ $(CFLAGS) $(PIFLAGS)
+$(ODIR)/polarizationAnalysisTools.o: polarizationAnalysisTools.c
+	$(CC) -c -o $@ $^ $(CFLAGS) $(PIFLAGS)
 
 
 getcounts: obj/getcounts.o $(INTOBJECTS)
@@ -101,6 +103,8 @@ faradayRotation: obj/faradayRotation.o obj/mathTools.o obj/faradayScanAnalysisTo
 polarization: obj/polarization.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS) obj/polarizationAnalysisTools.o
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 setOmega: obj/setOmega.o $(INTOBJECTS)
+	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+getOmega: obj/getOmega.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 setProbeLaser: obj/setProbeLaser.o $(INTOBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)

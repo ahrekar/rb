@@ -255,7 +255,7 @@ float calculateStokesErr(int i, int signOfError, float alpha, float beta, float 
 
 int printOutFC(float* fcCos, float* fcCosErr,float* fcSin, float* fcSinErr){
 	printf("Cos Coefficients:\n");
-	int numCoefficients = 10;
+	int numCoefficients = 5;
 	int i;
 	for(i=0;i<numCoefficients;i++){
 		printf("%s %d:\t%10.3f\t%10.3f\t%10.3f\n","Cos",i,fcCos[i],fcCosErr[POS+i],fcCosErr[NEG+i]);
@@ -355,6 +355,10 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 	float* spErr = malloc(NUMSTOKES*2*sizeof(float));
 	printf("Calculating Stokes Parameters from Fourier Coefficients...\n");
 	calculateStokesFromFC(fcCos,fcCosErr,fcSin,fcSinErr,stokesParameters,spErr);
+
+	printf("====Relevant FC====\n");
+    printOutFC(fcCos,fcCosErr,fcSin,fcSinErr);
+
 
 	printf("====Stokes Parameters====\n");
 	printOutSP(stokesParameters,spErr);

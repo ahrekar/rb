@@ -39,7 +39,7 @@ int main (int argc, char **argv)
 	strcpy(extensionStart,"analysis.dat");
 
 
-	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, DATAPOINTSPERREV, REVOLUTIONS, normalizeWithCurrent); 
+	processFileWithBackground(analysisFileName, backgroundFileName, rawDataFileName, DATAPOINTSPERREV, 1, normalizeWithCurrent); 
 
 	return 0;
 }

@@ -33,6 +33,7 @@ Usage:
 #include "interfacing/interfacing.h"
 #include "mathTools.h"
 #define BUFSIZE 1024
+#define HPCAL 31.65/1023.0
 
 void graphData(char* fileName);
 
@@ -118,8 +119,7 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#Filename:\t%s\n",buffer);
 
-	HPcal=28.1/960.0;
-	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPcal);
+	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPCAL);
 
 	steprange = 1+(int)(scanrange/HPcal);
 	if (steprange>1023) steprange = 1023;
