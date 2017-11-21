@@ -112,17 +112,20 @@ void writeFileHeader(char* fileName, char* comments){
 
     /** End System Stats Recording **/
 
-	fprintf(fp,"Time\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
+	fprintf(fp,"TIME\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
+	fprintf(fp,"TEMP\tFREQ\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
 	fclose(fp);
 }
 
 void collectAndRecordData(char* fileName){
 	FILE* fp;
 	int k=0,i;
-    int timeCounter;
+    int timeCounter=0;
 	int nSamples = 16; // The number of data points to collect
-    int evaluationTime=300;
+    float temperature=0.0;
+    float wavelength=0.0;
 	float involts[NUMCHANNELS];
+
 
 	fp=fopen(fileName,"a");
 	if (!fp) {
@@ -134,8 +137,11 @@ void collectAndRecordData(char* fileName){
 	// error bars.
 	float* measurement = malloc(nSamples*sizeof(float));
 
-    for (timeCounter=0;timeCounter < evaluationTime; timeCounter+=1){
-        fprintf(fp,"%d\t",timeCounter);
+    //for (timeCounter=0;timeCounter < evaluationTime; timeCounter+=1){
+    while(temperature!=-1.0){
+        timeCounter++;
+        scanf("%f,%f",&temperature,&wavelength);
+        fprintf(fp,"%f\t%f\t",temperature,wavelength);
 
         for(k=0;k<NUMCHANNELS;k++){
             involts[k]=0.0;	

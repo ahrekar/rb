@@ -18,7 +18,6 @@ int setFlipMirror(unsigned short chan, unsigned short position){
 	8 = mirror full up
 */
 	if (position > 8) position = 8;
-	position += 181;
 	// the microcontroller is looking for a range between 181 and 189
 
 	status=write_Modbus_RTU(chan,FM_REG, position);
@@ -31,7 +30,7 @@ int getFlipMirror (unsigned short chan, unsigned short* position){
 	int status;
 	unsigned int temp;
 	status = read_Modbus_RTU(chan,FM_REG, &temp);
-	*position = temp - 181;
+	*position = temp;
 	return status;
 
 }

@@ -47,7 +47,7 @@ int main (int argc, char **argv)
 	struct tm * timeinfo;
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
-	float bias, HeOffset, N2Offset,HPcal,primaryEnergy, secondaryEnergy, scanrange;
+	float bias, HeOffset, N2Offset,primaryEnergy, secondaryEnergy, scanrange;
 	float returnFloat;
 	float current, pressure;
 	long returnCounts;
@@ -121,18 +121,19 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPCAL);
 
-	steprange = 1+(int)(scanrange/HPcal);
+	steprange = 1+(int)(scanrange/(HPCAL));
+    printf("Step range:%d\n",steprange);
 	if (steprange>1023) steprange = 1023;
 	if (steprange < 8 ) steprange = 8;
 
 	minstepsize=1;
 	maxstepsize=24;
 	if (stepsize<minstepsize){
-		printf("Step size too small, using %d (%0.3fV) instead.\n",minstepsize,minstepsize*HPcal);
+		printf("Step size too small, using %d (%0.3fV) instead.\n",minstepsize,minstepsize*HPCAL);
 		stepsize=minstepsize;
 	}
 	else if (stepsize > maxstepsize){
-		printf("Step size too large, using %d (%0.3fV) instead.\n",maxstepsize,maxstepsize*HPcal);
+		printf("Step size too large, using %d (%0.3fV) instead.\n",maxstepsize,maxstepsize*HPCAL);
 		stepsize=maxstepsize;
 	}
 
@@ -177,13 +178,13 @@ int main (int argc, char **argv)
 
 		fprintf(fp,"%4.4f\t",-bias);
 		fprintf(fp,"%4.4f\t",N2Offset);
-		fprintf(fp,"%4.4f\t",HeOffset + HPcal*(float)value);
+		fprintf(fp,"%4.4f\t",HeOffset + HPCAL*(float)value);
 
-		primaryEnergy = bias + (-HeOffset - HPcal*(float)value);
+		primaryEnergy = bias + (-HeOffset - HPCAL*(float)value);
 		printf("eV %4.2f\t",primaryEnergy);
 		fprintf(fp,"%4.4f\t",primaryEnergy);
 
-		secondaryEnergy =  (bias - N2Offset) + (-HeOffset - HPcal*(float)value);
+		secondaryEnergy =  (bias - N2Offset) + (-HeOffset - HPCAL*(float)value);
 		printf("eV %4.2f\t",secondaryEnergy);
 		fprintf(fp,"%4.4f\t",secondaryEnergy);
 

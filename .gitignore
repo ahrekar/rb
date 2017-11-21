@@ -19,6 +19,7 @@ gnutest
 faradayscan2
 getIonGauge
 getStats
+getOmega
 setLaserFlag
 homemotor2
 this

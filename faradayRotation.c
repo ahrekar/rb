@@ -33,8 +33,7 @@
 #include "interfacing/waveMeter.h"
 
 #define PI 3.14159265358979
-#define NUMSTEPS 350
-#define STEPSIZE 7
+#define STEPSIZE 7.0
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -45,7 +44,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
 int main (int argc, char **argv)
 {
-    int revolutions,dataPointsPerRevolution,quickHomeResult;
+    int i;
+    int revolutions,dataPointsPerRevolution;
     time_t rawtime;
     float returnFloat;
     //float probeOffset,mag1Voltage,mag2Voltage;
@@ -77,7 +77,7 @@ int main (int argc, char **argv)
     }
 
     revolutions=1;
-    dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
+    dataPointsPerRevolution=(int)STEPSPERREV/STEPSIZE;
 
     // Set up interfacing devices
     initializeBoard();
@@ -146,24 +146,23 @@ int main (int argc, char **argv)
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 	fprintf(fp,"#NumAouts:\t%d\n",1);
 
-    // Write the header for the data to the file.
-    fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\n");
-    fclose(fp);
-
-    int photoDetectors[] = {PROBE_LASER,REF_LASER};
+    char* names[]={"PMP","PRB","REF"};
+    int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+    int numPhotoDetectors = 3;
     int motor = PROBE_MOTOR;
 
+    // Write the header for the data to the file.
+    fprintf(fp,"STEP");
+    for(i=0;i<numPhotoDetectors;i++){
+        fprintf(fp,"\t%s\t%ssd",names[i],names[i]);
+    }
+    fprintf(fp,"\n");
+    fclose(fp);
 
-    int aout=512;
-    float wavelength=-1.0;
     fp=fopen(fileName,"a");
-    fprintf(fp,"\n\n#AOUT:%d(%f)\n",aout,wavelength);
 
 	homeMotor(motor);
-    do{
-        collectDiscreteFourierData(fp, photoDetectors, 2, motor, revolutions);
-        quickHomeResult=quickHomeMotor(motor);
-    } while(quickHomeResult!=0);
+    collectDiscreteFourierData(fp, photoDetectors, numPhotoDetectors, motor, revolutions);
 
     fclose(fp);
 
@@ -197,8 +196,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     float* stdDev = calloc(numPhotoDetectors,sizeof(float));
 
     for (k=0;k<revolutions;k++){ //revolutions
-        for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // steps
-            // (NUMSTEPS) in increments of STEPSIZE
+        for (steps=0;steps < STEPSPERREV;steps+=(int)STEPSIZE){ // steps
+            // (STEPSPERREV) in increments of STEPSIZE
             delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
             //get samples and average
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
@@ -212,7 +211,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 stdDev[j]=stdDeviation(measurement,nSamples);
             } // numPhotoDet1
 
-            fprintf(fp,"%d\t",steps+NUMSTEPS*k);
+            fprintf(fp,"%d\t",steps+(int)STEPSPERREV*k);
             for(j=0;j<numPhotoDetectors;j++){
                 if(j!=numPhotoDetectors-1)
                     fprintf(fp,"%f\t%f\t",involts[j],stdDev[j]);
@@ -224,7 +223,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             sumCos+=involts[0]*cos(2*angle);
 
             count++;
-            stepMotor(motor,CLK,STEPSIZE);
+            stepMotor(motor,CLK,(int)STEPSIZE);
         } // steps
     } // revolutions
     f3=sumSin/count;

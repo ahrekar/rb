@@ -204,7 +204,7 @@ int plotRawData(char* fileName){
 	gnuplot = popen("gnuplot","w"); 
 
     int stepColumnNumber=1;
-    int intensityColumnNumber=2;
+    int intensityColumnNumber=4;
 	if (gnuplot != NULL){
 		fprintf(gnuplot, "set terminal dumb size 100,28\n");
 		fprintf(gnuplot, "set output\n");			
@@ -349,7 +349,7 @@ int readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, flo
         fscanf(data,"\n\n#AOUT:%d(%f)\n",&aouts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
         //printf("The aout is %d/%d and the code is %d and j is %d\n",aouts[j*dataPointsPerAout],numAouts,code,j);
         for (i=0; i < dataPointsPerAout; i++){
-            fscanf(data,"%d\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard);
+            fscanf(data,"%d\t%f\t%f\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&discard,&discard,&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard);
             aouts[j*dataPointsPerAout+i]=aouts[j*dataPointsPerAout];
             wavelength[j*dataPointsPerAout+i]=wavelength[j*dataPointsPerAout];
             //fscanf(data,"%d\t%f\t%d\t%f\t%f\t%d\n",&aouts[i],&wavelength[i],&steps[i],&intensity[i],&intensityErr[i],&homeFlag[i]);

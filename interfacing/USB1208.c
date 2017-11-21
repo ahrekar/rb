@@ -39,7 +39,7 @@ int getUSB1208AnalogIn(unsigned short chan, float* returnvalue){
     int gain;
     if(chan==PROBE_LASER){
         gain = BP_5_00V;
-        //gain = BP_2_00V;
+        //gain = BP_2_50V;
     }else{
         gain = BP_2_50V;
     }

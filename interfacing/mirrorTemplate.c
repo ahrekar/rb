@@ -12,27 +12,27 @@
 
 int main (int argc, char* argv[]){
 
-	        unsigned short i;
-		int z;
+	unsigned short i;
+	int z;
 
-		initializeBoard();
+	initializeBoard();
 
 	if (argc == 2) {
 		i = atoi(argv[1]);
-		z=setFlipMirror(0x22,i);
-		if (z>0) printf("error occured: %d\n");
+		z=setFlipMirror(0xA4,i);
+		if (z>0) printf("error occured: %d\n",z);
 	} else {
 		printf("usage sudo ./mirrorTemplate <int 0 - 8>\n");
 	}
 
 	delay(300);
 	i=0;
-	z = getFlipMirror(0x22,&i);
+	z = getFlipMirror(0xA4,&i);
 
-	if (z>0) printf("error occured: %d\n");
+	if (z>0) printf("error occured: %d\n",z);
 
 	if(i==0)printf("Measuring Pump Beam\n");
-	if(i==8)printf("Measuring Probe Beam\n");
+	if(i==7)printf("Measuring Probe Beam\n");
 	printf("current position %d\n",i);
 
 	return 0 ;

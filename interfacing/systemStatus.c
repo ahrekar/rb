@@ -14,9 +14,6 @@
 #include "USB1208.h"
 #include "BK1696.h"
 
-#define K617 0
-#define PROBELASER 2
-#define REFLASER 3
 #define HOURSINDAY 24
 #define MINUTESINHOUR 60
 #define BUFSIZE 1024
@@ -62,11 +59,14 @@ int main (int argc, char* argv[]){
 		// this number is just the mantissa
 
 		printf("\n\n_____PHOTODIODES_____\n");
-		getUSB1208AnalogIn(REFLASER,&myTemp);
+		getUSB1208AnalogIn(REF_LASER,&myTemp);
 		printf("RefCell: %.2f\t",myTemp);
 
-		getUSB1208AnalogIn(PROBELASER,&myTemp);
-		printf("PrbCell: %.2f\n",myTemp);
+		getUSB1208AnalogIn(PUMP_LASER,&myTemp);
+		printf("PumpLaser: %.2f\t",myTemp);
+
+		getUSB1208AnalogIn(PROBE_LASER,&myTemp);
+		printf("PrbLaser: %.2f\n",myTemp);
 
 		printf("\n\n_____POWERSUPPLIES_____\n");
 		getVoltsAmpsBK1696(9,&volts,&amps);
