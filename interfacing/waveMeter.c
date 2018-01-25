@@ -8,7 +8,6 @@
 
 float getWaveMeter(void){
 
-    int tries=5;
 	char buffer[16];
 	float waves;
 	
@@ -23,19 +22,17 @@ float getWaveMeter(void){
 
 	delay(100);
 	FILE* wavelengthFile;
-	wavelengthFile=fopen("/home/pi/irpi/.wavelength","r");
+	wavelengthFile=fopen("/home/pi/share/irpi/.wavelength","r");
 
 	if(!wavelengthFile) {
 		// unable to open. 
-        //printf("Unable to open wavelength file!\n");
+        printf("Error: Unable to open wavelength file!\n");
 	} else {
         //while(waves<7900000 && tries > 0){
-           // printf("Tries remaining: %d\n",tries);
+            //printf("Tries remaining: %d\n",tries);
             fgets(buffer,8,wavelengthFile);
             waves=atof(buffer);
             //printf("Value returned: %f\n",waves);
-            tries--;
-            rewind(wavelengthFile);
             delay(1000);
         //}
 	}

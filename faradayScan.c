@@ -52,7 +52,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	float returnFloat;
 	float wavelength;
-	float probeOffset,mag1Voltage,mag2Voltage;
+	float probeOffset;
 	struct tm * timeinfo;
 	char fileName[BUFSIZE], comments[BUFSIZE];
 	char dailyFileName[BUFSIZE];
@@ -110,10 +110,10 @@ int main (int argc, char **argv)
 
     int totalAouts=0;
     deltaAout=10;
-    probeOffset=40;
+    probeOffset=35.5;
     if(probeOffset<45){
         AoutStart1=0;
-        AoutStop1=875;
+        AoutStop1=700;
         totalAouts+=(AoutStop1-AoutStart1)/deltaAout;
         AoutStart2=875;
         AoutStop2=1000;
@@ -185,8 +185,7 @@ int main (int argc, char **argv)
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 		delay(1000); 
 
-	//	wavelength=getWaveMeter();
-        wavelength=-1;
+	    wavelength=getWaveMeter();
 
         fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
         printf("AOUT:%d(%f)\t",Aout,wavelength);
@@ -198,8 +197,7 @@ int main (int argc, char **argv)
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 		delay(1000); 
 
-		//wavelength=getWaveMeter();
-		wavelength=-1;
+		wavelength=getWaveMeter();
 
         fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
         printf("AOUT:%d(%f)\t",Aout,wavelength);
@@ -235,12 +233,8 @@ int main (int argc, char **argv)
 
 void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetectors,int motor, int revolutions)
 {
-    float sumSin=0;
-    float sumCos=0;
     int count=0;
     int steps,i,j,k;
-    float f3,f4,angle;
-
 
     int nSamples=16;
 	float* measurement = malloc(nSamples*sizeof(float));
@@ -272,18 +266,11 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 else
                     fprintf(fp,"%f\t%f\n",involts[j],stdDev[j]);
             }
-            angle=2.0*PI*(steps)/STEPSPERREV;
-            sumSin+=involts[0]*sin(2*angle);
-            sumCos+=involts[0]*cos(2*angle);
 
             count++;
             stepMotor(motor,CLK,STEPSIZE);
         } // steps
     } // revolutions
-    f3=sumSin/count;
-    f4=sumCos/count;
-    angle = 0.5*atan2(f4,f3);
-    printf("Angle: %0.4f\n",angle*180/PI);
     free(measurement);
     free(stdDev);
     free(involts);

@@ -10,6 +10,9 @@
 #define BK1696ON 0
 #define BK1696OFF 1
 
+#define BK_FILAMENT 8
+#define BK_MAGNETS 9
+
 int initializeBK1696(int address);
 int getVoltsAmpsBK1696(int address,float* volts, float* amps);
 int setVoltsBK1696(int address, float volts);

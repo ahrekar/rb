@@ -18,6 +18,7 @@
 
 #define PROBEOFFSET 0
 #define HETARGET 1
+#define HPCAL 0.0310068
 
 
 int closeUSB1208();

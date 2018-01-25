@@ -13,16 +13,14 @@
 
 int main (int argc, char* argv[]){
 
-	float tempTarg;
-	float tempRes;
 	float returnFloat;
 	
 	initializeBoard();
 
 	getPVCN7500(CN_TARGET,&returnFloat);
-	printf("Target Temp:%f\n",returnFloat);
+	printf("CollCellTemp(degC):%3.1f\n",returnFloat);
 	getPVCN7500(CN_RESERVE,&returnFloat);
-	printf("Reservoir Temp:%f\n",returnFloat);
+	printf("ResTemp(degC):%3.1f\n",returnFloat);
 
 	closeBoard();
 	return 0 ;

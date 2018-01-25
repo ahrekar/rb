@@ -27,11 +27,23 @@ int main (int argc, char* argv[]){
 	} else{
 		// We're okay to continue, set up variables.
         int i;
+        long returnCounts;
+        int dwell=10;
 		float myTemp;
 		float volts, amps;
+        char stringBuffer[BUFSIZE];
+
+        // Variables for recording the time. 
+        time_t rawtime;
+        struct tm * timeinfo;
 
 		initializeBoard();
 		initializeUSB1208();
+
+        time(&rawtime);
+        timeinfo=localtime(&rawtime);
+        strftime(stringBuffer,BUFSIZE,"Current Time: %F_%H%M%S\n\n",timeinfo);
+        printf(stringBuffer);
 
         /* i holds error information */
 		printf("_____TEMPERATURE______\n");
@@ -54,9 +66,13 @@ int main (int argc, char* argv[]){
 
 		printf("\n\n_____CURRENT_____\n");
 		getUSB1208AnalogIn(K617,&myTemp);
-		printf("Kiethly 617 %.2f\n",myTemp);
+		printf("Kiethly 617: %.2f\n",myTemp);
         // There is no way to read the scale, or order of magnitude,
 		// this number is just the mantissa
+
+		printf("\n\n_____COUNTS_____\n");
+		getUSB1208Counter(dwell,&returnCounts);
+		printf("Counts: %ld\n",returnCounts);
 
 		printf("\n\n_____PHOTODIODES_____\n");
 		getUSB1208AnalogIn(REF_LASER,&myTemp);
@@ -69,8 +85,10 @@ int main (int argc, char* argv[]){
 		printf("PrbLaser: %.2f\n",myTemp);
 
 		printf("\n\n_____POWERSUPPLIES_____\n");
+		getVoltsAmpsBK1696(8,&volts,&amps);
+		printf("BK volts (filament): %.2f\tamps %.2f\n",volts,amps);
 		getVoltsAmpsBK1696(9,&volts,&amps);
-		printf("BK  volts %.2f\tamps %.2f\n",volts,amps);
+		printf("BK volts (other): %.2f\tamps %.2f\n",volts,amps);
 
 
 		closeUSB1208();

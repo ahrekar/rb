@@ -10,7 +10,6 @@
 #define DATAPOINTSPERREV 60
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
-#define HPCAL 31.65/1023.0
 #define NORMCURR 0 	// Set this to 1 to normalize the intensity with the current
 #define DWELL 1		// The number of seconds to pause, letting electronics settle
 #define ALPHA 3.2	// The constant Alpha (location of transmission axis), measured in degrees.

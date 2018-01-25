@@ -38,7 +38,17 @@ int getUSB1208AnalogIn(unsigned short chan, float* returnvalue){
     signed short svalue;
     int gain;
     if(chan==PROBE_LASER){
-        gain = BP_5_00V;
+        //SE_10_00V // Single Ended +/- 10.0 V
+        
+        //BP_20_00V  // Differential +/- 20.0 V
+        //BP_10_00V  // Differential +/- 10.0 V
+        //BP_5_00V   // Differential +/- 5.00 V
+        //BP_4_00V   // Differential +/- 4.00 V
+        //BP_2_50V   // Differential +/- 2.50 V
+        //BP_2_00V   // Differential +/- 2.00 V
+        //BP_1_25V   // Differential +/- 1.25 V
+        //BP_1_00V   // Differential +/- 1.00 V
+        gain = BP_10_00V;
         //gain = BP_2_50V;
     }else{
         gain = BP_2_50V;

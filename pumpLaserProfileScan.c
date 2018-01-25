@@ -27,7 +27,15 @@ int main (int argc, char **argv)
 	if (argc==2) {
 		strcpy(comments,argv[1]);
 	} else {
-		printf("Usage:\n$ sudo ./monitorPhotodiodes <comments>\n");
+		printf("Usage:\n$ sudo ./pumpLaserProfileScan <comments>\n");
+		printf("\n");
+		printf("   The program will ask prompt for temperature  \n");
+		printf("   and reported wavelength by the wavemeter.    \n");
+		printf("   By systematically stepping the temperature   \n");
+		printf("   of the laser a relationship between wavelength\n");
+		printf("   and temperature can be established so the 	\n");
+		printf("   frequency of the pump laser can be precisely \n");
+		printf("   known.  \n");
 		return 0;
 	}
 	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
@@ -140,6 +148,8 @@ void collectAndRecordData(char* fileName){
     //for (timeCounter=0;timeCounter < evaluationTime; timeCounter+=1){
     while(temperature!=-1.0){
         timeCounter++;
+		printf("Input the laser temperature and the laser frequency,\n");
+		printf("separated by a comma. (e.g. '28.213,377.112', '-1,-1' when done)\n");
         scanf("%f,%f",&temperature,&wavelength);
         fprintf(fp,"%f\t%f\t",temperature,wavelength);
 

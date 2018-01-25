@@ -8,23 +8,15 @@
 #include <string.h>
 #include "kenBoard.h"
 
-
-
-
-
-
-
 int main (int argc, char* argv[]){
 
 char chardata[64];
 char command[64];
 int j;
 
-
 	initialize_rs485(9600,25);
 	//9600 is the default for most equipment
 	//wiring pi gpio #25 controls write/listen
-
 
 if (argc==2){
 	

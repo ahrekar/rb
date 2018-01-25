@@ -11,9 +11,9 @@ if [ "$#" -ne 1 ]; then
 else
     COMMENTS=$1
 
-    PIPOS=93
-    SPLUSPOS=49
-    SMINUSPOS=137
+    PIPOS=74
+    SPLUSPOS=30
+    SMINUSPOS=118
 
     PUMP=1
     PROBE=0

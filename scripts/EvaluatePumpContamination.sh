@@ -42,7 +42,6 @@ else
     $RBC/faradayRotation "$COMMENTS, no beams blocked, S- Light"
 
     echo "Blocking only probe beams"
-	read
     $RBC/setLaserFlag $PROBE $BLOCKED
 
 	echo "Setting QWP for Pi light..."
@@ -61,14 +60,12 @@ else
     $RBC/faradayRotation "$COMMENTS, probe beam blocked, S- Light"
 
     echo "Blocking only pump beam."
-	read
     $RBC/setLaserFlag $PUMP $BLOCKED
     $RBC/setLaserFlag $PROBE $UNBLOCKED
     
     $RBC/faradayRotation "$COMMENTS, pump beam blocked"
 
     echo "Blocking both beams."
-	read
     $RBC/setLaserFlag $PUMP $BLOCKED
     $RBC/setLaserFlag $PROBE $BLOCKED
     

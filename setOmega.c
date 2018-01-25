@@ -20,19 +20,19 @@ int main (int argc, char* argv[]){
 	initializeBoard();
 
 	if(argc==2){
-        printf("Setting temperatures to Targ: %f and Res: %f\n",atof(argv[1])+3,atof(argv[1]));
+        printf("Setting temperatures to Targ: %3.1f and Res: %3.1f\n",atof(argv[1])+3,atof(argv[1]));
 		tempRes=atof(argv[1]);
 		getPVCN7500(CN_TARGET,&returnFloat);
-		printf("Target Temp:%f\n",returnFloat);
+		printf("CollCellTemp(degC):%3.1f\n",returnFloat);
 		getPVCN7500(CN_RESERVE,&returnFloat);
-		printf("Reservoir Temp:%f\n",returnFloat);
+		printf("ResTemp(degC):%3.1f\n",returnFloat);
 
 		setSVCN7500(CN_RESERVE, tempRes);
 		setSVCN7500(CN_TARGET, tempRes+3.0);
 	}else if(argc==3){
 		tempTarg=atof(argv[1]);
 		tempRes=atof(argv[2]);
-        printf("Setting temperatures to Targ: %f and Res: %f\n",tempTarg,tempRes);
+        printf("Setting temperatures to Cell: %3.1f and Res: %3.1f\n",tempTarg,tempRes);
 		setSVCN7500(CN_TARGET, tempTarg);
 		setSVCN7500(CN_RESERVE, tempRes);
 	}else{

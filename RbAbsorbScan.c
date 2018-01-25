@@ -36,9 +36,10 @@ void findAndSetProbeMaxTransmission();
 
 int main (int argc, char **argv)
 {
-	int startvalue,endvalue,stepsize;
+    // Variables for recording the time. 
 	time_t rawtime;
 	struct tm * timeinfo;
+	int startvalue,endvalue,stepsize;
 	char fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
@@ -123,7 +124,7 @@ void graphData(char* fileName){
 	//aoutInt=.6516*probeOffset-22.851;
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 158,32\n");
+		fprintf(gnuplot, "set terminal dumb size 80,32\n");
 		fprintf(gnuplot, "set output\n");			
 		
 		sprintf(buffer, "set title '%s'\n", fileName);
@@ -273,12 +274,12 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 		fprintf(fp,"%d\t",value);
 
 		// delay to allow transients to settle
-		//delay(30000);
 		delay(300);
-		//kensWaveLength = getWaveMeter();
-		kensWaveLength = -1; 
-		fprintf(fp,"%07f\t",kensWaveLength);
-		printf("%f\t",kensWaveLength);
+		kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
+                                        // So we no longer need the previous delay statement. 
+		//kensWaveLength = -1;
+		fprintf(fp,"%07.0f\t",kensWaveLength);
+		printf("%07.0f\t",kensWaveLength);
 		for(k=0;k<NUMCHANNELS;k++){
 			involts[k]=0.0;	
 		}

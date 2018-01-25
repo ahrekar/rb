@@ -167,8 +167,10 @@ int main (int argc, char **argv)
     fclose(fp);
 
     printf("Processing Data...\n");
-    analyzeData(fileName, 1, revolutions, dataPointsPerRevolution);
+
     plotRawData(fileName);
+
+    analyzeData(fileName, 1, revolutions, dataPointsPerRevolution);
 
     closeUSB1208();
 
@@ -185,7 +187,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     float sumCos=0;
     int count=0;
     int steps,i,j,k;
-    float f3,f4,angle;
+    float angle;
 
 
     int nSamples=16;
@@ -218,7 +220,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 else
                     fprintf(fp,"%f\t%f\n",involts[j],stdDev[j]);
             }
-            angle=2.0*PI*(steps)/STEPSPERREV;
+            angle=2.0*PI*(steps-69)/STEPSPERREV;
             sumSin+=involts[0]*sin(2*angle);
             sumCos+=involts[0]*cos(2*angle);
 
@@ -226,10 +228,6 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             stepMotor(motor,CLK,(int)STEPSIZE);
         } // steps
     } // revolutions
-    f3=sumSin/count;
-    f4=sumCos/count;
-    angle = 0.5*atan2(f4,f3);
-    printf("Angle: %0.4f\n",angle*180/PI);
     free(measurement);
     free(stdDev);
     free(involts);

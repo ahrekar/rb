@@ -36,6 +36,7 @@ int main (int argc, char **argv)
 {
 	int aout, dwell;
 	float leakageCurrent;
+    int ammeterScale;
 	
 	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; 
 	char buffer[1024];
@@ -55,17 +56,18 @@ int main (int argc, char **argv)
 	struct stat st = {0};
 
 	// Get parameters.
-	if (argc==5){
+	if (argc==6){
 		aout=atoi(argv[1]);
 		dwell=atoi(argv[2]);
 		leakageCurrent=atof(argv[3]);
-		strcpy(comments,argv[4]);
+		ammeterScale=atof(argv[4]);
+		strcpy(comments,argv[5]);
 		strcpy(backgroundFileName,"NONE");
 	} else {
 		printf("There is one option for using this program: \n\n");
-		printf("usage '~$ sudo ./polarization <aout_for_HeTarget> <dwell> <leakageCurrent> <comments_in_double_quotes>'\n");
-		printf("                                (0-1023)           (1-5)s (just mantissa,                              \n");
-		printf("                                                              assumed neg.)                            \n");
+		printf("usage '~$ sudo ./polarization <aout_for_HeTarget> <dwell> <ammeterScale> <leakageCurrent> <comments_in_double_quotes>'\n");
+		printf("                                (0-1023)           (1-5)s (assumed neg.) (just mantissa,                              \n");
+		printf("                                                                           assumed neg.)                            \n");
 		return 1;
 	}
 
@@ -137,6 +139,7 @@ int main (int argc, char **argv)
 
 	fprintf(rawData,"#AOUT:\t%d\n",aout);
 	fprintf(rawData,"#LEAKCURR:\t%f\n",leakageCurrent);
+	fprintf(rawData,"#SCALE:\t%d\n",ammeterScale);
 	fprintf(rawData,"#AOUTCONV:\t%2.6f\n",HPCAL);
 	fprintf(rawData,"#REV:\t%d\n",REVOLUTIONS);
 	fprintf(rawData,"#DATAPPR:\t%d\n",DATAPOINTSPERREV);

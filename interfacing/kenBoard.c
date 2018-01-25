@@ -351,8 +351,10 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 	if(validateRTU(returndata,j)==0){	/* this checks the last
 										   two CRC bytes to ensure
 										   transmission is  valid.*/
+        //printf("The transmission is valid.\n");
 
 		if(returndata[0]==cmd[0]){ // then the correct machine responded
+            //printf("The correct machine responded.\n");
 			if(returndata[1] & 0x80){// then an error occured
 				z=returndata[2];
 			}
