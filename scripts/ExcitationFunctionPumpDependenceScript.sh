@@ -1,20 +1,17 @@
 #!/bin/bash
-#
-# Usage:
-#
-#		./ElectronPolarizationScript <aout background> <aout Helium Excited> <dwell> <additional comments>
-#
 
-if [ "$#" -ne 6 ]; then
-	echo "usage: ./ElectronPolarizationScript.sh <aout background> <AOUT THRESHOLD> <aout Helium Excited> <dwell> <leakageCurrent> <additional comments>"
-	echo "                                                 (400)               (0)           	(2)   (0 if not used)                       "
+if [ "$#" -ne 9 ]; then
+	echo "usage: ./ExcitationFunctionPumpDependenceScript.sh  <filament bias> <N2 Offset> <N2 Sweep> <He offset> <scan range> <step size> <dwell time> <orderOfMagnitudeOfCurrent> <comments>"
 else
-    AOUTBACK=$1
-	AOUTTHRESH=$2
-    AOUTEXCITE=$3
-    DWELL=$4
-    LEAKCURRENT=$5
-    COMMENTS=$6
+    FILBIAS=$1
+	N2OFFSET=$2
+    N2SWEEP=$3
+    HEOFFSET=$4
+    SCANRANGE=$5
+	STEPSIZE=$6
+    DWELL=$7
+	CURRENTMAG=$8
+	COMMENTS=$9
 
     PIPOS=74
     SPLUSPOS=30
@@ -32,44 +29,26 @@ else
 
 	echo "Blocking pump beam..."
 	$RBC/setLaserFlag $PUMP $BLOCKED
-
-	echo "No pump (Background)..."
-	$RBC/excitationfn 100.1 2.0 6.8 70.0 30 8 5 9 "Excitation Function Prior to collecting serious data tomorrow.
-	$RBC/polarization "$AOUTBACK" "$DWELL" "$LEAKCURRENT" "$COMMENTS, background, pump=none"
-	echo "No pump (Threshold He)..."
-	$RBC/polarization "$AOUTTHRESH" "$DWELL" "$LEAKCURRENT" "$COMMENTS, excited1, pump=none"
-	echo "No pump (Excited He)..."
-	$RBC/polarization "$AOUTEXCITE" "$DWELL" "$LEAKCURRENT" "$COMMENTS, excited2, pump=none"
+	echo "No pump..."
+	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTMAG "$COMMENTS, pump=none"
 
 	echo "Unblocking pump beam..."
 	$RBC/setLaserFlag $PUMP $UNBLOCKED
 
 	echo "Setting pump to Pi..."
 	$RBC/setWavePlate $PIPOS
-	echo "Pi Polarized light (Background)..."
-	$RBC/polarization "$AOUTBACK" "$DWELL" "$LEAKCURRENT" "$COMMENTS, background, pump=pi"
-	echo "Pi Polarized light (Threshold He)..."
-	$RBC/polarization "$AOUTTHRESH" "$DWELL" "$LEAKCURRENT" "$COMMENTS, excited1, pump=pi"
-	echo "Pi Polarized light (Excited He)..."
-	$RBC/polarization "$AOUTEXCITE" "$DWELL" "$LEAKCURRENT" "$COMMENTS, excited2, pump=pi"
+	echo "Pi Polarized light..."
+	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTMAG "$COMMENTS, pump=pi"
 
 	echo "Setting pump to S+..."
 	$RBC/setWavePlate $SPLUSPOS
-	echo "Polarization Run with S+ light (background)..."
-	$RBC/polarization "$AOUTBACK" "$DWELL" "$LEAKCURRENT" "$COMMENTS, background, pump=s+"
-	echo "Polarization Run with S+ light (excited1)..."
-	$RBC/polarization "$AOUTTHRESH" "$DWELL" "$LEAKCURRENT" "$COMMENTS, excited1, pump=s+"
-	echo "Polarization Run with S+ light (excited2)..."
-	$RBC/polarization "$AOUTEXCITE" "$DWELL" "$LEAKCURRENT" "$COMMENTS, excited2, pump=s+"
+	echo "S+ light..."
+	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTMAG "$COMMENTS, pump=S+"
 
 	echo "Setting pump to S-..."
 	$RBC/setWavePlate $SMINUSPOS
-	echo "Polarization Run with S- light (background)..."
-	$RBC/polarization "$AOUTBACK" "$DWELL" "$LEAKCURRENT" "$COMMENTS, background, pump=s-"
-	echo "Polarization Run with S- light (excited1)..."
-	$RBC/polarization "$AOUTTHRESH" "$DWELL" "$LEAKCURRENT" "$COMMENTS, excited1, pump=s-"
-	echo "Polarization Run with S- light (excited)..."
-	$RBC/polarization "$AOUTEXCITE" "$DWELL" "$LEAKCURRENT" "$COMMENTS, excited2, pump=s-"
+	echo "S- light..."
+	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTMAG "$COMMENTS, pump=S-"
 
 	echo "Unblocking probe beam..."
 	$RBC/setLaserFlag $PROBE $UNBLOCKED

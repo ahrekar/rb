@@ -12,13 +12,13 @@
 #define PI 3.14159265358979
 #define NORMCURR 0 	// Set this to 1 to normalize the intensity with the current
 #define DWELL 1		// The number of seconds to pause, letting electronics settle
-#define ALPHA 3.2	// The constant Alpha (location of transmission axis), measured in degrees.
-#define DALPHA 0.0	// The uncertainty in ALPHA
-#define BETA -6.95	// The constant Beta_0 (beginning position of QWP relative to positive x axis  ) measured in degrees.
-#define DBETA 0.0		// The uncertainty in BETA
-#define DELTA 90.0	// The constant Delta (wave plate retardance) in degrees.
-#define DDELTA 2.0	// The uncertainty in DELTA
-#define DSTEP 0	// The uncertainty in the step size 
+#define ALPHA 20.4	// The constant Alpha (location of transmission axis), measured in degrees.
+#define DALPHA 0.1	// The uncertainty in ALPHA
+#define BETA 68.7	// The constant Beta_0 (beginning position of QWP relative to positive x axis  ) measured in degrees.
+#define DBETA 0.1		// The uncertainty in BETA
+#define DELTA 94.5	// The constant Delta (wave plate retardance) in degrees.
+#define DDELTA 0.6	// The uncertainty in DELTA
+#define DSTEP .5	// The uncertainty in the step size 
 #define NUMSTOKES 4
 #define POS 0			// Used for my error array positive values are stored first.
 #define NEG (DATAPOINTS/2)// Then negative values. 

@@ -59,8 +59,8 @@ int main (int argc, char **argv)
 	if (argc==6){
 		aout=atoi(argv[1]);
 		dwell=atoi(argv[2]);
-		leakageCurrent=atof(argv[3]);
-		ammeterScale=atof(argv[4]);
+		ammeterScale=atof(argv[3]);
+		leakageCurrent=atof(argv[4]);
 		strcpy(comments,argv[5]);
 		strcpy(backgroundFileName,"NONE");
 	} else {

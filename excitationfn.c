@@ -39,7 +39,6 @@ void graphData(char* fileName);
 int main (int argc, char **argv)
 {
 	int i,stepsize,steprange;
-	long totalCounts;
 	int minstepsize,maxstepsize, nSamples;
 	int dwell,magnitude;
 	time_t rawtime;
@@ -75,14 +74,14 @@ int main (int argc, char **argv)
 		printf("                                (assumed neg.)            (assmd. neg) (   0-30   ) (  1-24   )    (1-5)s       \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
-		printf("               1: 0.029V    9: 0.263V   17: 0.497V                                             \n");
-		printf("               2: 0.059V   10: 0.293V   18: 0.527V                                             \n");
-		printf("               3: 0.088V   11: 0.322V   19: 0.556V                                             \n");
-		printf("               4: 0.117V   12: 0.351V   20: 0.585V                                             \n");
-		printf("               5: 0.146V   13: 0.381V   21: 0.615V                                             \n");
-		printf("               6: 0.176V   14: 0.410V   22: 0.644V                                             \n");
-		printf("               7: 0.205V   15: 0.439V   23: 0.673V                                             \n");
-		printf("               8: 0.234V   16: 0.468V   24: 0.703V                                             \n");
+		printf("               1: %1.3fV    9: %1.3fV   17: %1.3fV  25: %1.3fV           \n",1*HPCAL,9*HPCAL,17*HPCAL,25*HPCAL);
+		printf("               2: %1.3fV   10: %1.3fV   18: %1.3fV  26: %1.3fV           \n",2*HPCAL,10*HPCAL,18*HPCAL,26*HPCAL);
+		printf("               3: %1.3fV   11: %1.3fV   19: %1.3fV  27: %1.3fV           \n",3*HPCAL,11*HPCAL,19*HPCAL,27*HPCAL);
+		printf("               4: %1.3fV   12: %1.3fV   20: %1.3fV  28: %1.3fV           \n",4*HPCAL,12*HPCAL,20*HPCAL,28*HPCAL);
+		printf("               5: %1.3fV   13: %1.3fV   21: %1.3fV  29: %1.3fV           \n",5*HPCAL,13*HPCAL,21*HPCAL,29*HPCAL);
+		printf("               6: %1.3fV   14: %1.3fV   22: %1.3fV  30: %1.3fV           \n",6*HPCAL,14*HPCAL,22*HPCAL,30*HPCAL);
+		printf("               7: %1.3fV   15: %1.3fV   23: %1.3fV  31: %1.3fV           \n",7*HPCAL,15*HPCAL,23*HPCAL,31*HPCAL);
+		printf("               8: %1.3fV   16: %1.3fV   24: %1.3fV  32: %1.3fV           \n",8*HPCAL,16*HPCAL,24*HPCAL,32*HPCAL);
 		printf("                                                                                               \n");
 		return 1;
 	}
@@ -156,21 +155,19 @@ int main (int argc, char **argv)
 
 	getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
-	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
 
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
 
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Aout\tbias\tN2Offset\tN2Sweep\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");
+	fprintf(fp,"Aout\tbias\tN2Offset\tN2Sweep\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCountRate\tCountRateStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	totalCounts=0;
 	for (value=0;value<steprange;value+=stepsize){
 		setUSB1208AnalogOut(HETARGET,value);
 		printf("Aout %d \t",value);
@@ -194,7 +191,6 @@ int main (int argc, char **argv)
 
 		getUSB1208Counter(dwell*10,&returnCounts);
 		printf("Counts %ld\t",returnCounts);
-		totalCounts+=returnCounts;
 
 		current = 0.0;
 		// grab several readings and average
@@ -207,7 +203,7 @@ int main (int argc, char **argv)
 
 		printf("Current %f\t",current);
 
-		fprintf(fp,"%ld\t%Lf\t",returnCounts,sqrtl(returnCounts));
+		fprintf(fp,"%ld\t%Lf\t",returnCounts/dwell,sqrtl(returnCounts)/dwell);
 		fprintf(fp,"%f\t%f\t",-current,stdDeviation(measurement,nSamples));
 
 		// Grab several readings and average
