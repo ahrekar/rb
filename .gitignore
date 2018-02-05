@@ -58,6 +58,8 @@ interfacing/getAnalogIn
 interfacing/waveMeter
 interfacing/manualRTU
 interfacing/mirrorTemplate
+interfacing/setBKAmps
+interfacing/setBKVolts
 
 *.data
 *~
