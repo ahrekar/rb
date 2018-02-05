@@ -523,3 +523,61 @@ void write_rs485ASCII(char* cmd, char* pszEcho){
 	//strncpy(pszEcho,buffer,sizeEcho);
 	delay(100);
 }//end write_rs485
+
+void writeRS232Bridge(char* cmd, char* returnData, unsigned  short bridgeAddress){
+    int i,j,k;
+    char cmdOut[35];
+    char tempData[64];
+    unsigned short temp;
+
+    cmdOut[0]=bridgeAddress;
+    cmdOut[1]=0x03;
+    cmdOut[2]=0;
+    returnData[0]=0;
+
+    j=strlen(cmd); // append cmd to cmdOut
+    for (i=0;i<j;i++){
+        cmdOut[i+2]=cmd[i];
+    }
+    j=j+2;
+
+    temp = modRTU_CRC(cmdOut,j);//calculate the crc bytes
+
+    cmdOut[j+1]=(unsigned char)((temp&0xFF00)>>8);  //ensures that the MSByte is sent 
+    cmdOut[j]=(unsigned char)(temp&0x00FF);  //before the LSByte
+
+    // debug. print the cmdOut
+    /*
+       printf("outdata\n");
+       for (i=0;i<j+2;i++){
+       printf("%02x ",cmdOut[i]);
+       }
+       printf("\n");
+       */
+
+    write_rs485BYTE(cmdOut,j+2,tempData,&k);
+
+    //debug print returnData
+
+    printf("return data\n");
+    for (i=0;i<k;i++){
+        printf("%02x ",tempData[i]);
+    }
+    printf("\n");
+
+    //  remove first two and last two bytes
+    for (i=0;i<k-4;i++){
+        returnData[i]=tempData[i+2];
+    }
+    returnData[i]=0;//append null for string manipulations
+
+    /*
+       printf("return data stripped\n");
+       i=0;
+       while (returnData[i]!=0){
+       printf("%02x ",returnData[i]);
+       i++;
+       }
+       */
+
+}
