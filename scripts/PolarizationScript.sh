@@ -2,13 +2,71 @@
 #
 #
 
-if [ "$#" -ne 13 ]; then
-	echo "usage: sudo ./PolarizationScript.sh <FD aout start> <FD aout end> <FD step size> <RbScan start> <RbScan end> <aout background> <aout Helium Excited> <dwell> <leakage current> <probeOffset> <magnet1Voltage> <magnet2Voltage> <additional comments>"
-	echo "               Suggested values:        (0)         (400)        (50)       			(500)         (1000)       (400)         			(0)          (2)    (0 if unused)      (37.0)          (~40)           (~60)"
+if [ "$#" -ne 1 ]; then 
+	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
 else
-	/home/pi/RbControl/RbPolarizationScript.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "${13}" 
+    RBC="/home/pi/RbControl"
+	FILBIAS=130.0
+	N2OFFSET=2.0
+	N2SWEEP=2.5
+	HEOFFSET=80.0
+	CURRENTSCALE=7
+	SCANRANGE=30
+	STEPSIZE=24
+	DWELL=3
+	COMMENTS=$1
+	# TEMPS FOR TESTING
+	#STARTTEMP=100
+	#ENDTEMP=105
+	#STEPTEMP=1
 
-	for i in $(seq 1 5); do 
-		/home/pi/RbControl/ElectronPolarizationScript.sh "$9" "${10}" "${11}" "${12}" "Run $i, ${13}"
+    PUMP=1
+    PROBE=0
+
+    BLOCKED=1
+    UNBLOCKED=0
+
+	#temp=100
+	#j=1
+	#i=1
+	#AOUT=0
+
+
+	date
+	echo "Giving 1 hour to equillibrate"
+	for i in $(seq 1 30); do
+		sudo $RBC/scripts/RbQuickPolarizationScript.sh "$COMMENTS, auto run while equilibrates."
+		#echo '$RBC/scripts/RbQuickPolarizationScript.sh "$COMMENTS, auto run while reservoir warms."'
 	done
+
+	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, prelude" 
+	#echo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, prelude" 
+
+	echo "Blocking pump beam..."
+	sudo $RBC/setLaserFlag $PUMP $BLOCKED
+
+	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  prelude"
+	#echo '$RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  prelude"'
+
+	NUMRUN=5
+	for i in $(seq 1 $NUMRUN); do 
+		echo "About to start next set of polarization runs. Pausing for 5 seconds to give the opportunity to cancel the run."
+		sleep 5
+		sudo $RBC/scripts/ElectronPolarizationScript.sh 144 3 $CURRENTSCALE "Run $i/$NUMRUN, AOUT=216, $COMMENTS"
+		echo "About to start next AOUT value. Pausing for 5 seconds to give the opportunity to cancel the run."
+		sleep 5
+		sudo $RBC/scripts/ElectronPolarizationScript.sh 600 6 $CURRENTSCALE "Run $i/$NUMRUN, AOUT=504, $COMMENTS"
+		echo "About to start next AOUT value. Pausing for 5 seconds to give the opportunity to cancel the run."
+		sleep 5
+		sudo $RBC/scripts/ElectronPolarizationScript.sh 792 3 $CURRENTSCALE "Run $i/$NUMRUN, AOUT=800, $COMMENTS"
+	# EXACT REPEAT DONE
+	done
+
+	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, temp=$temp, postscript" 
+
+	echo "Blocking pump beam..."
+	sudo $RBC/setLaserFlag $PUMP $BLOCKED
+
+	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  postscript"
+
 fi
