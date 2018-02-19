@@ -28,8 +28,8 @@ int main (int argc, char* argv[]){
 		// any of the instruments. 
 		return 1;
 	} else{
-        int i;
 		float myTemp;
+        int i;
 		char buffer[BUFSIZE];
 		float volts, amps;
 		FILE* fp;

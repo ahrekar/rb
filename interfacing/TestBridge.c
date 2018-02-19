@@ -22,11 +22,14 @@ char outData[32];
 char rtnData[32];
 
 
-	initialize_rs485(9600,6); // this is raspi specific. May need to change the gpio pin number
+if (argc==2){
+
+initializeBoard();
+//	initialize_rs485(9600,6); // this is raspi specific. May need to change the gpio pin number
 	//9600 is the default for most equipment
 
 
-	strcpy(outData,"PWR OFF");
+	strcpy(outData,argv[1]);
 		i=strlen(outData);
 		outData[i]=13;
 		outData[i+1]=0; 
@@ -39,6 +42,6 @@ printf("\n");
 printf(rtnData);
 
 printf("\n");
-
+}
   return 0 ;
 }

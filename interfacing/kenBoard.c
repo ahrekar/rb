@@ -457,7 +457,7 @@ void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho){
 
 	digitalWrite(wp,HIGH);// now set control to READ (i.e. LISTEN)
 
-	delay(100); // wait some more so that the external device has time to transmitt.  Data fills the UART buffer.
+	delay(600); // wait some more so that the external device has time to transmitt.  Data fills the UART buffer.
 	// this could be calculated based on what is expected.  usually, a delay of 30 works fine for 4 to 8 chars returned. 
 	// it doesnt hurt if data sets in the UART buffer until it is read.
 	i=0;
@@ -547,24 +547,24 @@ void writeRS232Bridge(char* cmd, char* returnData, unsigned  short bridgeAddress
     cmdOut[j]=(unsigned char)(temp&0x00FF);  //before the LSByte
 
     // debug. print the cmdOut
-    /*
+   /*
        printf("outdata\n");
        for (i=0;i<j+2;i++){
        printf("%02x ",cmdOut[i]);
        }
        printf("\n");
-       */
+     */
 
     write_rs485BYTE(cmdOut,j+2,tempData,&k);
 
     //debug print returnData
-
+	/*
     printf("return data\n");
     for (i=0;i<k;i++){
         printf("%02x ",tempData[i]);
     }
     printf("\n");
-
+	*/
     //  remove first two and last two bytes
     for (i=0;i<k-4;i++){
         returnData[i]=tempData[i+2];
@@ -578,6 +578,5 @@ void writeRS232Bridge(char* cmd, char* returnData, unsigned  short bridgeAddress
        printf("%02x ",returnData[i]);
        i++;
        }
-       */
-
+      */
 }

@@ -145,9 +145,13 @@ int main (int argc, char **argv)
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 	fprintf(fp,"#NumAouts:\t%d\n",1);
+    fprintf(fp,"#Wavelength:\t%f\n",getWaveMeter());
 
-    char* names[]={"PMP","PRB","REF"};
-    int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+    // UNCOMMENT THE FOLLOWING LINES
+    //int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+    //char* names[]={"PMP","PRB","REF"};
+    int photoDetectors[] = {PROBE_LASER,PUMP_LASER,REF_LASER};
+    char* names[]={"PRB","PMP","REF"};
     int numPhotoDetectors = 3;
     int motor = PROBE_MOTOR;
 

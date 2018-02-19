@@ -54,7 +54,8 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
-	if (argc == 10){
+    int expectedArguments=10;
+	if (argc == expectedArguments){
 		bias = atof(argv[1]);
 		N2Offset = atof(argv[2]);
         N2Sweep = atof(argv[3]);
@@ -67,7 +68,7 @@ int main (int argc, char **argv)
 	} else{
 		printf("Hey, DUMBASS. you made an error in your input, please examine\n");
 		printf("the following usage to fix your error.\n");
-		printf("...dumbass\n");
+		printf("...dumbass. You supplied %d arguments, %d were expected\n", argc-1,expectedArguments-1);
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
 		printf("           sudo ./excitationfn <filament bias> <N2 Offset> <N2 Sweep> <He offset> <scan range> <step size> <dwell time> <orderOfMagnitudeOfCurrent> <comments>\n");

@@ -13,10 +13,8 @@
 
 int main (int argc, char* argv[]){
 
-	float tempTarg;
-	float tempRes;
 	float returnRes, returnTarg, returnTargSet;
-	int changed =0;
+//	int changed =0;
 	float temperatureStep=100;
 	float modTemperature=10;
 
@@ -63,7 +61,7 @@ if (returnRes < 36 && returnTarg < 80){
 }
 
 printf("temperature %f > %f, setting to %f and 20\n",returnRes,temperatureStep,temperatureStep+modTemperature);
-changed=1;
+//changed=1;
 /**
 while(!changed){
 	if (returnRes > temperatureStep){

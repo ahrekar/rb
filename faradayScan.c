@@ -76,7 +76,7 @@ int main (int argc, char **argv)
 	}
 
     revolutions=1;
-    dataPointsPerRevolution=NUMSTEPS/STEPSIZE;
+    dataPointsPerRevolution=(int)STEPSPERREV/STEPSIZE;
 
 	// Set up interfacing devices
 	initializeBoard();
@@ -109,22 +109,22 @@ int main (int argc, char **argv)
     }
 
     int totalAouts=0;
-    deltaAout=10;
-    probeOffset=35.5;
+    deltaAout=50;
+    probeOffset=44.9;
     if(probeOffset<45){
-        AoutStart1=0;
+        AoutStart1=400;
         AoutStop1=700;
-        totalAouts+=(AoutStop1-AoutStart1)/deltaAout;
+        totalAouts+=(AoutStop1-AoutStart1)/deltaAout+1;
         AoutStart2=875;
         AoutStop2=1000;
-        totalAouts+=(AoutStop2-AoutStart2)/deltaAout;
+        totalAouts+=(AoutStop2-AoutStart2)/deltaAout+1;
     }else{
         AoutStart1=0;
         AoutStop1=125;
-        totalAouts+=(AoutStop1-AoutStart1)/deltaAout;
+        totalAouts+=(AoutStop1-AoutStart1)/deltaAout+1;
         AoutStart2=625;
         AoutStop2=1000;
-        totalAouts+=(AoutStop2-AoutStart2)/deltaAout;
+        totalAouts+=(AoutStop2-AoutStart2)/deltaAout+1;
     }
 
 	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
@@ -171,13 +171,14 @@ int main (int argc, char **argv)
 	fprintf(fp,"#StepSize:\t%d\n",STEPSIZE);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\n");
+	fprintf(fp,"STEP\tPUMP\tPUMPsd\tPRB\tPRBsd\n");
     fclose(fp);
 
 	printf("Homing motor...\n");
 	homeMotor(PROBE_MOTOR);
 
-    int pd[] = {PROBE_LASER,PUMP_LASER};
+    int numPd=3;
+    int pd[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
 
 	fp=fopen(fileName,"a");
 
@@ -190,7 +191,7 @@ int main (int argc, char **argv)
         fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
         printf("AOUT:%d(%f)\t",Aout,wavelength);
 
-        collectDiscreteFourierData(fp,pd,2 /*numPhotoDet*/,PROBE_MOTOR,revolutions);
+        collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
 	}//end for Aout
 
 	for(Aout=AoutStart2;Aout<AoutStop2;Aout+=deltaAout){
@@ -202,7 +203,7 @@ int main (int argc, char **argv)
         fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
         printf("AOUT:%d(%f)\t",Aout,wavelength);
 
-        collectDiscreteFourierData(fp,pd,2 /*numPhotoDet*/,PROBE_MOTOR,revolutions);
+        collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
 	}//end for Aout
 	setUSB1208AnalogOut(PROBEOFFSET,512);
 	fclose(fp);

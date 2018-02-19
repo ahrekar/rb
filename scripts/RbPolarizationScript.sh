@@ -22,9 +22,9 @@ else
     UNBLOCKED=0
     RBC=/home/pi/RbControl
 
-	#set laser flag to unblock the beam.
-	echo "Blocking Pump Beam..."
+	echo "Blocking Pump Beam and unblocking probe..."
 	$RBC/setLaserFlag $PUMP $BLOCKED
+	$RBC/setLaserFlag $PROBE $UNBLOCKED
 
 	echo "Faraday Scan: no pump..."
 	$RBC/faradayScan "$COMMENTS, no pump"
