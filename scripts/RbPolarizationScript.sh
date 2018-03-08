@@ -11,7 +11,7 @@ if [ "$#" -ne 1 ]; then
 else
     COMMENTS=$1
 
-    PIPOS=74
+    PIPOS=76
     SPLUSPOS=30
     SMINUSPOS=118
 
@@ -27,27 +27,27 @@ else
 	$RBC/setLaserFlag $PROBE $UNBLOCKED
 
 	echo "Faraday Scan: no pump..."
-	$RBC/faradayScan "$COMMENTS, no pump"
+	$RBC/quickFaradayScan "$COMMENTS, no pump"
 
 	# Unblock pump beam for sure
 	echo "Unblocking pump beam..."
 	$RBC/setLaserFlag $PUMP $UNBLOCKED
 
-	# set QWP for Pi light
-	echo "Setting QWP for Pi light..."
-	$RBC/setWavePlate $PIPOS
-	echo "Faraday Scan: Pi pump..."
-    $RBC/faradayScan "$COMMENTS, Pi pump"
+#	# set QWP for Pi light
+#	echo "Setting QWP for Pi light..."
+#	$RBC/setWavePlate $PIPOS
+#	echo "Faraday Scan: Pi pump..."
+#    $RBC/quickFaradayScan "$COMMENTS, Pi pump"
 
 	# set QWP for S+ light
 	echo "Setting QWP for S+ light..."
 	$RBC/setWavePlate $SPLUSPOS
 	echo "Faraday Scan: S+ pump..."
-    $RBC/faradayScan "$COMMENTS, S+ pump"
+    $RBC/quickFaradayScan "$COMMENTS, S+ pump"
 
 	# set QWP for S- light
 	echo "Setting QWP for S- light..."
 	$RBC/setWavePlate $SMINUSPOS
 	echo "Faraday Scan: S- pump..."
-    $RBC/faradayScan "$COMMENTS, S- pump"
+    $RBC/quickFaradayScan "$COMMENTS, S- pump"
 fi

@@ -275,9 +275,9 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 
 		// delay to allow transients to settle
 		delay(300);
-		kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
+		//kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
-		//kensWaveLength = -1;
+		kensWaveLength = -1;
 		fprintf(fp,"%07.0f\t",kensWaveLength);
 		printf("%07.0f\t",kensWaveLength);
 		for(k=0;k<NUMCHANNELS;k++){

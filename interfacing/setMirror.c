@@ -20,7 +20,7 @@ int main (int argc, char* argv[]){
 	if (argc == 2) {
 		i = atoi(argv[1]);
 		if(i==0)i=0;
-		else i=6;
+		else i=5;
 		z=setFlipMirror(0xA3,i);
 		if (z>0) printf("Error occured: %d\n",z);
 	} else {

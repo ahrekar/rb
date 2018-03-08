@@ -1,38 +1,60 @@
+CC=gcc
 CFLAGS=-O3 -g -Wall -I. -lm
 PIFLAGS= -l wiringPi -l mccusb -L. -L/usr/local/lib -lhidapi-libusb -lusb-1.0
 
-all:mainTemplate bakeoutOmega controlledCooldown systemStatus getWavelength getAnalogIn mirrorTemplate controlledWarmup setMirror setBKvolts setBKamps
+SOURCES=mainTemplate.c bakeoutOmega.c controlledCooldown.c systemStatus.c getWavelength.c getAnalogIn.c mirrorTemplate.c controlledWarmup.c setMirror.c setBKvolts.c setBKamps.c testLasers.c TestLaser.c TestBridge.c
 
-mainTemplate: mainTemplate.c grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c
-	gcc $(CFLAGS) $(PIFLAGS) grandvillePhillips.c mainTemplate.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c -o mainTemplate
+OBJECTS=$(SOURCES:.c=.o)
+BINARIES=${subst .c,,${SOURCES}}
+
+all: ${BINARIES}
+
+%.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
+
+mainTemplate: mainTemplate.o grandvillePhillips.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o
+	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o mainTemplate.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o mainTemplate
+
+#mainTemplate: mainTemplate.o grandvillePhillips.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o
+#	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o mainTemplate.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o mainTemplate
 	
-bakeoutOmega: bakeoutOmega.c grandvillePhillips.c omegaCN7500.c kenBoard.c USB1208.c
-	gcc $(CFLAGS) $(PIFLAGS) grandvillePhillips.c bakeoutOmega.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c -o bakeoutOmega
+bakeoutOmega: bakeoutOmega.o grandvillePhillips.o omegaCN7500.o kenBoard.o USB1208.o
+	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o bakeoutOmega.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o bakeoutOmega
 
-controlledCooldown: controlledCooldown.c grandvillePhillips.c omegaCN7500.c kenBoard.c USB1208.c
-	gcc $(CFLAGS) $(PIFLAGS) grandvillePhillips.c controlledCooldown.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c -o controlledCooldown
+controlledCooldown: controlledCooldown.o grandvillePhillips.o omegaCN7500.o kenBoard.o USB1208.o
+	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o controlledCooldown.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o controlledCooldown
 	
-controlledWarmup: controlledWarmup.c grandvillePhillips.c omegaCN7500.c kenBoard.c USB1208.c
-	gcc $(CFLAGS) $(PIFLAGS) grandvillePhillips.c controlledWarmup.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c -o controlledWarmup
+controlledWarmup: controlledWarmup.o grandvillePhillips.o omegaCN7500.o kenBoard.o USB1208.o
+	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o controlledWarmup.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o controlledWarmup
 
-systemStatus: systemStatus.c grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c
-	gcc $(CFLAGS) $(PIFLAGS) grandvillePhillips.c systemStatus.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c -o systemStatus
+#systemStatus: systemStatus.o grandvillePhillips.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o
+#	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o systemStatus.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o systemStatus
+systemStatus: systemStatus.o grandvillePhillips.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $^ -o systemStatus
 
-getAnalogIn: getAnalogIn.c  kenBoard.c USB1208.c
-	gcc $(CFLAGS) $(PIFLAGS) getAnalogIn.c kenBoard.c USB1208.c -o getAnalogIn 
+getAnalogIn: getAnalogIn.o  kenBoard.o USB1208.o
+	$(CC) $(CFLAGS) $(PIFLAGS) getAnalogIn.o kenBoard.o USB1208.o -o getAnalogIn 
 
-mirrorTemplate: mirrorTemplate.c kenBoard.c USB1208.c flipMirror.h flipMirror.c
-	gcc $(CFLAGS) $(PIFLAGS) grandvillePhillips.c mirrorTemplate.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c flipMirror.c -o mirrorTemplate
+mirrorTemplate: mirrorTemplate.o kenBoard.o USB1208.o flipMirror.h flipMirror.o
+	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o mirrorTemplate.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o flipMirror.o -o mirrorTemplate
 
-getWavelength: getWavelength.c waveMeter.c
-	gcc $(CFLAGS) $(PIFLAGS) getWavelength.c waveMeter.c -o getWavelength
+getWavelength: getWavelength.o waveMeter.o
+	$(CC) $(CFLAGS) $(PIFLAGS) getWavelength.o waveMeter.o -o getWavelength
 
-setMirror: setMirror.c kenBoard.c USB1208.c flipMirror.h flipMirror.c
-	gcc $(CFLAGS) $(PIFLAGS) grandvillePhillips.c $@.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c flipMirror.c -o $@
+setMirror: setMirror.o kenBoard.o USB1208.o flipMirror.h flipMirror.o
+	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o $@.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o flipMirror.o -o $@
 
-setBKvolts: setBKvolts.c kenBoard.c USB1208.c BK1696.c
-	gcc $(CFLAGS) $(PIFLAGS) $@.c BK1696.c kenBoard.c USB1208.c -o $@
+setBKvolts: setBKvolts.o kenBoard.o USB1208.o BK1696.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $@.o BK1696.o kenBoard.o USB1208.o -o $@
 
-setBKamps: setBKamps.c kenBoard.c USB1208.c BK1696.c
-	gcc $(CFLAGS) $(PIFLAGS) $@.c BK1696.c kenBoard.c USB1208.c -o $@
+setBKamps: setBKamps.o kenBoard.o USB1208.o BK1696.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $@.o BK1696.o kenBoard.o USB1208.o -o $@
 
+testLasers: testLasers.o vortexLaser.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $@.o BK1696.o kenBoard.o USB1208.o vortexLaser.o -o $@
+
+TestLaser: TestLaser.o sacherLaser.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $@.o BK1696.o kenBoard.o USB1208.o sacherLaser.o -o $@
+
+TestBridge: TestBridge.o kenBoard.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $@.o BK1696.o kenBoard.o USB1208.o -o $@

@@ -475,7 +475,7 @@ void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho){
 }
 
 
-//void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho){
+//void erite_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho){
 void write_rs485ASCII(char* cmd, char* pszEcho){
 	/* routine to write  ASCII data to the rs485 serial port. If a device
 	requires a CR or LF in the instruction, it must be in the cmd array. it is not
@@ -547,36 +547,36 @@ void writeRS232Bridge(char* cmd, char* returnData, unsigned  short bridgeAddress
     cmdOut[j]=(unsigned char)(temp&0x00FF);  //before the LSByte
 
     // debug. print the cmdOut
-   /*
-       printf("outdata\n");
-       for (i=0;i<j+2;i++){
-       printf("%02x ",cmdOut[i]);
-       }
-       printf("\n");
-     */
+
+    //   printf("outdata\n");
+    //   for (i=0;i<j+2;i++){
+    //   printf("%02x ",cmdOut[i]);
+    //   }
+    //   printf("\n");
+
 
     write_rs485BYTE(cmdOut,j+2,tempData,&k);
 
     //debug print returnData
-	/*
-    printf("return data\n");
-    for (i=0;i<k;i++){
-        printf("%02x ",tempData[i]);
-    }
-    printf("\n");
-	*/
+	
+    //printf("return data\n");
+    //for (i=0;i<k;i++){
+    //    printf("%02x ",tempData[i]);
+    //}
+    //printf("\n");
+	
     //  remove first two and last two bytes
     for (i=0;i<k-4;i++){
         returnData[i]=tempData[i+2];
     }
     returnData[i]=0;//append null for string manipulations
 
-    /*
-       printf("return data stripped\n");
-       i=0;
-       while (returnData[i]!=0){
-       printf("%02x ",returnData[i]);
-       i++;
-       }
-      */
+
+    //   //printf("return data stripped\n");
+    //   i=0;
+    //   while (returnData[i]!=0){
+    //   //printf("%02x ",returnData[i]);
+    //   i++;
+    //   }
+
 }

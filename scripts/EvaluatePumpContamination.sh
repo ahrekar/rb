@@ -13,7 +13,7 @@ else
     PUMP=1
     PROBE=0
 
-    PIPOS=74
+    PIPOS=76
     SPLUSPOS=30
     SMINUSPOS=118
 

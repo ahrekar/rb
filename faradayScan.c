@@ -109,13 +109,13 @@ int main (int argc, char **argv)
     }
 
     int totalAouts=0;
-    deltaAout=50;
+    deltaAout=42;
     probeOffset=44.9;
     if(probeOffset<45){
-        AoutStart1=400;
-        AoutStop1=700;
+        AoutStart1=0;
+        AoutStop1=1023;
         totalAouts+=(AoutStop1-AoutStart1)/deltaAout+1;
-        AoutStart2=875;
+        AoutStart2=625;
         AoutStop2=1000;
         totalAouts+=(AoutStop2-AoutStart2)/deltaAout+1;
     }else{
@@ -181,8 +181,12 @@ int main (int argc, char **argv)
     int pd[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
 
 	fp=fopen(fileName,"a");
+	setUSB1208AnalogOut(PROBEOFFSET,AoutStart1);
+    delay(500);
+	setUSB1208AnalogOut(PROBEOFFSET,AoutStop2);
+    delay(500);
 
-	for(Aout=AoutStart1;Aout<AoutStop1;Aout+=deltaAout){
+	for(Aout=AoutStart1;Aout<=AoutStop1;Aout+=deltaAout){
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 		delay(1000); 
 
@@ -194,7 +198,7 @@ int main (int argc, char **argv)
         collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
 	}//end for Aout
 
-	for(Aout=AoutStart2;Aout<AoutStop2;Aout+=deltaAout){
+	for(Aout=AoutStart2;Aout<=AoutStop2;Aout+=deltaAout){
 		setUSB1208AnalogOut(PROBEOFFSET,Aout);
 		delay(1000); 
 
@@ -205,6 +209,7 @@ int main (int argc, char **argv)
 
         collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
 	}//end for Aout
+
 	setUSB1208AnalogOut(PROBEOFFSET,512);
 	fclose(fp);
 

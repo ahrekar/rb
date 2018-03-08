@@ -33,12 +33,13 @@ Usage:
 #include "interfacing/interfacing.h"
 #include "mathTools.h"
 #define BUFSIZE 1024
+#define WAITTIME 2
 
 void graphData(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int i,j;
+	int i,j, k;
 	long totalCounts;
 	int nSamples;
 	int dwell, totalMeasurements,magnitude;
@@ -114,13 +115,24 @@ int main (int argc, char **argv)
 	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
 
+	int numPhotoDetectors = 3;
+    int photoDetector[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+    char* names[]={"PMP","PRB","REF"};
+
 	// Print the header for the information in the datafile
-	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");
+	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev");
+    for(i=0;i<numPhotoDetectors;i++){
+        fprintf(fp,"\t%s\t%ssd",names[i],names[i]);
+    }
+    fprintf(fp,"\n");
+    //fclose(fp);
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
+    float* involts = calloc(numPhotoDetectors,sizeof(float));
+    float* stdDev = calloc(numPhotoDetectors,sizeof(float));
 
 	totalCounts=0;
 	for (j=0;j<totalMeasurements;j++){
@@ -136,12 +148,12 @@ int main (int argc, char **argv)
 			current+=measurement[i];
 		}
 		current=current/(float)nSamples;
-		printf("Current %f\t",current);
+		printf("Current %1.3f\t",current);
 
 		fprintf(fp,"%ld\t%Lf\t",returnCounts,sqrtl(returnCounts));
 		fprintf(fp,"%f\t%f\t",-current,stdDeviation(measurement,nSamples));
 
-		// Grab several readings and average
+		// Record Pressure
 		pressure=0;
 		for (i=0;i<nSamples;i++){
 			getIonGauge(&measurement[i]);
@@ -149,14 +161,35 @@ int main (int argc, char **argv)
 		}
 		pressure=pressure/(float)nSamples;
 		printf("IG= %2.2E \n",pressure);
-		fprintf(fp,"%2.4E\t%2.4E\n",pressure,stdDeviation(measurement,nSamples));
+		fprintf(fp,"%2.4E\t%2.4E\t",pressure,stdDeviation(measurement,nSamples));
+
+		// Record photodiode signals
+		for(k=0;k<numPhotoDetectors;k++){ // numPhotoDet1
+			involts[k]=0.0;	
+			for (i=0;i<nSamples;i++){ // nSamples
+					getUSB1208AnalogIn(photoDetector[k],&measurement[i]);
+					involts[k]=involts[k]+fabs(measurement[i]);
+					delay(WAITTIME);
+			} // nSamples
+			involts[k]=involts[k]/(float)nSamples; 
+			stdDev[k]=stdDeviation(measurement,nSamples);
+		} // numPhotoDet1
+
+		for(k=0;k<numPhotoDetectors;k++){
+			if(k!=numPhotoDetectors-1)
+				fprintf(fp,"%f\t%f\t",involts[k],stdDev[k]);
+			else
+				fprintf(fp,"%f\t%f\n",involts[k],stdDev[k]);
+		}
 	}
 	closeUSB1208();
 
 	free(measurement);
+	free(involts);
+	free(stdDev);
 	fclose(fp);
 
-	graphData(fileName);
+	//graphData(fileName);
 
 	fclose(dataCollectionFlagFile);
 	remove(dataCollectionFileName);

@@ -14,7 +14,7 @@ else
     COMMENTS=$4
 	LEAKCURRENT=0
 
-    PIPOS=74
+    PIPOS=76
     SPLUSPOS=30
     SMINUSPOS=118
 
@@ -37,9 +37,9 @@ else
 	echo "Unblocking pump beam..."
 	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 
-	echo "Setting pump to Pi..."
-	sudo $RBC/setWavePlate $PIPOS
-	sudo $RBC/polarization "$AOUT" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT=$AOUT, pump=pi"
+#	echo "Setting pump to Pi..."
+#	sudo $RBC/setWavePlate $PIPOS
+#	sudo $RBC/polarization "$AOUT" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT=$AOUT, pump=pi"
 
 	echo "Setting pump to S+..."
 	sudo $RBC/setWavePlate $SPLUSPOS

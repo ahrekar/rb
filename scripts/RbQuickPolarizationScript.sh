@@ -11,7 +11,7 @@ if [ "$#" -ne 1 ]; then
 else
     COMMENTS=$1
 
-    PIPOS=74
+    PIPOS=76
     SPLUSPOS=30
     SMINUSPOS=118
 
@@ -23,7 +23,7 @@ else
     RBC=/home/pi/RbControl
 
 	echo "setting the probe laser to a proper detuning"
-	sudo $RBC/setProbeLaser 700
+	sudo $RBC/setProbeLaser 600
 
 	#set laser flag to unblock the probe beam.
 	echo "Unblocking probe Beam."

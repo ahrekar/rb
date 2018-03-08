@@ -147,11 +147,12 @@ int main (int argc, char **argv)
 	fprintf(fp,"#NumAouts:\t%d\n",1);
     fprintf(fp,"#Wavelength:\t%f\n",getWaveMeter());
 
-    // UNCOMMENT THE FOLLOWING LINES
-    //int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
-    //char* names[]={"PMP","PRB","REF"};
-    int photoDetectors[] = {PROBE_LASER,PUMP_LASER,REF_LASER};
-    char* names[]={"PRB","PMP","REF"};
+    // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
+    int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+    char* names[]={"PMP","PRB","REF"};
+    // UNCOMMENT THE FOLLOWING LINES WHEN USING THE FLOATING PD
+    //int photoDetectors[] = {PROBE_LASER,PUMP_LASER,REF_LASER};
+    //char* names[]={"PRB","PMP","REF"};
     int numPhotoDetectors = 3;
     int motor = PROBE_MOTOR;
 
@@ -205,6 +206,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
         for (steps=0;steps < STEPSPERREV;steps+=(int)STEPSIZE){ // steps
             // (STEPSPERREV) in increments of STEPSIZE
             delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
+
             //get samples and average
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
