@@ -46,13 +46,12 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
 int main (int argc, char **argv)
 {
-	int AoutStart1,AoutStop1,deltaAout,Aout;
-	int AoutStart2,AoutStop2;
+	int VoltStart1,VoltStop1,deltaVolt,Volt;
+	int VoltStart2,VoltStop2;
     int revolutions,dataPointsPerRevolution;
 	time_t rawtime;
 	float returnFloat;
 	float wavelength;
-	float probeOffset;
 	struct tm * timeinfo;
 	char fileName[BUFSIZE], comments[BUFSIZE];
 	char dailyFileName[BUFSIZE];
@@ -61,8 +60,9 @@ int main (int argc, char **argv)
 	FILE *fp,*dataCollectionFlagFile,*configFile;
 
 
-	if (argc==2){
+	if (argc==3){
 		strcpy(comments,argv[1]);
+		deltaVolt=atoi(argv[2]);
 	} else { 
 		printf("usage '~$ sudo ./faradayscan <comments in quotes>'\n");
 		return 1;
@@ -108,24 +108,13 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-    int totalAouts=0;
-    deltaAout=42;
-    probeOffset=44.9;
-    if(probeOffset<45){
-        AoutStart1=0;
-        AoutStop1=1023;
-        totalAouts+=(AoutStop1-AoutStart1)/deltaAout+1;
-        AoutStart2=625;
-        AoutStop2=1000;
-        totalAouts+=(AoutStop2-AoutStart2)/deltaAout+1;
-    }else{
-        AoutStart1=0;
-        AoutStop1=125;
-        totalAouts+=(AoutStop1-AoutStart1)/deltaAout+1;
-        AoutStart2=625;
-        AoutStop2=1000;
-        totalAouts+=(AoutStop2-AoutStart2)/deltaAout+1;
-    }
+    int totalVolts=0;
+    VoltStart1=0;
+    VoltStop1=117;
+    totalVolts+=(VoltStop1-VoltStart1)/deltaVolt+1;
+    VoltStart2=0;
+    VoltStop2=117;
+    totalVolts+=(VoltStop2-VoltStart2)/deltaVolt+1;
 
 	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
@@ -167,7 +156,7 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
-	fprintf(fp,"#NumAouts:\t%d\n",totalAouts);
+	fprintf(fp,"#NumVolts:\t%d\n",totalVolts);
 	fprintf(fp,"#StepSize:\t%d\n",STEPSIZE);
 
 	// Write the header for the data to the file.
@@ -181,41 +170,51 @@ int main (int argc, char **argv)
     int pd[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
 
 	fp=fopen(fileName,"a");
-	setUSB1208AnalogOut(PROBEOFFSET,AoutStart1);
+	setVortexPiezo(VoltStart1);
     delay(500);
-	setUSB1208AnalogOut(PROBEOFFSET,AoutStop2);
+	setVortexPiezo(VoltStop2);
     delay(500);
 
-	for(Aout=AoutStart1;Aout<=AoutStop1;Aout+=deltaAout){
-		setUSB1208AnalogOut(PROBEOFFSET,Aout);
+	for(Volt=VoltStart1;Volt<=VoltStop1;Volt+=deltaVolt){// start for Volt
+        setVortexPiezo(Volt);
 		delay(1000); 
 
 	    wavelength=getWaveMeter();
+	   // wavelength=-1;
 
-        fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
-        printf("AOUT:%d(%f)\t",Aout,wavelength);
+        fprintf(fp,"\n\n#VOLT:%d(%f)\n",Volt,wavelength);
+        printf("VOLT:%d(%f)\t",Volt,wavelength);
+        fflush(stdout);
 
+        delay(1000);
+        
+        quickHomeMotor(PROBE_MOTOR);
         collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
-	}//end for Aout
+	}//end for Volt
 
-	for(Aout=AoutStart2;Aout<=AoutStop2;Aout+=deltaAout){
-		setUSB1208AnalogOut(PROBEOFFSET,Aout);
+	for(Volt=VoltStop2;Volt>=VoltStart2;Volt-=deltaVolt){
+		setVortexPiezo(Volt);
 		delay(1000); 
 
 		wavelength=getWaveMeter();
+		//wavelength=-1;
 
-        fprintf(fp,"\n\n#AOUT:%d(%f)\n",Aout,wavelength);
-        printf("AOUT:%d(%f)\t",Aout,wavelength);
+        fprintf(fp,"\n\n#VOLT:%d(%f)\n",Volt,wavelength);
+        printf("VOLT:%d(%f)\t",Volt,wavelength);
+        fflush(stdout);
 
+        delay(1000);
+
+        quickHomeMotor(PROBE_MOTOR);
         collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
-	}//end for Aout
+	}//end for Volt
 
-	setUSB1208AnalogOut(PROBEOFFSET,512);
+    setVortexPiezo(45);
 	fclose(fp);
 
 
 	printf("Processing Data...\n");
-	analyzeData(fileName, totalAouts, revolutions, dataPointsPerRevolution);
+	analyzeData(fileName, totalVolts, revolutions, dataPointsPerRevolution);
 
 	char* extensionStart;
 	extensionStart=strstr(fileName,".dat");

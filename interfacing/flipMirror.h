@@ -7,6 +7,8 @@
 
 #include "kenBoard.h"
 
+#define WAVEMETERFLIP 0xA3
+
 
 
 int setFlipMirror(unsigned short chan, unsigned short position);

@@ -21,7 +21,8 @@ int main (int argc, char* argv[]){
 	printf("CollCellTemp(degC):%3.1f\n",returnFloat);
 	getPVCN7500(CN_RESERVE,&returnFloat);
 	printf("ResTemp(degC):%3.1f\n",returnFloat);
+	getPVCN7500(CN_CHAMWALL,&returnFloat);
+	printf("WallTemp(degC):%3.1f\n",returnFloat);
 
-	closeBoard();
-	return 0 ;
+	return 0;
 }

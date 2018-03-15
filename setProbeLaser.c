@@ -25,10 +25,10 @@
 
 int main (int argc, char *argv[])
 {
-	int value;
+	float value;
 
 	if (argc==2) {
-		value=atoi(argv[1]);
+		value=atof(argv[1]);
 	}else{
 		printf("Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024\n");
 		value=0;
@@ -41,11 +41,11 @@ int main (int argc, char *argv[])
 	initializeBoard();
 	initializeUSB1208();
 
-	setUSB1208AnalogOut(PROBEOFFSET,value);//sets vout such that 0 v at the probe laser
+	setVortexPiezo(value);
 
 	closeUSB1208();
 
-	printf("Aout %d \n",value);
+	printf("Voltage %d \n",value);
 
 	return 0;
 }

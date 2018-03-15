@@ -52,7 +52,10 @@ int main (int argc, char* argv[]){
 
 		i=getPVCN7500(CN_RESERVE,&myTemp);
         if(i==0)
-            printf("Res. T= %.1f\t",myTemp);
+            printf("Res. T= %.1f\n",myTemp);
+		i=getPVCN7500(CN_CHAMWALL,&myTemp);
+        if(i==0)
+            printf("Chm. T= %.1f\n",myTemp);
 
 		printf("\n\n_____PRESSURE_____\n");
 		getConvectron(GP_HE_CHAN,&myTemp);
@@ -85,9 +88,14 @@ int main (int argc, char* argv[]){
 		printf("PrbLaser: %.2f\n",myTemp);
 
 		printf("\n\n_____POWERSUPPLIES_____\n");
-		getVoltsAmpsBK1696(8,&volts,&amps);
+        int bkChan=8;
+		initializeBK1696(bkChan);
+		getVoltsAmpsBK1696(bkChan,&volts,&amps);
 		printf("BK volts (filament): %.2f\tamps %.2f\n",volts,amps);
-		getVoltsAmpsBK1696(9,&volts,&amps);
+
+        bkChan=9;
+		initializeBK1696(bkChan);
+		getVoltsAmpsBK1696(bkChan,&volts,&amps);
 		printf("BK volts (other): %.2f\tamps %.2f\n",volts,amps);
 
 

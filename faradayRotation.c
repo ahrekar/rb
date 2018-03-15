@@ -144,7 +144,7 @@ int main (int argc, char **argv)
 
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
-	fprintf(fp,"#NumAouts:\t%d\n",1);
+	fprintf(fp,"#NumVoltages:\t%d\n",1);
     fprintf(fp,"#Wavelength:\t%f\n",getWaveMeter());
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA

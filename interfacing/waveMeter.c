@@ -16,7 +16,7 @@ float getWaveMeter(void){
 	waves=7800000;
 
     //printf("Running the remote program...\n");
-	program = popen("ssh -i /home/pi/.ssh/id_rsa pi@irpi 'sudo /home/pi/karlCode/uart/getWaveMeterWavelength'","w");
+	program = popen("ssh -i /home/pi/.ssh/id_rsa pi@irpi 'sudo /home/pi/rbExp/conv232to485/getWaveMeterWavelength'","w");
 	pclose(program);
     //printf("Remote program ran!\n");
 

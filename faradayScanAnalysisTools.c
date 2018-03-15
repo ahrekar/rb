@@ -41,7 +41,7 @@ int plotRawData(char* fileName);
 float calculateBdotL(float mag1Volt, float mag2Volt);
 int recordNumberDensity(char* fileName);
 int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevolution);
-int	readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, float* wavelength, int* steps, float* intensity, float* inensityErr,int* homeFlag);
+int	readInData(char* fileName,int totalDatapoints, int numAouts, float* aouts, float* wavelength, int* steps, float* intensity, float* inensityErr,int* homeFlag);
 float calculateOneSumTerm(int trigFunc, int dataPointsPerRevolution,int revolutions,float intensity, float i,int k);
 float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevolution, int revolutions, float intensity,float intensityErr, float i, float iErr, int k);
 int fourierAnalysis(int dataPointsPerRevolution, int revolutions, int* steps, float* intensity, float* intensityErr, float* fourierCoefficients, float* fcErr);
@@ -177,9 +177,8 @@ int plotData(char* fileName){
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set key autotitle columnheader\n");
-		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
+		fprintf(gnuplot, "set xlabel 'Probe Voltage (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Theta'\n");			
-		fprintf(gnuplot, "set xrange [0:1024] reverse\n");			
 		sprintf(buffer, "plot '%s' using %d:%d:($%d+$%d):($%d+$%d) with errorbars\n",fileName,aoutColumnNumber,angleColumnNumber,angleColumnNumber,angleColumnNumber+1,angleColumnNumber,angleColumnNumber+2);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
@@ -241,7 +240,7 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 
 	int numAouts= runs; 
 
-	int* aouts=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
+	float* volts=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
 	int* homeFlag=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
 	float* wavelength=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
 	float* intensity=calloc(totalDatapointsPerRun*numAouts,sizeof(float));
@@ -249,7 +248,7 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 	int* steps=calloc(totalDatapointsPerRun*numAouts,sizeof(float)); 
 
 	printf("Reading in data...");
-	readInData(fileName,totalDatapointsPerRun*numAouts,numAouts,aouts,wavelength,steps,intensity,intensityErr,homeFlag);
+	readInData(fileName,totalDatapointsPerRun*numAouts,numAouts,volts,wavelength,steps,intensity,intensityErr,homeFlag);
 	printf("Data read in. ");
 
 	strcpy(fileNameCopy,fileName);
@@ -315,10 +314,10 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 		angleErrUp = angleErrUp*180.0/PI;
 		angleErrDown = angleErrDown*180.0/PI;
 		printf("c0 = %f\tlinearPercent= %f\ts2 = %f\ts2Err = %f\tc2 = %f\tc2Err = %f\tangle = %f (%f)\n",c0,linearPercent,s2,fcErr[sin+pos+2],c2,fcErr[cos+pos+2],angle,angleErrUp);
-		fprintf(analysis,"%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",aouts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
-		fprintf(daily,"%s\t%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",fileName,comments,aouts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
+		fprintf(analysis,"%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",volts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
+		fprintf(daily,"%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",fileName,comments,volts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
 	}
-	free(aouts);
+	free(volts);
 	free(intensity);
 	free(intensityErr);
 	free(steps);
@@ -327,9 +326,9 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 	return 0;
 }
 
-int readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, float* wavelength, int* steps, float* intensity, float* intensityErr,int* homeFlag){
+int readInData(char* fileName,int totalDatapoints, int numVolts, float* volts, float* wavelength, int* steps, float* intensity, float* intensityErr,int* homeFlag){
 	FILE* data = fopen(fileName,"r");
-    int dataPointsPerAout=totalDatapoints/numAouts;
+    int dataPointsPerAout=totalDatapoints/numVolts;
     float discard;
 
 	char trash[1024];
@@ -345,28 +344,28 @@ int readInData(char* fileName,int totalDatapoints, int numAouts, int* aouts, flo
 	}while(trash[0]=='#');
 
 	int i,j=0;
-    for(j=0;j< numAouts; j++){
-        fscanf(data,"\n\n#AOUT:%d(%f)\n",&aouts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
-        //printf("The aout is %d/%d and the code is %d and j is %d\n",aouts[j*dataPointsPerAout],numAouts,code,j);
+    for(j=0;j< numVolts; j++){
+        fscanf(data,"\n\n#VOLT:%f(%f)\n",&volts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
+        //printf("The aout is %d/%d and the code is %d and j is %d\n",volts[j*dataPointsPerAout],numVolts,code,j);
         for (i=0; i < dataPointsPerAout; i++){
             fscanf(data,"%d\t%f\t%f\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&discard,&discard,&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard);
-            aouts[j*dataPointsPerAout+i]=aouts[j*dataPointsPerAout];
+            volts[j*dataPointsPerAout+i]=volts[j*dataPointsPerAout];
             wavelength[j*dataPointsPerAout+i]=wavelength[j*dataPointsPerAout];
-            //fscanf(data,"%d\t%f\t%d\t%f\t%f\t%d\n",&aouts[i],&wavelength[i],&steps[i],&intensity[i],&intensityErr[i],&homeFlag[i]);
+            //fscanf(data,"%d\t%f\t%d\t%f\t%f\t%d\n",&volts[i],&wavelength[i],&steps[i],&intensity[i],&intensityErr[i],&homeFlag[i]);
         }
     }
     /*
-        code=fscanf(data,"\n\n#AOUT:%d(%f)\n",&aouts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
-        printf("The aout is %d/%d and the code is %d and j is %d\n",aouts[j*dataPointsPerAout],numAouts,code,j);
+        code=fscanf(data,"\n\n#AOUT:%d(%f)\n",&volts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
+        printf("The aout is %d/%d and the code is %d and j is %d\n",volts[j*dataPointsPerAout],numAouts,code,j);
         for (i=0; i < dataPointsPerAout; i++){
             code=fscanf(data,"%d\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard);
             printf("code %d\n",code);
-            aouts[j*dataPointsPerAout+i]=aouts[j*dataPointsPerAout];
+            volts[j*dataPointsPerAout+i]=volts[j*dataPointsPerAout];
             wavelength[j*dataPointsPerAout+i]=wavelength[j*dataPointsPerAout];
         }
         j++;
-        fscanf(data,"\n\n#AOUT:%d(%f)\n",&aouts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
-        printf("The aout is %d/%d and the code is %d and j is %d\n",aouts[j*dataPointsPerAout],numAouts,code,j);
+        fscanf(data,"\n\n#AOUT:%d(%f)\n",&volts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
+        printf("The aout is %d/%d and the code is %d and j is %d\n",volts[j*dataPointsPerAout],numAouts,code,j);
 
      */
 

@@ -345,7 +345,7 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 	write_rs485BYTE(cmd,len+2, returndata, &j);
 	/* len is the  number of input bytes in the command to send. Add two for the CRC bytes
 	   and send ALL these bytes.  returndata holds any response */
-	z=-1; //my way of recording errors
+	z=-686; //my way of recording errors
 	tempint=0;
 
 	if(validateRTU(returndata,j)==0){	/* this checks the last

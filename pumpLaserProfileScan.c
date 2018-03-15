@@ -71,8 +71,6 @@ int main (int argc, char **argv)
 
 	collectAndRecordData(fileName);
 
-	setUSB1208AnalogOut(PROBEOFFSET,512);//sets vout such that 0 v offset at the probe laser
-
 	closeUSB1208();
 
 	fclose(dataCollectionFlagFile);

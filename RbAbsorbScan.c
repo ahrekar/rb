@@ -19,10 +19,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <asm/types.h>
-#include "interfacing/interfacing.h"
 #include "mathTools.h"
 #include "fileTools.h"
-#include "interfacing/waveMeter.h"
+#include "interfacing/interfacing.h"
 
 #define BUFSIZE 1024
 #define NUMCHANNELS 3
@@ -30,7 +29,7 @@
 void graphData(char* fileName);
 void writeFileHeader(char* fileName, char* comments);
 void writeTextToFile(char* fileName, char* line);
-void collectAndRecordData(char* fileName, int startvalue, int endvalue, int stepsize);
+void collectAndRecordData(char* fileName, float startvalue, float endvalue, float stepsize);
 float stdDeviation(float* values, int numValues);
 void findAndSetProbeMaxTransmission();
 
@@ -39,22 +38,23 @@ int main (int argc, char **argv)
     // Variables for recording the time. 
 	time_t rawtime;
 	struct tm * timeinfo;
-	int startvalue,endvalue,stepsize;
+	float startvalue,endvalue,stepsize;
 	char fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+    int err;
 
 	FILE *dataCollectionFlagFile, *fp;
 
 	if (argc==5) {
-		startvalue=atoi(argv[1]);
-		endvalue=atoi(argv[2]);
-		stepsize=atoi(argv[3]);
+		startvalue=atof(argv[1]);
+		endvalue=atof(argv[2]);
+		stepsize=atof(argv[3]);
 
 		strcpy(comments,argv[4]);
 	} else {
 		printf("Usage:\n");
 		printf("$ sudo ./RbAbsorbScan <begin> <end> <step>  <comments>\n");
-		printf("                      (  0  - 1023)                   \n");
+		printf("                      (0.0 - 117.5)                   \n");
 		return 0;
 	}
 	// Indicate that data is being collected.
@@ -67,10 +67,10 @@ int main (int argc, char **argv)
 	initializeBoard();
 	initializeUSB1208();
 
-	if (endvalue>1024) endvalue=1024;
-	if (startvalue>1024) endvalue=1024;
-	if (startvalue<1) startvalue=0;
-	if (endvalue<1) endvalue=0;
+	if (endvalue>117.5) endvalue=117.5;
+	if (startvalue>117.5) endvalue=117.5;
+	if (startvalue<0) startvalue=0;
+	if (endvalue<0) endvalue=0;
 	if (startvalue>endvalue) {
 		printf("error: startvalue > endvalue.\nYeah, i could just swap them in code.. or you could just enter them in correctly. :-)\n");
 		return 1;
@@ -94,12 +94,15 @@ int main (int argc, char **argv)
 		printf("unable to open file: %s\n",fileName);
 		exit(1);
 	}
-	
+
+    err=setFlipMirror(WAVEMETERFLIP,0);
+    if(err>0) printf("Error Occured While setting Flip Mirror: %d\n",err);
+
 	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
 
 	//homeMotor(PROBE_MOTOR);
 
-	setUSB1208AnalogOut(PROBEOFFSET,512);//sets vout such that 0 v offset at the probe laser
+	setVortexPiezo(45.0); // Return Piezo to 45.0 V
 
 	closeUSB1208();
 
@@ -131,11 +134,11 @@ void graphData(char* fileName){
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set key autotitle columnheader\n");
-		fprintf(gnuplot, "set xlabel 'Aout (Detuning)'\n");			
+		fprintf(gnuplot, "set xlabel 'Voltage (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
 		fprintf(gnuplot, "set yrange [-.1:*]\n");			
-		fprintf(gnuplot, "set xrange [*:*] reverse\n");			
-		//fprintf(gnuplot, "set x2range [*:*] reverse\n");			
+		fprintf(gnuplot, "set xrange [*:*]\n");			
+		//fprintf(gnuplot, "set x2range [*:*]\n");			
 		fprintf(gnuplot, "set x2tics nomirror\n");
 		//sprintf(buffer, "plot '%s' using 1:6:7 with errorbars, '%s' using ($1*%f+%f):6:7 axes x2y1\n",fileName,fileName,aoutConv,aoutInt);
 		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
@@ -228,8 +231,8 @@ void writeFileHeader(char* fileName, char* comments){
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
     /** End System Stats Recording **/
 
-	//fprintf(fp,"Aout\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"AOUT\tWAV\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
+	//fprintf(fp,"VOLT\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
+	fprintf(fp,"VOLT\tWAV\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
 	fclose(fp);
 }
 
@@ -244,8 +247,8 @@ void writeTextToFile(char* fileName, char* line){
 	fclose(fp);
 }
 
-void collectAndRecordData(char* fileName, int startvalue, int endvalue, int stepsize){
-	__u16 value;
+void collectAndRecordData(char* fileName, float startvalue, float endvalue, float stepsize){
+	float value;
 	FILE* fp;
 	int k=0,i;
 	int nSamples;
@@ -264,20 +267,20 @@ void collectAndRecordData(char* fileName, int startvalue, int endvalue, int step
 	float* measurement = malloc(nSamples*sizeof(float));
 
 	value=startvalue;
-	setUSB1208AnalogOut(PROBEOFFSET,value);
+	setVortexPiezo(value);
 	delay(10000);
 
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
         if(count%15==0) printf("          \t       \t\t\tPUMP      |        PROBE      |        REFERENCE\n");
-		setUSB1208AnalogOut(PROBEOFFSET,value);
-		printf("Aout %04d \t",value);
-		fprintf(fp,"%d\t",value);
+		setVortexPiezo(value);
+		printf("VOLT %3.1f \t",value);
+		fprintf(fp,"%f\t",value);
 
 		// delay to allow transients to settle
 		delay(300);
-		//kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
+		kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
-		kensWaveLength = -1;
+		//kensWaveLength = -1;
 		fprintf(fp,"%07.0f\t",kensWaveLength);
 		printf("%07.0f\t",kensWaveLength);
 		for(k=0;k<NUMCHANNELS;k++){

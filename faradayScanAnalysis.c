@@ -46,12 +46,13 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-    getCommentLineFromFile(fileName,"#NumAouts:",buffer);
+    getCommentLineFromFile(fileName,"#NumVolts:",buffer);
     runs=atoi(buffer);
     getCommentLineFromFile(fileName,"#Revolutions:",buffer);
     revolutions=atoi(buffer);
     getCommentLineFromFile(fileName,"#DataPointsPerRev:",buffer);
     dataPointsPerRev=atoi(buffer);
+    printf("COMMENT LINES: NUMVOLT=%d, REV=%d, DPPR=%d",runs,revolutions,dataPointsPerRev);
   
 
 	printf("Processing Data...");

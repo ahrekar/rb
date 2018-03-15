@@ -14,9 +14,6 @@ all: ${BINARIES}
 
 mainTemplate: mainTemplate.o grandvillePhillips.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o
 	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o mainTemplate.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o mainTemplate
-
-#mainTemplate: mainTemplate.o grandvillePhillips.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o
-#	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o mainTemplate.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o mainTemplate
 	
 bakeoutOmega: bakeoutOmega.o grandvillePhillips.o omegaCN7500.o kenBoard.o USB1208.o
 	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o bakeoutOmega.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o bakeoutOmega

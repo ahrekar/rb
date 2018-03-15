@@ -23,7 +23,7 @@ else
     RBC=/home/pi/RbControl
 
 	echo "setting the probe laser to a proper detuning"
-	sudo $RBC/setProbeLaser 600
+	sudo $RBC/setProbeLaser 40
 
 	#set laser flag to unblock the probe beam.
 	echo "Unblocking probe Beam."

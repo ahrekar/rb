@@ -19,7 +19,7 @@ else
 	DWELL=$6
 	NUMRUN=$7
 	COMMENTS=$8
-	AOUTS=(144 600 792)
+	AOUTS=(264)
 
     PUMP=1
     PROBE=0

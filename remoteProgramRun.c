@@ -11,7 +11,7 @@ int main (int argc, char **argv)
 	
 	FILE* program;
 
-	program = popen("ssh pi@irpi 'sudo /home/pi/karlCode/uart/getWaveMeterWavelength'","w");
+	program = popen("ssh pi@irpi 'sudo /home/pi/rbExp/conv232to485/getWaveMeterWavelength'","w");
 	fclose(program);
 
 	FILE* wavelengthFile;

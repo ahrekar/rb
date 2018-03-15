@@ -12,6 +12,9 @@
 #include "grandvillePhillips.h"
 #include "USB1208.h"
 #include "BK1696.h"
+#include "vortexLaser.h"
+#include "flipMirror.h"
+#include "waveMeter.h"
 
 #define BUFSIZE 1024
 /**
