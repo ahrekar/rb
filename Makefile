@@ -3,6 +3,12 @@
 # through bash commands to find the last compile that
 # you did.
 #
+#
+
+#NEWDEP
+#DEPDIR := .d
+#$(bash mkdir -p $(DEPDIR) >/dev/null)
+#DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 
 # CC will be used to specify the compiler we will be using
 CC=gcc
@@ -10,6 +16,7 @@ CC=gcc
 # SOURCES are the names of the executable files that we are combiling
 SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c quickFaradayScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c pumpLaserProfileScan.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c
 
+# INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
 _INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
@@ -17,7 +24,7 @@ INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 # The directory to put object files into.
 ODIR=obj
 
-# Take all of the interfacing source files, and give them .o suffixes instead.
+# Take all of the interfacing source files, and create a variable having the same names but with .o suffixes instead.
 _INTOBJECTS=$(INTERFACING:.c=.o)
 # Create all of the interfacing object files in their own directory.
 INTOBJECTS=$(patsubst %,$(ODIR)/%,$(_INTOBJECTS))
@@ -45,6 +52,10 @@ CFLAGS= -O3 -g -Wall -I. -lm
 # code.
 PIFLAGS= -l wiringPi -l mccusb -L. -L/usr/local/lib -lhidapi-libusb -lusb-1.0
 
+#NEWDEP
+# This is the comile line. It includes the flags, the compiler and all that good stuff.
+#COMPILE.c = $(CC) $(DEPFLAGS) 
+
 # What follows is the code to actually compile the code.
 # it is always of the form
 # 
@@ -66,7 +77,10 @@ all: ${BINARIES}
 # Each binary needs to be compiled. In this command, each
 # file in the BINARIES list is selected by the % symbol.
 # The percent symbol from that point forward then 
-# represents the binary file's name. 
+# represents the binary file's name.  Currently, this line
+# is commented out because I haven't figured out how to
+# get Make to look at the header files to know what other 
+# object files it will need. 
 #$(BINARIES):$@.o
 #	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
 

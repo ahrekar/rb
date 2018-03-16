@@ -6,7 +6,14 @@ polarization
 polarizationAnalysis
 README
 setHP3617
+setMirror
 stepmotor
+recordEverythingAndTwistMotor
+razorBladeLaserProfiling
+quickFaradayScan
+pumpLaserProfileScan
+monitorPhotodiodes
+monitorCountsAndCurrent
 diagnoseCounts
 RbAbsorbScan
 faradayrotation
@@ -14,7 +21,6 @@ faradayscan
 homemotor
 setProbeLaser
 test-usb1208LS
-tmp.txt
 gnutest
 faradayscan2
 getIonGauge
@@ -22,8 +28,6 @@ getStats
 getOmega
 setLaserFlag
 homemotor2
-this
-that
 fileTools
 homeWavePlate
 setWavePlate
@@ -52,7 +56,7 @@ setHeliumTarget
 test
 test.c
 test.sh
-txt.txt
+
 interfacing/mainTemplate
 interfacing/getAnalogIn
 interfacing/waveMeter
@@ -60,6 +64,17 @@ interfacing/manualRTU
 interfacing/mirrorTemplate
 interfacing/setBKAmps
 interfacing/setBKVolts
+interfacing/TestBridge
+interfacing/TestBridgeDebug
+interfacing/TestLaser
+interfacing/controlledWarmup
+interfacing/getWavelength
+interfacing/mainTestVortex
+interfacing/oldMakefile
+interfacing/setMirror
+interfacing/testLasers
+
+system.cfg
 
 *.data
 *~
