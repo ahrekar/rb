@@ -8,7 +8,7 @@ else
 	COMMENTS=$2
 
 	for i in $(seq 1 $RUNS); do
-		sudo $RBC/scripts/RbPolarizationScript.sh "Run $i/$RUNS, $2"
+		sudo $RBC/scripts/RbQuickPolarizationScript.sh "Run $i/$RUNS, $2"
 	done
 
 fi

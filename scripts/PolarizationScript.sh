@@ -19,7 +19,7 @@ else
 	DWELL=$6
 	NUMRUN=$7
 	COMMENTS=$8
-	AOUTS=(264)
+	AOUTS=(288)
 
     PUMP=1
     PROBE=0
@@ -27,15 +27,28 @@ else
     BLOCKED=1
     UNBLOCKED=0
 
+	echo "Blocking pump laser..."
+	sudo $RBC/setLaserFlag $PUMP $BLOCKED
+
+	sudo $RBC/RbAbsorbScan 45 65 .2 "$COMMENTS, prelude"
+
+	echo "Unblocking pump laser..."
+	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, prelude" 
 
-	echo "Blocking pump beam..."
-	sudo $RBC/setLaserFlag $PUMP $BLOCKED
+
+	echo "Blocking probe laser..."
+	sudo $RBC/setLaserFlag $PROBE $BLOCKED
 
 	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, prelude"
 
 	for i in $(seq 1 $NUMRUN); do 
+		echo "Unblocking pump beam..."
+		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+		sudo $RBC/scripts/takePictureAndSendToEmail.sh "RUN${i}of${NUMRUN}"
 		echo "About to start next set of polarization runs. Pausing for 5 seconds to give the opportunity to cancel the run."
+		sleep 5
+
 		for AOUT in ${AOUTS[@]}; do 
 			echo "About to start next energy polarization run. Pausing for 5 seconds to give the opportunity to cancel the run."
 			sleep 5
@@ -44,11 +57,22 @@ else
 	# EXACT REPEAT DONE
 	done
 
-	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, postscript" 
-
-	echo "Blocking pump beam..."
+	echo "Blocking pump laser..."
 	sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
+	sudo $RBC/RbAbsorbScan 45 65 .2 "$COMMENTS, postscript"
+
+	echo "Unblocking pump laser..."
+	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, postscript" 
+
+	echo "Blocking probe laser..."
+	sudo $RBC/setLaserFlag $PROBE $BLOCKED
+
 	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript"
+
+	echo "Unblocking lasers..."
+	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+	sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 
 fi

@@ -45,7 +45,7 @@ int main (int argc, char *argv[])
 
 	closeUSB1208();
 
-	printf("Voltage %d \n",value);
+	printf("Voltage %3.1f \n",value);
 
 	return 0;
 }

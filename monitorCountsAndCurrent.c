@@ -120,7 +120,7 @@ int main (int argc, char **argv)
     char* names[]={"PMP","PRB","REF"};
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev");
+	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\tCCellTemp");
     for(i=0;i<numPhotoDetectors;i++){
         fprintf(fp,"\t%s\t%ssd",names[i],names[i]);
     }
@@ -160,7 +160,7 @@ int main (int argc, char **argv)
 			pressure+=measurement[i];
 		}
 		pressure=pressure/(float)nSamples;
-		printf("IG= %2.2E \n",pressure);
+		printf("IG= %2.2E\t",pressure);
 		fprintf(fp,"%2.4E\t%2.4E\t",pressure,stdDeviation(measurement,nSamples));
 
 		// Record photodiode signals
@@ -175,11 +175,19 @@ int main (int argc, char **argv)
 			stdDev[k]=stdDeviation(measurement,nSamples);
 		} // numPhotoDet1
 
+		getPVCN7500(CN_TARGET,&returnFloat);
+		printf("%f\t",returnFloat);
+		fprintf(fp,"%f\n",returnFloat);
+
 		for(k=0;k<numPhotoDetectors;k++){
-			if(k!=numPhotoDetectors-1)
+			if(k!=numPhotoDetectors-1){
+				printf("%f\t%f\t",involts[k],stdDev[k]);
 				fprintf(fp,"%f\t%f\t",involts[k],stdDev[k]);
-			else
+			}
+			else{
+				printf("%f\t%f\n",involts[k],stdDev[k]);
 				fprintf(fp,"%f\t%f\n",involts[k],stdDev[k]);
+			}
 		}
 	}
 	closeUSB1208();

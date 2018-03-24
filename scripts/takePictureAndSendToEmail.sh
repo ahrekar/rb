@@ -28,5 +28,8 @@ else
 		ssh -i /home/pi/.ssh/id_rsa pi@irpi "/home/pi/karlCode/takeRemotePicture.sh $SS $ISO $FILENAME"
 	fi
 
-	echo "Auto Pic Send to Email" | mutt -a $(ls /home/pi/RbPictures/2018-03-10* | tail -n 1) -- karl@huskers.unl.edu
+	DATE=$(date +%Y-%m-%d)
+	IPADDRESS=$(sudo hostname -I)
+
+	echo "Auto Pic Send to Email" | mutt -s "RbPi ($IPADDRESS) Autopic" -a $(ls /home/pi/RbPictures/${DATE}* | tail -n 1) -- karl@huskers.unl.edu
 fi

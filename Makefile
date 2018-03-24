@@ -3,12 +3,17 @@
 # through bash commands to find the last compile that
 # you did.
 #
+# Note that $(OUTPUT_OPTION) is defined to be "-o $@" in my 
+# case. This is defined by the compiler.
 #
 
 #NEWDEP
-#DEPDIR := .d
-#$(bash mkdir -p $(DEPDIR) >/dev/null)
-#DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+DEPDIR := .d
+$(shell mkdir -p $(DEPDIR) >/dev/null)
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+
+VPATH = obj
+
 
 # CC will be used to specify the compiler we will be using
 CC=gcc
@@ -53,8 +58,12 @@ CFLAGS= -O3 -g -Wall -I. -lm
 PIFLAGS= -l wiringPi -l mccusb -L. -L/usr/local/lib -lhidapi-libusb -lusb-1.0
 
 #NEWDEP
-# This is the comile line. It includes the flags, the compiler and all that good stuff.
-#COMPILE.c = $(CC) $(DEPFLAGS) 
+# This is the compile line. It includes the flags, the compiler and all that good stuff.
+COMPILE.c= $(CC) $(DEPFLAGS) $(CFLAGS) $(PIFLAGS) -c
+# This is the link line. It also includes the flags, the compiler and all that good stuff. It binds the compiled files together.
+LINK.c=$(CC) $(DEPFLAGS) $(CFLAGS) $(PIFLAGS)
+# These commands are run after the compiling process.
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 
 # What follows is the code to actually compile the code.
 # it is always of the form
@@ -82,7 +91,7 @@ all: ${BINARIES}
 # get Make to look at the header files to know what other 
 # object files it will need. 
 #$(BINARIES):$@.o
-#	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+#	$(COMPILE.c) -o $@ $^ 
 
 # Create the object directory to store the object
 # files in if it doesn't already exist.
@@ -90,68 +99,83 @@ $(ODIR):
 	mkdir -p $(ODIR)
 	mkdir -p $(ODIR)/$(INTDIR)
 
+# The vertical line in this command separates the normal-prerequisites from the order-only prerequisites. 
+# The order-only prerequisites tells make that it needs to run the rules for $(ODIR) first, before 
+# doing the commands below, but it does not require the target to be updated if the $(ODIR) rules are run.
 $(ODIR)/%.o: %.c | $(ODIR)
-	$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
+$(ODIR)/%.o: %.c $(DEPDIR)/%.d | $(ODIR)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
 
 #$(ODIR)/fileTools.o: fileTools.c
-#	$(CC) -c -o $@ $< $(CFLAGS) $(PIFLAGS)
+#	$(COMPILE.c) -c $(OUTPUT_OPTION) $< 
 #
 #$(ODIR)/faradayScanAnalysisTools.o: faradayScanAnalysisTools.c
-#	$(CC) -c -o $@ $^ $(CFLAGS) $(PIFLAGS)
-$(ODIR)/polarizationAnalysisTools.o: polarizationAnalysisTools.c
-	$(CC) -c -o $@ $^ $(CFLAGS) $(PIFLAGS)
+#	$(COMPILE.c) -c $(OUTPUT_OPTION) $^ 
+#
+#$(ODIR)/polarizationAnalysisTools.o: polarizationAnalysisTools.c
+#	$(LINK.c) -c $(OUTPUT_OPTION) $^ 
+getcounts: getcounts.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
 
-getcounts: obj/getcounts.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-RbAbsorbScan: obj/RbAbsorbScan.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-pumpLaserProfileScan: obj/pumpLaserProfileScan.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-excitationfn: obj/excitationfn.o obj/mathTools.o $(INTOBJECTS) 
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-monitorCountsAndCurrent: obj/monitorCountsAndCurrent.o obj/mathTools.o $(INTOBJECTS) 
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-recordEverythingAndTwistMotor: obj/recordEverythingAndTwistMotor.o obj/mathTools.o $(INTOBJECTS) 
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayScan: obj/faradayScan.o obj/mathTools.o obj/faradayScanAnalysisTools.o obj/fileTools.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-quickFaradayScan: obj/quickFaradayScan.o obj/mathTools.o obj/faradayScanAnalysisTools.o obj/fileTools.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-razorBladeLaserProfiling: obj/razorBladeLaserProfiling.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayRotation: obj/faradayRotation.o obj/mathTools.o obj/faradayScanAnalysisTools.o obj/fileTools.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-polarization: obj/polarization.o obj/mathTools.o obj/fileTools.o $(INTOBJECTS) obj/polarizationAnalysisTools.o
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setOmega: obj/setOmega.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-getOmega: obj/getOmega.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setProbeLaser: obj/setProbeLaser.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-toggleLaserFlag: obj/toggleLaserFlag.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setLaserFlag: obj/setLaserFlag.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setHeliumTarget: obj/setHeliumTarget.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-waitForOmega: obj/waitForOmega.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+$(DEPDIR)/%.d: ;
+.PRECIOUS: $(DEPDIR)/%.d
 
-stepmotor: obj/stepmotor.o 				$(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-homemotor: obj/homemotor.o 				$(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SOURCES))))
+
+#ORIGINAL
+#RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
+#	$(LINK.c) $(OUTPUT_OPTION) $^ 
+#TESTING
+RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+pumpLaserProfileScan: pumpLaserProfileScan.o mathTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+excitationfn: excitationfn.o mathTools.o $(INTOBJECTS) 
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+monitorCountsAndCurrent: monitorCountsAndCurrent.o mathTools.o $(INTOBJECTS) 
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+recordEverythingAndTwistMotor: recordEverythingAndTwistMotor.o mathTools.o $(INTOBJECTS) 
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+faradayScan: faradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+quickFaradayScan: quickFaradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+razorBladeLaserProfiling: razorBladeLaserProfiling.o mathTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+faradayRotation: faradayRotation.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setOmega: setOmega.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+getOmega: getOmega.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setProbeLaser: setProbeLaser.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+toggleLaserFlag: toggleLaserFlag.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setLaserFlag: setLaserFlag.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setHeliumTarget: setHeliumTarget.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+waitForOmega: waitForOmega.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+
+stepmotor: stepmotor.o 				$(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+homemotor: homemotor.o 				$(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 homeWavePlate: homeWavePlate.c 		$(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-setWavePlate: setWavePlate.c obj/fileTools.o $(INTOBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setWavePlate: setWavePlate.c fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
-polarizationAnalysis: obj/polarizationAnalysis.o obj/polarizationAnalysisTools.o obj/mathTools.o obj/fileTools.o
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-polarizationScriptAnalysis: obj/polarizationScriptAnalysis.o obj/polarizationAnalysisTools.o obj/mathTools.o obj/fileTools.o
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
-faradayScanAnalysis: obj/faradayScanAnalysis.o obj/faradayScanAnalysisTools.o obj/mathTools.o obj/fileTools.o
-	$(CC) -o $@ $^ $(CFLAGS) $(PIFLAGS)
+polarizationAnalysis: polarizationAnalysis.o polarizationAnalysisTools.o mathTools.o fileTools.o
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+polarizationScriptAnalysis: polarizationScriptAnalysis.o polarizationAnalysisTools.o mathTools.o fileTools.o
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+faradayScanAnalysis: faradayScanAnalysis.o faradayScanAnalysisTools.o mathTools.o fileTools.o
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
