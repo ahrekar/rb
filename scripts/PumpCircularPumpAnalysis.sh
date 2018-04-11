@@ -2,7 +2,9 @@
 
 RBC=/home/pi/RbControl
 
-for i in $(seq 44 1 48); do 
+for i in $(seq 0 3 349); do 
+	echo "Waiting for 5 seconds before starting next run..."
+	sleep 5
 	$RBC/setWavePlate $i
-    $RBC/faradayRotation 0 0 0 "Wave plate set at $i, Finding circular, should be one with least variation in intensity over revolution."
+    $RBC/faradayRotation "Wave plate in position $i, finding max polarization"
 done

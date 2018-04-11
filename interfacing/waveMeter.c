@@ -4,8 +4,20 @@
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "flipMirror.h"
 #include "wiringPi.h"
 
+float getProbeFreq(void){
+    printf("Getting Probe Freq.\n");
+    setFlipMirror(WAVEMETERFLIP,8);
+    return getWaveMeter();
+}
+float getPumpFreq(void){
+    printf("Getting Pump Freq.\n");
+    setFlipMirror(0xA3,0);
+    printf("Set Flip Mirror Pump Freq.\n");
+    return getWaveMeter();
+}
 float getWaveMeter(void){
 
 	char buffer[16];

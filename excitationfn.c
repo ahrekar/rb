@@ -72,7 +72,7 @@ int main (int argc, char **argv)
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
 		printf("           sudo ./excitationfn <filament bias> <N2 Offset> <N2 Sweep> <He offset> <scan range> <step size> <dwell time> <orderOfMagnitudeOfCurrent> <comments>\n");
-		printf("                                (assumed neg.)            (assmd. neg) (   0-30   ) (  1-24   )    (1-5)s       \n");
+		printf("                                (remember neg.)                     (remember neg.!) (   0-30   ) (  1-24   )    (1-5)s       \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
 		printf("               1: %1.3fV    9: %1.3fV   17: %1.3fV  25: %1.3fV           \n",1*HPCAL,9*HPCAL,17*HPCAL,25*HPCAL);
@@ -137,7 +137,7 @@ int main (int argc, char **argv)
 		stepsize=maxstepsize;
 	}
 
-	fprintf(fp,"#FilamentBias:\t%f\n",-bias);
+	fprintf(fp,"#FilamentBias:\t%f\n",bias);
 	fprintf(fp,"#NumberOfSecondsPerCountMeasurement:\t%d\n",dwell);
 	fprintf(fp,"#Comments:\t%s\n",comments);
 
@@ -154,12 +154,18 @@ int main (int argc, char **argv)
 	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
+    /** Temperature Controllers **/
 	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
-	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
+	fprintf(fp,"#CurrTemp(Res):\t%f\n",returnFloat);
+	getSVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#SetTemp(Res):\t%f\n",returnFloat);
+
+	getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#CurrTemp(Targ):\t%f\n",returnFloat);
+	getSVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
-
 
 	// Print the header for the information in the datafile
 	fprintf(fp,"Aout\tbias\tN2Offset\tN2Sweep\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCountRate\tCountRateStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");
@@ -174,16 +180,16 @@ int main (int argc, char **argv)
 		printf("Aout %d \t",value);
 		fprintf(fp,"%d\t",value);
 
-		fprintf(fp,"%4.4f\t",-bias);
+		fprintf(fp,"%4.4f\t",bias);
 		fprintf(fp,"%4.4f\t",N2Offset);
 		fprintf(fp,"%4.4f\t",N2Sweep);
-		fprintf(fp,"%4.4f\t",HeOffset + HPCAL*(float)value);
+		fprintf(fp,"%4.4f\t",HeOffset - HPCAL*(float)value);
 
-		primaryEnergy = bias + (-HeOffset - HPCAL*(float)value);
+		primaryEnergy = (HeOffset - HPCAL*(float)value) - bias;
 		printf("eV %4.2f\t",primaryEnergy);
 		fprintf(fp,"%4.4f\t",primaryEnergy);
 
-		secondaryEnergy =  (bias - N2Offset) + (-HeOffset - HPCAL*(float)value);
+		secondaryEnergy = (HeOffset - HPCAL*(float)value) - (bias + N2Offset) ;
 		printf("eV %4.2f\t",secondaryEnergy);
 		fprintf(fp,"%4.4f\t",secondaryEnergy);
 
@@ -256,7 +262,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 7:8:9 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using 7:abs(8):9 with yerrorbars\n", fileName);
 		fprintf(gnuplot, "%s", buffer);
 
 		// Set up the axis for the second plot x axis stays the same
@@ -266,7 +272,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 7:10:11 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using 7:abs(10):11 with yerrorbars\n", fileName);
 		fprintf(gnuplot, "%s",buffer);
 		// End printing to screen
 
@@ -288,7 +294,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		// Print the plot
-		sprintf(buffer, "plot '%s.dat' using 7:8:9 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using 7:abs(8):9 with yerrorbars\n", fileName);
 		fprintf(gnuplot, "%s",buffer);
 		fprintf(gnuplot, "unset output\n"); 
 
@@ -301,7 +307,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
 		//fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
-		sprintf(buffer, "plot '%s.dat' using 7:10:11 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using 7:abs(10):11 with yerrorbars\n", fileName);
 		fprintf(gnuplot, "%s",buffer);
 	}
 	pclose(gnuplot);

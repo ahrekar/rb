@@ -7,6 +7,36 @@
 
 #include "sacherLaser.h"
 
+int initializeTA(void){
+
+	char retData[32];
+	char outData[32];
+	int j;
+
+	strcpy(outData,":SYST:E 0");
+	j=strlen(outData);
+	outData[j]=13;
+	outData[j+1]=0;
+
+	writeRS232Bridge(outData,retData,TA);
+
+	j=strcmp(retData,"O.K.");
+
+	if (j!=0){
+		printf(retData);
+	}
+//	strcpy(outData,":SYST:ACK 0");
+//	j=strlen(outData);
+//	outData[j]=13;
+//	outData[j+1]=0;
+
+//	writeRS232Bridge(outData,retData,HEAD);
+
+	
+
+	// expect j = 0 for no errors.  If there is an error, 
+	return j;
+}
 
 
 int initializeLaser(void){
@@ -20,7 +50,7 @@ int initializeLaser(void){
 	outData[j]=13;
 	outData[j+1]=0;
 
-	writeRS232Bridge(outData,retData,BRIDGE);
+	writeRS232Bridge(outData,retData,HEAD);
 
 	j=strcmp(retData,"O.K.");
 
@@ -32,10 +62,7 @@ int initializeLaser(void){
 //	outData[j]=13;
 //	outData[j+1]=0;
 
-//	writeRS232Bridge(outData,retData,BRIDGE);
-
-	
-
+//	writeRS232Bridge(outData,retData,HEAD);
 	// expect j = 0 for no errors.  If there is an error, 
 	return j;
 }
@@ -57,12 +84,38 @@ float getLaserTemperature(void){
 	outData[j]=13;
 	outData[j+1]=0;
 
-	writeRS232Bridge(outData,retData,BRIDGE);
+	writeRS232Bridge(outData,retData,HEAD);
 	temp=atof(retData);
 
 	return temp;
 }
 
+int setTACurrent(int current){
+	char retData[32];
+	char outData[32];
+	int j,temp;
+
+	j=-1;
+
+	if ((current >= 0) & (current<=2500)){
+		sprintf(retData,"%d",current);
+
+		strcpy(outData,":L:CURR ");
+		strcat(outData,retData);
+		strcat(outData,"mA");
+		j=strlen(outData);
+		outData[j]=13;
+		outData[j+1]=0;
+
+		writeRS232Bridge(outData,retData,TA);
+
+		j=strcmp(retData,"O.K.");
+
+		if (j!=0) printf(retData);
+	}
+
+	return j;
+}
 
 int setLaserTemperature(float temperature){
 	char retData[32];
@@ -80,7 +133,7 @@ int setLaserTemperature(float temperature){
 		outData[j]=13;
 		outData[j+1]=0;
 
-		writeRS232Bridge(outData,retData,BRIDGE);
+		writeRS232Bridge(outData,retData,HEAD);
 
 		j=strcmp(retData,"O.K.");
 

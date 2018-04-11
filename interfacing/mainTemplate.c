@@ -79,7 +79,7 @@ int main (int argc, char* argv[]){
 		i=getPVCN7500(CN_CHAMWALL,&myTemp);
         if(i==0)
             printf("Chm. T= %.1f\n",myTemp);
-		fprintf(fp,"%.2f\n",myTemp);
+		fprintf(fp,"%.2f\t",myTemp);
 
 		printf("\n\n_____PRESSURE_____\n");
 		getConvectron(GP_HE_CHAN,&myTemp);

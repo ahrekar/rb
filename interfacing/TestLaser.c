@@ -17,19 +17,28 @@
 
 int main (int argc, char* argv[]){
 	float temperature;
+	int current;
 
 	initializeBoard();
 
-	initializeLaser();
-	printf("\n");
-	printf("Present Laser Temperature= ");
-	temperature=getLaserTemperature();
-	printf("%f \n",temperature);
+	//initializeLaser();
+	//printf("\n");
+	//printf("Present Laser Temperature= ");
+	//temperature=getLaserTemperature();
+	//printf("%f \n",temperature);
+
+	initializeTA();
+
+//	if (argc==2){
+//		temperature=atof(argv[1]);
+//		printf("Setting Laser Temperature:= %2.3f\n",temperature);
+//		setLaserTemperature(temperature);
+//	}
 
 	if (argc==2){
-		temperature=atof(argv[1]);
-		printf("Setting Laser Temperature:= %2.3f\n",temperature);
-		setLaserTemperature(temperature);
+		current=atoi(argv[1]);
+		printf("Setting TA current:= %dmA\n",current);
+		setTACurrent(current);
 	}
 	return 0;
 }

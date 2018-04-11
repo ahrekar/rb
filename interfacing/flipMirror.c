@@ -14,8 +14,8 @@ int setFlipMirror(unsigned short chan, unsigned short position){
 	int status;
 /* position should range from 0 to 8
 	with
-	0 = mirror full down 
-	8 = mirror full up
+	0 = mirror full down (*measuring pump*)
+	8 = mirror full up   (*measuring probe*)
 */
 	if (position > 8) position = 8;
 

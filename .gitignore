@@ -3,6 +3,10 @@ excitationfn
 getadc
 getcounts
 polarization
+polarization15
+polarization20
+polarization30
+polarization60
 polarizationAnalysis
 README
 setHP3617
@@ -33,6 +37,7 @@ homeWavePlate
 setWavePlate
 .motor?position
 setOmega
+setTACurrent
 faradayAnalysis
 logPumpAbs
 setBKamps
@@ -49,6 +54,7 @@ faradayScanNoAoutMove
 interfacing/bakeoutOmega
 interfacing/controlledCooldown
 interfacing/systemStatus
+.d/
 io/
 polarizationScriptAnalysis
 remoteProgramRun

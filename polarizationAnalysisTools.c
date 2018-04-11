@@ -374,7 +374,7 @@ int processFileWithBackground(char* analysisFileName, char* backgroundFileName, 
 							avgCurrent,avgCurrentStdDev);
 
 	printf("Generating graph of Stokes parameters...\n");
-	plotStokesParameters(analysisFileName);
+	//plotStokesParameters(analysisFileName);
 
 	free(fcCos);
 	free(fcSin);

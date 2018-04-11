@@ -25,15 +25,16 @@ else
     UNBLOCKED=0
 
 	for detune in $(seq $STARTFREQ $STEPFREQ $ENDFREQ; seq 28.2 .035 28.305); do 
-		echo "About to change freq to $detune, giving 5 minutes opportunity to cancel" 
-		echo "About to change temperature to $detune" | mutt -s "RbPi Report" karl@huskers.unl.edu
-		sleep 300
-
+##		echo "About to change freq to $detune, giving 5 minutes opportunity to cancel" 
+#		echo "About to change temperature to $detune" | mutt -s "RbPi Report" karl@huskers.unl.edu
+#		sleep 300
+#
 		sudo $RBC/interfacing/TestLaser $detune
 		echo "Giving 30 s for the laser to settle"
-		sleep 30
-
-		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN "detune=$detune,  $COMMENTS"
+		sleep 3
+#		sleep 30
+#
+#		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN "detune=$detune,  $COMMENTS"
 	# detune LOOP DONE
 	done 
 	echo "Finished with pump scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu

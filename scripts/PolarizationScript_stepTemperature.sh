@@ -5,19 +5,20 @@ if [ "$#" -ne 1 ]; then
 else
     RBC="/home/pi/RbControl"
 	FILBIAS="120.0"
-	N2OFFSET="37.3"
-	N2SWEEP="5.8"
-	HEOFFSET=40
-	CURRENTSCALE=6
+	N2OFFSET="2"
+	N2SWEEP="4.6"
+	HEOFFSET=80
+	CURRENTSCALE=8
 	SCANRANGE=30
 	STEPSIZE=24
-	DWELL=2
-	NUMRUN=7
+	DWELL=1
+	NUMRUN=15
 	NUMEQUILRUN=30
 	COMMENTS=$1
-	STARTTEMP=121
-	ENDTEMP=136
-	STEPTEMP=3
+	CCELLTEMP=180
+	STARTTEMP=125
+	ENDTEMP=100
+	STEPTEMP=-2
 
     PUMP=1
     PROBE=0
@@ -29,10 +30,11 @@ else
 		echo "About to change temperature to $temp, giving 5 minutes opportunity to cancel" 
 		echo "About to change temperature to $temp" | mutt -s "RbPi Report" karl@huskers.unl.edu
 		sleep 300
-		sudo $RBC/setOmega 150 $temp
+		sudo $RBC/setOmega $CCELLTEMP $temp
 
 		sudo $RBC/scripts/repeatRbQuickPolarization.sh $NUMEQUILRUN "Equil runs for temp=$temp (from $STARTTEMP to $ENDTEMP in steps of $STEPTEMP), $COMMENTS"
 		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN "temp=$temp,  $COMMENTS"
 	# TEMP LOOP DONE
 	done 
+	echo "Done with temp step run from $STARTTEMP to $ENDTEMP" | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

@@ -8,3 +8,5 @@
 #include "wiringPi.h"
 
 float getWaveMeter(void);
+float getProbeFreq(void);
+float getPumpFreq(void);

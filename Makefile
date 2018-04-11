@@ -10,6 +10,7 @@
 #NEWDEP
 DEPDIR := .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
+$(shell mkdir -p $(DEPDIR)/interfacing >/dev/null)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 
 VPATH = obj
@@ -19,11 +20,11 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c quickFaradayScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c pumpLaserProfileScan.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c quickFaradayScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c pumpLaserProfileScan.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
-_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c sacherLaser.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
 # The directory to put object files into.
@@ -99,6 +100,12 @@ $(ODIR):
 	mkdir -p $(ODIR)
 	mkdir -p $(ODIR)/$(INTDIR)
 
+$(DEPDIR)/%.d: ;
+.PRECIOUS: $(DEPDIR)/%.d
+.PRECIOUS: $(DEPDIR)/interfacing/%.d
+
+include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SOURCES))))
+
 # The vertical line in this command separates the normal-prerequisites from the order-only prerequisites. 
 # The order-only prerequisites tells make that it needs to run the rules for $(ODIR) first, before 
 # doing the commands below, but it does not require the target to be updated if the $(ODIR) rules are run.
@@ -119,10 +126,6 @@ getcounts: getcounts.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
 
-$(DEPDIR)/%.d: ;
-.PRECIOUS: $(DEPDIR)/%.d
-
-include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SOURCES))))
 
 #ORIGINAL
 #RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
@@ -153,6 +156,8 @@ setOmega: setOmega.o $(INTOBJECTS)
 getOmega: getOmega.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setProbeLaser: setProbeLaser.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setTACurrent: setTACurrent.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 toggleLaserFlag: toggleLaserFlag.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 

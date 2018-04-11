@@ -2,12 +2,13 @@
 #include "waveMeter.h"
 
 int main(int argc, char** argv){
-	float wavemeterReturn, frequency, detuning;
+	float wavemeterReturn;
 	float speedOfLight=299792458; //meters/sec
 	
-	wavemeterReturn=getWaveMeter();
-
-	printf("The wavelength reads: %f (%f)\n",wavemeterReturn/10000.,speedOfLight/(wavemeterReturn/10000.));
+	wavemeterReturn=getPumpFreq();
+	printf("The pump laser is at: %f (%f)\n",wavemeterReturn/10000.,speedOfLight/(wavemeterReturn/10000.));
+	wavemeterReturn=getProbeFreq();
+	printf("The probe laser is at: %f (%f)\n",wavemeterReturn/10000.,speedOfLight/(wavemeterReturn/10000.));
 
 	return 0;
 }

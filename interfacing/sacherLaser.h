@@ -9,10 +9,13 @@
 #include <stdlib.h>
 #include "kenBoard.h"
 
-#define BRIDGE 0xC0
+#define HEAD 0xC0
+#define TA 196
 
 int initializeLaser(void);
+int initializeTA(void);
 int setLaserStatus(unsigned short status);
 float getLaserTemperature(void);
 int setLaserTemperature(float temperature);
+int setTACurrent(int current);
 // chan is the rs485 channel

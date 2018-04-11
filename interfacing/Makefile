@@ -35,8 +35,8 @@ getAnalogIn: getAnalogIn.o  kenBoard.o USB1208.o
 mirrorTemplate: mirrorTemplate.o kenBoard.o USB1208.o flipMirror.h flipMirror.o
 	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o mirrorTemplate.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o flipMirror.o -o mirrorTemplate
 
-getWavelength: getWavelength.o waveMeter.o
-	$(CC) $(CFLAGS) $(PIFLAGS) getWavelength.o waveMeter.o -o getWavelength
+getWavelength: getWavelength.o waveMeter.o 
+	$(CC) $(CFLAGS) $(PIFLAGS) getWavelength.o waveMeter.o flipMirror.o kenBoard.o -o getWavelength
 
 setMirror: setMirror.o kenBoard.o USB1208.o flipMirror.h flipMirror.o
 	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o $@.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o flipMirror.o -o $@
