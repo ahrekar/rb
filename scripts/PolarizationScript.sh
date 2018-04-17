@@ -27,19 +27,19 @@ else
     BLOCKED=1
     UNBLOCKED=0
 
-	#echo "Blocking pump laser..."
-	#sudo $RBC/setLaserFlag $PUMP $BLOCKED
+	echo "Blocking pump laser..."
+	sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
-	#sudo $RBC/RbAbsorbScan 45 70 .2 "$COMMENTS, prelude"
+	sudo $RBC/RbAbsorbScan 45 70 .2 "$COMMENTS, prelude"
 
-	#echo "Unblocking pump laser..."
-	#sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	#sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, prelude" 
+	echo "Unblocking pump laser..."
+	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, prelude" 
 
-	#echo "Blocking probe laser..."
-	#sudo $RBC/setLaserFlag $PROBE $BLOCKED
+	echo "Blocking probe laser..."
+	sudo $RBC/setLaserFlag $PROBE $BLOCKED
 
-	#sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, prelude"
+	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, prelude"
 
 	for i in $(seq 1 $NUMRUN); do 
 		echo "Unblocking pump beam..."
