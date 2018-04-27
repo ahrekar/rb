@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "kenBoard.h"
-#include "flipMirror.h"
+#include "interfacing.h"
+
+#define UP 0
+#define DOWN 5
 
 int main (int argc, char* argv[]){
 
@@ -16,11 +18,12 @@ int main (int argc, char* argv[]){
 	int z;
 
 	initializeBoard();
+	initializeUSB1208();
 
 	if (argc == 2) {
 		i = atoi(argv[1]);
-		if(i==0)i=0;
-		else i=5;
+		if(i==0)i=UP;
+		else i=DOWN;
 		z=setFlipMirror(0xA3,i);
 		if (z>0) printf("Error occured: %d\n",z);
 	} else {

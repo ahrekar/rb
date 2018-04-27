@@ -46,8 +46,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
 int main (int argc, char **argv)
 {
-	int numVolts=9;
-	float volts[]={0,1,3,28,29,30,42,43,44};
+	int numVolts=8;
+	float volts[]={0,2,26,30,80,84,115,117};
 	//int numVolts=20;
 	//float volts[20];
 	//int j;
@@ -230,6 +230,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     float* involts = calloc(numPhotoDetectors,sizeof(float));
     float* stdDev = calloc(numPhotoDetectors,sizeof(float));
 
+	quickHomeMotor(motor);
     for (k=0;k<revolutions;k++){ //revolutions
         for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // steps
             // (NUMSTEPS) in increments of STEPSIZE

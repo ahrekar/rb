@@ -11,10 +11,10 @@
 
 
 int main (int argc, char* argv[]){
-	int current,i;
+	int i;
+	int current;
 	int line=0;
 	char systemCfgFileName[]="/home/pi/RbControl/system.cfg";
-    char* taCurrentString;
     char buffer[1024];
     FILE *systemCfgFile;
 
@@ -23,13 +23,15 @@ int main (int argc, char* argv[]){
 
 
 	if (argc==2){
-		current=atoi(argv[1]);
+		current=atof(argv[1]);
 	}else {
 		return 1;
 	}
+	printf("INPUT VALUE:%d\n",current);
+	printf("TA CURRENT VALUE:%f\n",1000*getTACurrent());
 	setTACurrent(current);
 
-    line=getLineNumberForComment(systemCfgFileName,"#PumpLaserTA",taCurrentString);
+    line=getLineNumberForComment(systemCfgFileName,"#PumpLaserTA");
 
     systemCfgFile=fopen(systemCfgFileName,"r+");
     if(!systemCfgFile){
@@ -40,7 +42,7 @@ int main (int argc, char* argv[]){
     for(i=0;i<line;i++){
         fgets(buffer,1024,systemCfgFile);
     }
-    fprintf(systemCfgFile,"#PumpLaserTACurrent(mA):\t%04d\n",current);
+    fprintf(systemCfgFile,"#PumpLaserTACurrent(mA):\t%4d\n",current);
 
     fclose(systemCfgFile);
 

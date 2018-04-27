@@ -28,7 +28,6 @@ int main (int argc, char *argv[]) {
     int line=0;
 
     char wavePlatePositionFileName[]="/home/pi/RbControl/system.cfg";
-    char* wavePlatePositionString;
     char buffer[1024];
     FILE *wavePlatePositionFile;
 
@@ -40,7 +39,7 @@ int main (int argc, char *argv[]) {
 	}
 	setMotor(2,newpos);
 
-    line=getLineNumberForComment(wavePlatePositionFileName,"#PumpQWP",wavePlatePositionString);
+    line=getLineNumberForComment(wavePlatePositionFileName,"#PumpQWP");
 
     wavePlatePositionFile=fopen(wavePlatePositionFileName,"r+");
     if(!wavePlatePositionFile){

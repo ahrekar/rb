@@ -215,13 +215,9 @@ int main (int argc, char **argv)
 
 		// Grab several readings and average
 		pressure=0;
-		for (i=0;i<nSamples;i++){
-			getIonGauge(&measurement[i]);
-			pressure+=measurement[i];
-		}
-		pressure=pressure/(float)nSamples;
+        getIonGauge(&pressure);
 		printf("IG= %2.2E \n",pressure);
-		fprintf(fp,"%2.4E\t%2.4E\n",pressure,stdDeviation(measurement,nSamples));
+		fprintf(fp,"%2.4E\t%2.4E\n",pressure,0.);
 	}
 
 	setUSB1208AnalogOut(HETARGET,0);

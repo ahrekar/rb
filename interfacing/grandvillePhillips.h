@@ -13,6 +13,7 @@ are connected to ADC channels
 
 #define GP_HE_CHAN 0
 #define GP_N2_CHAN 1
+#define GP_CHAMB_CHAN 2
 
 int getConvectron(unsigned int chan, float* returnvalue);
 int getIonGauge(float* returnvalue);

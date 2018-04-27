@@ -57,7 +57,7 @@ int getCommentLineFromFile(char* inputFile, char* commentDescText, char* returnS
 	return 0;
 }
 
-int getLineNumberForComment(char* inputFile, char* commentDescText, char* returnPointer){
+int getLineNumberForComment(char* inputFile, char* commentDescText){
     int i=-1;
 	FILE* data = fopen(inputFile,"r");
     char buffer[1024];

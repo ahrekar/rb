@@ -83,16 +83,20 @@ int main (int argc, char* argv[]){
 
 		printf("\n\n_____PRESSURE_____\n");
 		getConvectron(GP_HE_CHAN,&myTemp);
-		printf("HeCV: %2.2E\t",myTemp);
-		fprintf(fp,"%2.2E\t",myTemp);
+		printf("HeCV: %2.2E\n",myTemp);
+		fprintf(fp,"%2.2E\n",myTemp);
 
 		getConvectron(GP_N2_CHAN,&myTemp);
 		printf("N2CV: %2.2E\n",myTemp);
-		fprintf(fp,"%2.2E\t",myTemp);
+		fprintf(fp,"%2.2E\n",myTemp);
+
+		getConvectron(GP_CHAMB_CHAN,&myTemp);
+		printf("MainChamber: %2.2E\n",myTemp);
+		fprintf(fp,"%2.2E\n",myTemp);
 
 		getIonGauge(&myTemp);
-		printf("IonG: %2.2E\n",myTemp);
-		fprintf(fp,"%2.2E\t",myTemp);
+		printf("IonG: %2.2E\t",myTemp);
+		fprintf(fp,"%2.2E\n",myTemp);
 
 		printf("\n\n_____CURRENT_____\n");
 		getUSB1208AnalogIn(K617,&myTemp);

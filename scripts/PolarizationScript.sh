@@ -19,7 +19,7 @@ else
 	DWELL=$6
 	NUMRUN=$7
 	COMMENTS=$8
-	AOUTS=(24)
+	AOUTS=(270)
 
     PUMP=1
     PROBE=0
@@ -29,8 +29,10 @@ else
 
 	echo "Blocking pump laser..."
 	sudo $RBC/setLaserFlag $PUMP $BLOCKED
+	echo "Unblocking probe laser..."
+	sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 
-	sudo $RBC/RbAbsorbScan 45 70 .2 "$COMMENTS, prelude"
+	sudo $RBC/RbAbsorbScan 45 75 .2 "$COMMENTS, prelude"
 
 	echo "Unblocking pump laser..."
 	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
@@ -56,23 +58,25 @@ else
 	# EXACT REPEAT DONE
 	done
 
-	echo "Blocking pump laser..."
-	sudo $RBC/setLaserFlag $PUMP $BLOCKED
+	#echo "Blocking pump laser..."
+	#sudo $RBC/setLaserFlag $PUMP $BLOCKED
+	#echo "Unblocking probe laser..."
+	#sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 
-	sudo $RBC/RbAbsorbScan 45 70 .2 "$COMMENTS, postscript"
+	#sudo $RBC/RbAbsorbScan 45 75 .2 "$COMMENTS, postscript"
 
-	echo "Unblocking pump laser..."
-	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, postscript" 
+	#echo "Unblocking pump laser..."
+	#sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+	#sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, postscript" 
 
-	echo "Blocking probe laser..."
-	sudo $RBC/setLaserFlag $PROBE $BLOCKED
+	#echo "Blocking probe laser..."
+	#sudo $RBC/setLaserFlag $PROBE $BLOCKED
 
-	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript"
+	#sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript"
 
-	echo "Unblocking lasers..."
-	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
+	#echo "Unblocking lasers..."
+	#sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+	#sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 
 	echo "Completed set of repeat polarization runs, $COMMENTS" | mutt -s "RbPi Report" karl@huskers.unl.edu
 

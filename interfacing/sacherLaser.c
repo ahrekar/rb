@@ -90,10 +90,29 @@ float getLaserTemperature(void){
 	return temp;
 }
 
+float getTACurrent(void){
+	char retData[32];
+	char outData[32];
+	int j;
+	float temp;
+
+	j=-1;
+
+	strcpy(outData,":L:CURR?");
+	j=strlen(outData);
+	outData[j]=13;
+	outData[j+1]=0;
+
+	writeRS232Bridge(outData,retData,TA);
+	temp=atof(retData);
+
+	return temp;
+}
+
 int setTACurrent(int current){
 	char retData[32];
 	char outData[32];
-	int j,temp;
+	int j;
 
 	j=-1;
 
@@ -112,6 +131,9 @@ int setTACurrent(int current){
 		j=strcmp(retData,"O.K.");
 
 		if (j!=0) printf(retData);
+	} else {
+		printf("Error: Improper value input\n");
+		return -1;
 	}
 
 	return j;
@@ -120,7 +142,7 @@ int setTACurrent(int current){
 int setLaserTemperature(float temperature){
 	char retData[32];
 	char outData[32];
-	int j,temp;
+	int j;
 
 	j=-1;
 

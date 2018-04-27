@@ -281,8 +281,8 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 		kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
 		//kensWaveLength = -1;
-		fprintf(fp,"%07.0f\t",kensWaveLength);
-		printf("%07.0f\t",kensWaveLength);
+		fprintf(fp,"%03.4f\t",kensWaveLength);
+		printf("%03.4f\t",kensWaveLength);
 		for(k=0;k<NUMCHANNELS;k++){
 			involts[k]=0.0;	
 		}
