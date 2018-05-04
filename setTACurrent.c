@@ -27,8 +27,6 @@ int main (int argc, char* argv[]){
 	}else {
 		return 1;
 	}
-	printf("INPUT VALUE:%d\n",current);
-	printf("TA CURRENT VALUE:%f\n",1000*getTACurrent());
 	setTACurrent(current);
 
     line=getLineNumberForComment(systemCfgFileName,"#PumpLaserTA");

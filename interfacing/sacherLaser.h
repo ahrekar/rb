@@ -10,7 +10,7 @@
 #include "kenBoard.h"
 
 #define HEAD 0xC0
-#define TA 198
+#define TA 196
 
 int initializeLaser(void);
 int initializeTA(void);

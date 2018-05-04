@@ -443,7 +443,7 @@ int initialize_rs485(int baud,int pin){
 
 void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho){
 
-	int a,i,j;
+	int a,i,j,k;
 	char buffer[64];
 
 	digitalWrite(wp,LOW);// sets the control signal WRITE to the RS 485 buss
@@ -457,18 +457,30 @@ void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho){
 
 	digitalWrite(wp,HIGH);// now set control to READ (i.e. LISTEN)
 
-	delay(600); // wait some more so that the external device has time to transmitt.  Data fills the UART buffer.
-	// this could be calculated based on what is expected.  usually, a delay of 30 works fine for 4 to 8 chars returned. 
-	// it doesnt hurt if data sets in the UART buffer until it is read.
-	i=0;
-	    while (serialDataAvail (fd))
-	    {
-		a = serialGetchar(fd);
-		buffer[i]=a;
-		i++;
-	    }
-//KARL could probably eliminate the need for buffer[]?
-	for (j=0;j<i;j++){
+    k=0;
+    do{
+        delay(100); // wait some more so that the external device has time to transmitt.  Data fills the UART buffer.
+        // this could be calculated based on what is expected.  usually, a delay of 30 works fine for 4 to 8 chars returned. 
+        // it doesnt hurt if data sets in the UART buffer until it is read.
+
+	    if(serialDataAvail (fd)){ k=10;}
+        //printf("%d\n",k);
+
+        k++;
+    }while(k<10);
+    i=0;
+    while (serialDataAvail (fd))
+    {
+        while (serialDataAvail (fd))
+        {
+            a = serialGetchar(fd);
+            buffer[i]=a;
+            i++;
+        }
+        delay(10);
+    }
+    //KARL could probably eliminate the need for buffer[]?
+    for (j=0;j<i;j++){
 		pszEcho[j]=buffer[j];
 	}
 	*sizeEcho=i;
