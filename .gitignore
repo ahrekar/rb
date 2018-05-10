@@ -54,6 +54,7 @@ faradayScanNoAoutMove
 interfacing/bakeoutOmega
 interfacing/controlledCooldown
 interfacing/systemStatus
+interfacing/testAnalogSlave
 .d/
 io/
 polarizationScriptAnalysis
