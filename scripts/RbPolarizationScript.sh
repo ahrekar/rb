@@ -51,5 +51,5 @@ else
 	echo "Faraday Scan: S- pump..."
     $RBC/quickFaradayScan "$COMMENTS, S- pump"
 
-	echo "Finished RbScan: $COMMENTS" | mutt -s "RbControl Status Update" -- karl.ahrendsen@gmail.com
+	#echo "Finished RbScan: $COMMENTS" | mutt -s "RbControl Status Update" -- karl.ahrendsen@gmail.com
 fi

@@ -10,7 +10,7 @@
 
 float getProbeFreq(void){
     printf("Getting Probe Freq.\n");
-    setFlipMirror(0xA3,0k);
+    setFlipMirror(0xA3,0);
     printf("Mirror Flipped.\n");
     return getWaveMeter();
 }

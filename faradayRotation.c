@@ -145,7 +145,8 @@ int main (int argc, char **argv)
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 	fprintf(fp,"#NumVoltages:\t%d\n",1);
-    fprintf(fp,"#Wavelength:\t%f\n",getWaveMeter());
+//    fprintf(fp,"#PumpWavelength:\t%f\n",getPumpFreq());
+//   fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFreq());
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
     int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
