@@ -20,8 +20,8 @@ unsigned int readRS485AnalogSlave(unsigned short RS485Chan, unsigned short Analo
 	unsigned int temp;
 		cmd[0]=RS485Chan;
 		cmd[1]=0x08;
-		cmd[2]=0x0F; // change to cmd[2]=(BASEREGANLG & 0xFF00)>>8;
-		cmd[3]=15 + AnalogChan; // change to cmd[3]=(BASEREGANLG & 0x00FF)+AnalogChan; //channel number.  0 to 3
+		cmd[2]=(BASEREGANLG & 0xFF00)>>8;
+		cmd[3]=(BASEREGANLG & 0x00FF)+AnalogChan; //channel number.  0 to 3
 		i=4;
 		temp = modRTU_CRC(cmd,i);
 		cmd[i+1]=(unsigned char)((temp&0xFF00)>>8);  //ensures that the MSByte is sent 
@@ -55,8 +55,8 @@ unsigned int readRS485AnalogSlaveSimple(unsigned short RS485Chan, unsigned short
 
 	cmd[0]=RS485Chan;
 	cmd[1]=0x03;
-	cmd[2]= 0x0F; // change to cmd[2]=(BASEREGANLG & 0xFF00)>>8;
-	cmd[3]= 15 + AnalogChan;// change to cmd[3]=(BASEREGANLG & 0x00FF)+AnalogChan;  // channel number.  0 to 3
+	cmd[2]=(BASEREGANLG & 0xFF00)>>8; 
+	cmd[3]=(BASEREGANLG & 0x00FF)+AnalogChan; // channel number.  0 to 3
 	i=4;
 	temp = modRTU_CRC(cmd,i);
 	cmd[i+1]=(unsigned char)((temp&0xFF00)>>8);  //ensures that the MSByte is sent 
@@ -87,8 +87,8 @@ unsigned int setRS485AnalogSlavePeriod(unsigned short RS485Chan, unsigned short 
 
 		cmd[0]=RS485Chan;
 		cmd[1]=0x06;
-		cmd[2]=0x00;//change to cmd[2]=(BASEREGANLG & 0xFF00)>>8;
-		cmd[3]=0x0F; // change to cmd[3]=(BASEREGANLG & 0x00FF)+16;
+		cmd[2]=(BASEREGANLG & 0xFF00)>>8;
+		cmd[3]=(BASEREGANLG & 0x00FF)+16; 
 		cmd[4]=0;
 		cmd[5]=(ADCperiods & 0xFF);
 		i=6;
