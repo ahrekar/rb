@@ -20,8 +20,8 @@ unsigned int readRS485AnalogSlave(unsigned short RS485Chan, unsigned short Analo
 	unsigned int temp;
 		cmd[0]=RS485Chan;
 		cmd[1]=0x08;
-		cmd[2]=0x0F;
-		cmd[3]=15 + AnalogChan; // channel number.  0 to 3
+		cmd[2]=0x0F; // change to 0x0D
+		cmd[3]=15 + AnalogChan; // change to 0x0D + channel number.  0 to 3
 		i=4;
 		temp = modRTU_CRC(cmd,i);
 		cmd[i+1]=(unsigned char)((temp&0xFF00)>>8);  //ensures that the MSByte is sent 
@@ -30,7 +30,7 @@ unsigned int readRS485AnalogSlave(unsigned short RS485Chan, unsigned short Analo
 								*/
 
 if (!(returndata[1] & 0x80)){
-		temp = ((returndata[3] << 8)| returndata[4]);
+		temp = ((returndata[3] << 8)| returndata[4]);  // no changes here
 	//	printf("Raw sum of 10 measurements (0 to 10240) = %d\n",temp);
 		*ADCcount = ((float) temp)/10.0;
 		temp = ((returndata[5] <<8)| returndata[6]);
@@ -55,8 +55,8 @@ unsigned int readRS485AnalogSlaveSimple(unsigned short RS485Chan, unsigned short
 
 	cmd[0]=RS485Chan;
 	cmd[1]=0x03;
-	cmd[2]= 0x0F;
-	cmd[3]= 15 + AnalogChan;// channel number.  0 to 3
+	cmd[2]= 0x0F; // change to 0x0D
+	cmd[3]= 15 + AnalogChan;// change to 0x0D + channel number.  0 to 3
 	i=4;
 	temp = modRTU_CRC(cmd,i);
 	cmd[i+1]=(unsigned char)((temp&0xFF00)>>8);  //ensures that the MSByte is sent 
@@ -87,8 +87,8 @@ unsigned int setRS485AnalogSlavePeriod(unsigned short RS485Chan, unsigned short 
 
 		cmd[0]=RS485Chan;
 		cmd[1]=0x06;
-		cmd[2]=0x00;
-		cmd[3]=0x0F; 
+		cmd[2]=0x00;//change to 0x0D
+		cmd[3]=0x0F; // change to 0x1D
 		cmd[4]=0;
 		cmd[5]=(ADCperiods & 0xFF);
 		i=6;
