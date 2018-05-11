@@ -11,7 +11,8 @@
 #include "BK1696.h"
 
 
-
+// this is an edit
+// karl
 int initializeBK1696(int address){
 	char chardata[64];
 	char command[16];
