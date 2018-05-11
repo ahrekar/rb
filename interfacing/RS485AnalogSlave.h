@@ -16,6 +16,8 @@ the CRC is automatically appended to the end of the byte array.
 #include <string.h>
 #include "kenBoard.h"
 #include <math.h>
+// use the following for base register address for analog recorder devices
+// #define BASEREGANLG 0x0D0D
 
 unsigned int readRS485AnalogSlave(unsigned short RS485Chan, unsigned short AnalogChan, float* ADCcount, float* stdev);
 
