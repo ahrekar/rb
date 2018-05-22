@@ -8,18 +8,20 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "kenBoard.h"
-#include "flipMirror.h"
+#include "RS485Devices.h"
+
+#define FLIPMIRROR 0xA2  // <<-- tested with another servo unit. 
 
 int main (int argc, char* argv[]){
 
-	unsigned short i;
+	unsigned int i;
 	int z;
 
 	initializeBoard();
 
 	if (argc == 2) {
 		i = atoi(argv[1]);
-		z=setFlipMirror(0xA4,i);
+		z=setServoPosition(FLIPMIRROR,0,i);
 		if (z>0) printf("error occured: %d\n",z);
 	} else {
 		printf("usage sudo ./mirrorTemplate <int 0 - 8>\n");
@@ -27,7 +29,7 @@ int main (int argc, char* argv[]){
 
 	delay(300);
 	i=0;
-	z = getFlipMirror(0xA4,&i);
+	z = getServoPosition(FLIPMIRROR,0,&i);
 
 	if (z>0) printf("error occured: %d\n",z);
 

@@ -107,4 +107,4 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 
 int initialize_rs485(int baud, int pin);
 
-void writeRS232Bridge(char* cmd, char* returnData, unsigned short bridgeAddress);
+//void writeRS232Bridge(char* cmd, char* returnData, unsigned short bridgeAddress);

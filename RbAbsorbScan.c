@@ -115,11 +115,17 @@ int main (int argc, char **argv)
 }
 
 void graphData(char* fileName){
+	char fileNameBase[1024];
 	char buffer[BUFSIZE];
+	char* extension;
 	FILE* gnuplot;
 	// Create graphs for data see gnutest.c for an explanation of 
 	// how this process works.
 	gnuplot = popen("gnuplot","w"); 
+
+	strcpy(fileNameBase,fileName);
+	extension = strstr(fileNameBase,".dat");
+	strcpy(extension,"");
 
 	//getCommentLineFromFile(fileName,"#ProbeOffset:",buffer);
 	//probeOffset=atof(buffer);
@@ -149,7 +155,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s.png'\n", fileName);
+		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
 		fprintf(gnuplot, buffer);
 		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars,\
 						 	  '%s' using 1:5:6 with errorbars,\

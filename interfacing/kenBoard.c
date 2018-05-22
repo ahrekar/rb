@@ -536,6 +536,8 @@ void write_rs485ASCII(char* cmd, char* pszEcho){
 	delay(100);
 }//end write_rs485
 
+
+/*
 void writeRS232Bridge(char* cmd, char* returnData, unsigned  short bridgeAddress){
     int i,j,k;
     char cmdOut[35];
@@ -592,3 +594,4 @@ void writeRS232Bridge(char* cmd, char* returnData, unsigned  short bridgeAddress
     //   }
 
 }
+*/
