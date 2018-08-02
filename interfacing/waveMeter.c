@@ -7,32 +7,29 @@
 #include "flipMirror.h"
 #include "wiringPi.h"
 #include "waveMeter.h"
+#include "RS485Devices.h"
 
 float getProbeFreq(void){
-    printf("Getting Probe Freq.\n");
-    setFlipMirror(0xA3,0);
-    printf("Mirror Flipped.\n");
+    setMirror(0);
+    delay(300);
     return getWaveMeter();
 }
 float getPumpFreq(void){
-    printf("Getting Pump Freq.\n");
-    setFlipMirror(0xA3,8);
-    printf("Set Flip Mirror Pump Freq.\n");
+    setMirror(8);
+    delay(300);
     return getWaveMeter();
 }
 float getWaveMeter(void){
-	char retData[32];
-	char outData[32];
-	int j;
+	unsigned char retData[32];
+	unsigned char outData[32];
+	int i, status;
 	float temp;
 
-	strcpy(outData," ");
-	j=strlen(outData);
-	outData[j]=13;
-	outData[j+1]=0;
+	strcpy((char*) outData," ");
 
-	writeRS232Bridge(outData,retData,WAV);
-	temp=atof(retData);
+	status=setRS485BridgeReads(2,WAV);
+	writeRS485to232Bridge(outData,retData,WAV);
+	temp=atof((char*) retData);
 
 	return temp;
 }

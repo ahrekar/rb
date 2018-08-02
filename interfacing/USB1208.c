@@ -48,8 +48,8 @@ int getUSB1208AnalogIn(unsigned short chan, float* returnvalue){
         //BP_2_00V   // Differential +/- 2.00 V
         //BP_1_25V   // Differential +/- 1.25 V
         //BP_1_00V   // Differential +/- 1.00 V
-        gain = BP_10_00V;
-        //gain = BP_2_50V;
+        //gain = BP_10_00V;
+        gain = BP_2_50V;
     }else{
         gain = BP_2_50V;
     }

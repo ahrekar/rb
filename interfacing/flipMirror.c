@@ -4,32 +4,35 @@
    to follow
 
 */
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include "kenBoard.h"
+#include "RS485Devices.h"
 
-#include "flipMirror.h"
+#define FLIPMIRROR 0xA3  // <<-- tested with another servo unit. 
 
-#define FM_REG 0x0F0F
+int setMirror(int pos){
+	int z;
 
+	z=setRS485ServoPosition(FLIPMIRROR,0,pos);
+	if (z>0) printf("Error occured: %d\n",z);
+	
+	delay(300);
 
-int setFlipMirror(unsigned short chan, unsigned short position){
-	int status;
-/* position should range from 0 to 8
-	with
-	0 = mirror full down (*measuring pump*)
-	8 = mirror full up   (*measuring probe*)
-*/
-	if (position > 8) position = 8;
-
-	status=write_Modbus_RTU(chan,FM_REG, position);
-
-	return status;
+	return 0;
 }
 
-int getFlipMirror (unsigned short chan, unsigned short* position){
+int getMirror(void){
+	unsigned int i;
+	int z;
+	z = getRS485ServoPosition(FLIPMIRROR,0,&i);
+	if (z>0){
+		printf("Error occured: %d\n",z);
+		return z;
+	}
+	if(i==0)printf("Measuring Probe Beam\n");
+	if(i==8)printf("Measuring Pump Beam\n");
 
-	int status;
-	unsigned int temp;
-	status = read_Modbus_RTU(chan,FM_REG, &temp);
-	*position = temp;
-	return status;
-
+	return 0 ;
 }

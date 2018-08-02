@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <wiringPi.h>
-#define AA 23
-#define BB 24
+#include "interfacing/kenBoard.h"
+#include "interfacing/laserFlag.h"
 
 int main (int argc, char *argv[])
 {
@@ -27,26 +27,21 @@ int main (int argc, char *argv[])
         printf("Pump = 1\t\tBlocked = 1\n");
         return 1;
     }
+	if(value>0){value=8;}else{value=0;}
 
-    wiringPiSetup();
-
-    pinMode(AA,OUTPUT);
-    pinMode(BB,OUTPUT);
+	initializeBoard();
 
     switch (device) {
         case 1:
-            digitalWrite(AA, (value & 0b0001));
+			setFlag(PUMPFLAG,value);
             break;
         case 0:
-            digitalWrite(BB, (value & 0b0001));
+			setFlag(PROBEFLAG,value);
             break;
         default:
             printf("invalid device number\n");
             break;
     }
-
-
-    //digitalWrite(BB, ((value & 0b0010) >> 1) );
 
     return 0;
 }

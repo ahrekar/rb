@@ -40,19 +40,24 @@ if (returnRes == 0  || returnRes > 120){
 	getPVCN7500(CN_TARGET,&returnTarg);
 }
 
-modTemperature=(returnRes>40)?10:5;
-if (returnRes>95)
+if (returnRes>95){
 	modTemperature=30;
-else if (returnRes > 70)
+    printf("temperature %f > %f, setting to %f and 0\n",returnRes,95,returnRes+modTemperature);
+}else if (returnRes > 70){
 	modTemperature=20;
-else if (returnRes > 50)
+    printf("temperature %f > %f, setting to %f and 0\n",returnRes,70,returnRes+modTemperature);
+}else if (returnRes > 50){
 	modTemperature=10;
-else if (returnRes > 40)
+    printf("temperature %f > %f, setting to %f and 0\n",returnRes,50,returnRes+modTemperature);
+}else if (returnRes > 40){
 	modTemperature=5;
-else
+    printf("temperature %f > %f, setting to %f and 0\n",returnRes,40,returnRes+modTemperature);
+}else{
 	modTemperature=3;
+    printf("temperature %f < %f, setting to %f and 0\n",returnRes,40,returnRes+modTemperature);
+}
 
-if (returnRes < 36 && returnTarg < 80){
+if (returnRes < 38 && returnTarg < 80){
 	setSVCN7500(CN_RESERVE, 0.0);
 	setSVCN7500(CN_TARGET, 0.0);
 } else {
@@ -60,7 +65,6 @@ if (returnRes < 36 && returnTarg < 80){
 	setSVCN7500(CN_TARGET, returnRes+modTemperature);
 }
 
-printf("temperature %f > %f, setting to %f and 20\n",returnRes,temperatureStep,temperatureStep+modTemperature);
 //changed=1;
 /**
 while(!changed){

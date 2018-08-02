@@ -8,7 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "kenBoard.h"
+#include "RS485Devices.h"
 
+#define VORTEX 0XC2
 int initializeVortex(void);
 
 int setVortexPiezo(float volts);

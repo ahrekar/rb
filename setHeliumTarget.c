@@ -22,7 +22,7 @@
 
 int main (int argc, char *argv[])
 {
-	int value;
+	int value = 0;
 
 	if (argc==2) {
 		value=atoi(argv[1]);
@@ -38,7 +38,8 @@ int main (int argc, char *argv[])
 	initializeBoard();
 	initializeUSB1208();
 
-	setUSB1208AnalogOut(HETARGET,value);//sets vout such that 0 v at the probe laser
+       	setUSB1208AnalogOut(HETARGET,value);//sets vout such that 0 v at the probe laser
+       	//setUSB1208AnalogOut(0,value);//sets vout such that 0 v at the probe laser
 
 	closeUSB1208();
 

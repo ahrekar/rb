@@ -18,7 +18,7 @@ int initializeTA(void){
 	outData[j]=13;
 	outData[j+1]=0;
 
-	writeRS232Bridge(outData,retData,TA);
+	writeRS485to232Bridge(outData,retData,TA);
 
 	j=strcmp(retData,"O.K.");
 
@@ -30,7 +30,7 @@ int initializeTA(void){
 //	outData[j]=13;
 //	outData[j+1]=0;
 
-//	writeRS232Bridge(outData,retData,HEAD);
+//	writeRS485to232Bridge(outData,retData,HEAD);
 
 	
 
@@ -50,7 +50,7 @@ int initializeLaser(void){
 	outData[j]=13;
 	outData[j+1]=0;
 
-	writeRS232Bridge(outData,retData,HEAD);
+	writeRS485to232Bridge(outData,retData,HEAD);
 
 	j=strcmp(retData,"O.K.");
 
@@ -62,7 +62,7 @@ int initializeLaser(void){
 //	outData[j]=13;
 //	outData[j+1]=0;
 
-//	writeRS232Bridge(outData,retData,HEAD);
+//	writeRS485to232Bridge(outData,retData,HEAD);
 	// expect j = 0 for no errors.  If there is an error, 
 	return j;
 }
@@ -84,7 +84,7 @@ float getLaserTemperature(void){
 	outData[j]=13;
 	outData[j+1]=0;
 
-	writeRS232Bridge(outData,retData,HEAD);
+	writeRS485to232Bridge(outData,retData,HEAD);
 	temp=atof(retData);
 
 	return temp;
@@ -103,7 +103,7 @@ float getTACurrent(void){
 	outData[j]=13;
 	outData[j+1]=0;
 
-	writeRS232Bridge(outData,retData,TA);
+	writeRS485to232Bridge(outData,retData,TA);
 	temp=atof(retData);
 
 	return temp;
@@ -126,7 +126,7 @@ int setTACurrent(int current){
 		outData[j]=13;
 		outData[j+1]=0;
 
-		writeRS232Bridge(outData,retData,TA);
+		writeRS485to232Bridge(outData,retData,TA);
 
 		j=strcmp(retData,"O.K.");
 
@@ -155,7 +155,7 @@ int setLaserTemperature(float temperature){
 		outData[j]=13;
 		outData[j+1]=0;
 
-		writeRS232Bridge(outData,retData,HEAD);
+		writeRS485to232Bridge(outData,retData,HEAD);
 
 		j=strcmp(retData,"O.K.");
 

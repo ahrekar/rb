@@ -15,6 +15,7 @@
 #include "vortexLaser.h"
 #include "flipMirror.h"
 #include "waveMeter.h"
+#include "RS485Devices.h"
 
 #define BUFSIZE 1024
 /**

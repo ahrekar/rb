@@ -13,6 +13,7 @@
 #include "grandvillePhillips.h"
 #include "USB1208.h"
 #include "BK1696.h"
+#include "RS485Devices.h"
 
 #define HOURSINDAY 24
 #define MINUTESINHOUR 60

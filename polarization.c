@@ -20,6 +20,7 @@
 #include "fileTools.h"
 #include "polarizationAnalysisTools.h"
 #include "interfacing/interfacing.h"
+#include "interfacing/RS485Devices.h"
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 	#include "mathTools.h"
@@ -166,6 +167,8 @@ int main (int argc, char **argv)
 }
 
 int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurrent){
+	char command[64];
+	char echoData[128];
 	// Variables for stepper motor control.
 	int nsteps,steps,ninc,i;
 
@@ -203,23 +206,22 @@ int getPolarizationData(char* fileName, int aout, int dwell, float leakageCurren
 		current=0.0;
 		sumCounts=0;
 		for(i=0;i<dwell;i++){
-			getUSB1208AnalogIn(K617,&measurement[i]);
-			current += measurement[i];
+            //writeRS485to232Bridge("READ?",echoData,0xCA);
+			//current += atof(echoData);
+
+			getUSB1208AnalogIn(0,&current);
+
 			getUSB1208Counter(10,&returnCounts);
 			sumCounts += returnCounts;
-
-			getUSB1208AnalogIn(K617,&measurement[i+dwell]);
-			current += measurement[i+dwell];
 		}
 
 
-		current = current/(float)(dwell*2);
-		currentErr = stdDeviation(measurement,dwell*2);
+        currentErr=0;
 
 		angle = (float)steps/STEPSPERREV*2.0*PI;
 
-		printf("%d\t%ld\t%f\n",steps,sumCounts,current+leakageCurrent);
-		fprintf(rawData,"%d\t%ld\t%f\t%f\t%f\n",steps,sumCounts,current+leakageCurrent,currentErr,angle);
+		printf("%d\t%ld\t%e\n",steps,sumCounts,current+leakageCurrent);
+		fprintf(rawData,"%d\t%ld\t%e\t%f\t%f\n",steps,sumCounts,current+leakageCurrent,currentErr,angle);
 	}
 	fclose(rawData);
 

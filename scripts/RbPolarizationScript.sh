@@ -37,7 +37,7 @@ else
 #	echo "Setting QWP for Pi light..."
 #	$RBC/setWavePlate $PIPOS
 #	echo "Faraday Scan: Pi pump..."
-#    $RBC/quickFaradayScan "$COMMENTS, Pi pump"
+#    $RBC/faradayScan "$COMMENTS, Pi pump"
 
 	# set QWP for S+ light
 	echo "Setting QWP for S+ light..."
@@ -51,5 +51,5 @@ else
 	echo "Faraday Scan: S- pump..."
     $RBC/quickFaradayScan "$COMMENTS, S- pump"
 
-	#echo "Finished RbScan: $COMMENTS" | mutt -s "RbControl Status Update" -- karl.ahrendsen@gmail.com
+	echo "Finished RbScan: $COMMENTS" | mutt -s "RbControl Status Update" -- karl.ahrendsen@gmail.com
 fi

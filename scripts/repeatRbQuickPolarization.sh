@@ -8,10 +8,9 @@ else
 	COMMENTS=$2
 
 	for i in $(seq 1 $RUNS); do
-		echo "Pausing for only a second to give the opportunity to cancel."
-		sleep 1
+		echo "Pausing for 5 seconds to give the opportunity to cancel."
+		sleep 5
 		sudo $RBC/scripts/RbQuickPolarizationScript.sh "Run $i/$RUNS, $2"
-		sudo $RBC/interfacing/mainTemplate
 	done
 
 fi

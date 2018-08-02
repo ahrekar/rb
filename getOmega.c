@@ -13,16 +13,19 @@
 
 int main (int argc, char* argv[]){
 
-	float returnFloat;
+	float returnFloat,setReturnFloat;
 	
 	initializeBoard();
 
+	getSVCN7500(CN_TARGET,&setReturnFloat);
 	getPVCN7500(CN_TARGET,&returnFloat);
-	printf("CollCellTemp(degC):%3.1f\n",returnFloat);
+	printf("CollCellTemp(degC):%3.1f/%3.1f\n",returnFloat,setReturnFloat);
+	getSVCN7500(CN_RESERVE,&setReturnFloat);
 	getPVCN7500(CN_RESERVE,&returnFloat);
-	printf("ResTemp(degC):%3.1f\n",returnFloat);
+	printf("ResTemp(degC):%3.1f/%3.1f\n",returnFloat,setReturnFloat);
+	getSVCN7500(CN_CHAMWALL,&setReturnFloat);
 	getPVCN7500(CN_CHAMWALL,&returnFloat);
-	printf("WallTemp(degC):%3.1f\n",returnFloat);
+	printf("WallTemp(degC):%3.1f/%3.1f\n",returnFloat,setReturnFloat);
 
 	return 0;
 }

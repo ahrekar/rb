@@ -27,7 +27,6 @@
 #include <asm/types.h>
 #include <wiringPi.h>
 #include "mathTools.h" //includes stdDeviation
-#include "tempControl.h"
 #include "interfacing/interfacing.h"
 #include "faradayScanAnalysisTools.h"
 #include "interfacing/waveMeter.h"
@@ -46,8 +45,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
 int main (int argc, char **argv)
 {
-	int numVolts=8;
-	float volts[]={0,2,26,30,80,84,115,117};
+	int numVolts=14;
+	float volts[]={0,2,26,30,40,44,48,52,66,70,80,84,115,117};
 	//int numVolts=20;
 	//float volts[20];
 	//int j;
@@ -181,7 +180,8 @@ int main (int argc, char **argv)
 
 	for(i=0;i<numVolts;i++){
 		setVortexPiezo(volts[i]);
-		delay(1000); 
+		//Wait 10 seconds for laser to settle. 
+		delay(10000); 
 
 	    wavelength=getWaveMeter();
 

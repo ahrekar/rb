@@ -80,7 +80,8 @@ int writeDigital(unsigned short chan, unsigned short writedata);
 /*
  RS485 I/O
 */
-void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho);
+void write_rs485BYTE(unsigned char* cmd, unsigned int numchar, unsigned char* pszEcho, unsigned int* sizeEcho);
+
 //void write_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho);
 void write_rs485ASCII(char* cmd, char* pszEcho);
 // uses RaspiUART and one GPIO pin to control serial IO through RS485
@@ -88,10 +89,10 @@ void write_rs485ASCII(char* cmd, char* pszEcho);
 /*
 Modbus protocal using RS485 communation
 */
-unsigned short modRTU_CRC(char* buff,int len);
+unsigned short modRTU_CRC(unsigned char* buff,unsigned short len);
 // calculates Modbus16 CRC. Returns CRC word. This gets seperated into two bytes
 
-int validateRTU(char* buff, int len);
+int validateRTU(unsigned char* buff, unsigned short len);
 //checks a byte buffer . Assumes that the last two bytes are Modbus16 CRC
 
 int write_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int writedata);

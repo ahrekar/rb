@@ -20,11 +20,11 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbAbsorbScan.c quickFaradayScan.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c waitForOmega.c polarizationAnalysis.c setHeliumTarget.c polarizationScriptAnalysis.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c pumpLaserProfileScan.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbPumpAbsorbScan.c RbAbsorbScanAutoFindDetuning.c RbAbsorbScan.c quickFaradayScan.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c probeLaserControl.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
-_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c sacherLaser.c
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c sacherLaser.c RS485Devices.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
 # The directory to put object files into.
@@ -133,21 +133,33 @@ getcounts: getcounts.o $(INTOBJECTS)
 #TESTING
 RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
+RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+getWavemeter: getWavemeter.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 pumpLaserProfileScan: pumpLaserProfileScan.o mathTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 excitationfn: excitationfn.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 monitorCountsAndCurrent: monitorCountsAndCurrent.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
+monitorPhotodiodes: monitorPhotodiodes.o mathTools.o $(INTOBJECTS) 
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 recordEverythingAndTwistMotor: recordEverythingAndTwistMotor.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 faradayScan: faradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+faradayScanBPD: faradayScanBPD.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 quickFaradayScan: quickFaradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 razorBladeLaserProfiling: razorBladeLaserProfiling.o mathTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 faradayRotation: faradayRotation.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+stepTemperatureWaitForRotationAngle: stepTemperatureWaitForRotationAngle.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -157,15 +169,17 @@ getOmega: getOmega.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setProbeLaser: setProbeLaser.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setProbeDetuning: setProbeDetuning.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setTACurrent: setTACurrent.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-toggleLaserFlag: toggleLaserFlag.o $(INTOBJECTS)
+toggleLaserFlag: toggleLaserFlag.o interfacing/laserFlag.c interfacing/laserFlag.h $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setLaserFlag: setLaserFlag.o $(INTOBJECTS)
+toggleFlipMirror: toggleFlipMirror.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setLaserFlag: setLaserFlag.o $(INTOBJECTS) interfacing/laserFlag.c interfacing/laserFlag.h
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setHeliumTarget: setHeliumTarget.o $(INTOBJECTS)
-	$(LINK.c) $(OUTPUT_OPTION) $^ 
-waitForOmega: waitForOmega.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
 stepmotor: stepmotor.o 				$(INTOBJECTS)

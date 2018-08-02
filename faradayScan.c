@@ -27,7 +27,6 @@
 #include <asm/types.h>
 #include <wiringPi.h>
 #include "mathTools.h" //includes stdDeviation
-#include "tempControl.h"
 #include "interfacing/interfacing.h"
 #include "faradayScanAnalysisTools.h"
 #include "interfacing/waveMeter.h"
@@ -60,11 +59,13 @@ int main (int argc, char **argv)
 	FILE *fp,*dataCollectionFlagFile,*configFile;
 
 
-	if (argc==3){
-		strcpy(comments,argv[1]);
-		deltaVolt=atoi(argv[2]);
+	if (argc==5){
+        VoltStart1=atoi(argv[1]);
+        VoltStop1=atoi(argv[2]);
+        deltaVolt=atoi(argv[3]);
+		strcpy(comments,argv[4]);
 	} else { 
-		printf("usage '~$ sudo ./faradayscan <comments in quotes>'\n");
+		printf("usage '~$ sudo ./faradayScan <startVoltage> <endVoltage> <deltaVoltage> <comments in quotes>'\n");
 		return 1;
 	}
 
@@ -109,12 +110,7 @@ int main (int argc, char **argv)
     }
 
     int totalVolts=0;
-    VoltStart1=0;
-    VoltStop1=117;
     totalVolts+=(VoltStop1-VoltStart1)/deltaVolt+1;
-    VoltStart2=0;
-    VoltStop2=117;
-    totalVolts+=(VoltStop2-VoltStart2)/deltaVolt+1;
 
 	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
@@ -170,9 +166,13 @@ int main (int argc, char **argv)
     int pd[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
 
 	fp=fopen(fileName,"a");
-	setVortexPiezo(VoltStart1);
+    // We frequently see hysterisis when changing the voltage. This is an attempt to mitigate 
+    // this effect when running multiple faradayScans in a row for polarization purposes. 
+	setVortexPiezo(45);
     delay(500);
-	setVortexPiezo(VoltStop2);
+    setVortexPiezo(VoltStart1);
+    delay(500);
+	setVortexPiezo(VoltStop1);
     delay(500);
 
 	for(Volt=VoltStart1;Volt<=VoltStop1;Volt+=deltaVolt){// start for Volt
@@ -188,23 +188,6 @@ int main (int argc, char **argv)
 
         delay(1000);
         
-        quickHomeMotor(PROBE_MOTOR);
-        collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
-	}//end for Volt
-
-	for(Volt=VoltStop2;Volt>=VoltStart2;Volt-=deltaVolt){
-		setVortexPiezo(Volt);
-		delay(1000); 
-
-		wavelength=getWaveMeter();
-		//wavelength=-1;
-
-        fprintf(fp,"\n\n#VOLT:%d(%f)\n",Volt,wavelength);
-        printf("VOLT:%d(%f)\t",Volt,wavelength);
-        fflush(stdout);
-
-        delay(1000);
-
         quickHomeMotor(PROBE_MOTOR);
         collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
 	}//end for Volt

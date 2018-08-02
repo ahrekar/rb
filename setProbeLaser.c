@@ -31,7 +31,11 @@ int main (int argc, char *argv[])
 		value=atof(argv[1]);
 	}else{
 		printf("Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024\n");
-		value=0;
+
+		getVortexPiezo(&value);	
+		printf("Laser is currently at %3.1f V\n",value);
+		
+		return 0;
 	}
 
 	if (value<0) value=0;

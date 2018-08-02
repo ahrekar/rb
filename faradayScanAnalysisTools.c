@@ -210,7 +210,7 @@ int plotRawData(char* fileName){
     int stepColumnNumber=1;
     int intensityColumnNumber=4;
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 100,28\n");
+		fprintf(gnuplot, "set terminal dumb size 60,14\n");
 		fprintf(gnuplot, "set output\n");			
 
 		sprintf(buffer, "set title '%s'\n", fileName);

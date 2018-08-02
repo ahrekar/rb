@@ -7,41 +7,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "interfacing.h"
-
-#define UP 0
-#define DOWN 5
+#include "kenBoard.h"
+#include "flipMirror.h"
+#include "RS485Devices.h"
 
 int main (int argc, char* argv[]){
-
-	unsigned short i;
-	int z;
-
 	initializeBoard();
-	initializeUSB1208();
-
+	int i,z;
 	if (argc == 2) {
 		i = atoi(argv[1]);
-		if(i==0)i=UP;
-		else i=DOWN;
-		z=setFlipMirror(0xA3,i);
-		if (z>0) printf("Error occured: %d\n",z);
+		if(i>0){i=8;}else{i=0;}
+		z=setMirror(i);
 	} else {
-		printf("usage:\n \
-				    ./setMirror (0 or 1)\n");
+		printf("usage: sudo ./setMirror <0 for up (Probe), 1 for down (Pump)\n");
 	}
-
-	delay(300);
-	i=0;
-	z = getFlipMirror(0xA3,&i);
-
-	if (z>0) printf("error occured: %d\n",z);
-
-	if(i==0)printf("Mirror UP (Measuring Probe)\n");
-	if(i==7)printf("Mirror DOWN  (Measuring Pump)\n");
-	printf("Current position: %d\n",i);
-
-	return 0 ;
-
-
+	getMirror();
+	return 0;
 }

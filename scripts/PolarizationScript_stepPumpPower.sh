@@ -4,15 +4,15 @@ if [ "$#" -ne 1 ]; then
 	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
-	FILBIAS="-119.0"
-	N2OFFSET="74.5"
-	N2SWEEP="4.7"
-	HEOFFSET=0
-	CURRENTSCALE=6
+	FILBIAS="-130.0"
+	N2OFFSET="8.4"
+	N2SWEEP="12.2"
+	HEOFFSET=-74.3
+	CURRENTSCALE=7
 	SCANRANGE=31
 	STEPSIZE=24
-	DWELL=1
-	NUMRUN=4
+	DWELL=2
+	NUMRUN=7
 	COMMENTS=$1
 
     PUMP=1
@@ -21,7 +21,7 @@ else
     BLOCKED=1
     UNBLOCKED=0
 
-	for power in 0 500 1000 1500 2000 2300 2500; do 
+	for power in 2500 2000 1500 1000 0; do 
 		echo "About to change current to $power, giving 1 minutes opportunity to cancel" 
 		echo "About to change current to $power, giving 1 minute to cancel." | mutt -s "RbPi Report" karl@huskers.unl.edu
 		sleep 60

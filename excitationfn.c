@@ -75,14 +75,14 @@ int main (int argc, char **argv)
 		printf("                                (remember neg.)                     (remember neg.!) (   0-30   ) (  1-24   )    (1-5)s       \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
-		printf("               1: %1.3fV    9: %1.3fV   17: %1.3fV  25: %1.3fV           \n",1*HPCAL,9*HPCAL,17*HPCAL,25*HPCAL);
-		printf("               2: %1.3fV   10: %1.3fV   18: %1.3fV  26: %1.3fV           \n",2*HPCAL,10*HPCAL,18*HPCAL,26*HPCAL);
-		printf("               3: %1.3fV   11: %1.3fV   19: %1.3fV  27: %1.3fV           \n",3*HPCAL,11*HPCAL,19*HPCAL,27*HPCAL);
-		printf("               4: %1.3fV   12: %1.3fV   20: %1.3fV  28: %1.3fV           \n",4*HPCAL,12*HPCAL,20*HPCAL,28*HPCAL);
-		printf("               5: %1.3fV   13: %1.3fV   21: %1.3fV  29: %1.3fV           \n",5*HPCAL,13*HPCAL,21*HPCAL,29*HPCAL);
-		printf("               6: %1.3fV   14: %1.3fV   22: %1.3fV  30: %1.3fV           \n",6*HPCAL,14*HPCAL,22*HPCAL,30*HPCAL);
-		printf("               7: %1.3fV   15: %1.3fV   23: %1.3fV  31: %1.3fV           \n",7*HPCAL,15*HPCAL,23*HPCAL,31*HPCAL);
-		printf("               8: %1.3fV   16: %1.3fV   24: %1.3fV  32: %1.3fV           \n",8*HPCAL,16*HPCAL,24*HPCAL,32*HPCAL);
+		printf("               1: %1.3fV    9: %1.3fV   17: %1.3fV           \n",1*HPCAL,9*HPCAL,17*HPCAL );
+		printf("               2: %1.3fV   10: %1.3fV   18: %1.3fV           \n",2*HPCAL,10*HPCAL,18*HPCAL);
+		printf("               3: %1.3fV   11: %1.3fV   19: %1.3fV           \n",3*HPCAL,11*HPCAL,19*HPCAL);
+		printf("               4: %1.3fV   12: %1.3fV   20: %1.3fV           \n",4*HPCAL,12*HPCAL,20*HPCAL);
+		printf("               5: %1.3fV   13: %1.3fV   21: %1.3fV           \n",5*HPCAL,13*HPCAL,21*HPCAL);
+		printf("               6: %1.3fV   14: %1.3fV   22: %1.3fV           \n",6*HPCAL,14*HPCAL,22*HPCAL);
+		printf("               7: %1.3fV   15: %1.3fV   23: %1.3fV           \n",7*HPCAL,15*HPCAL,23*HPCAL);
+		printf("               8: %1.3fV   16: %1.3fV   24: %1.3fV           \n",8*HPCAL,16*HPCAL,24*HPCAL);
 		printf("                                                                                               \n");
 		return 1;
 	}
@@ -174,6 +174,7 @@ int main (int argc, char **argv)
 	// error bars.
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
+	char echoData[128];
 
 	for (value=0;value<steprange;value+=stepsize){
 		setUSB1208AnalogOut(HETARGET,value);
@@ -208,10 +209,13 @@ int main (int argc, char **argv)
 
 		current=current/(float)nSamples;
 
-		printf("Current %f\t",current);
+        //writeRS485to232Bridge("READ?",echoData,0xCA);
+        //current += atof(echoData);
+
+		printf("Current %e\t",current);
 
 		fprintf(fp,"%ld\t%Lf\t",returnCounts/dwell,sqrtl(returnCounts)/dwell);
-		fprintf(fp,"%f\t%f\t",-current,stdDeviation(measurement,nSamples));
+		fprintf(fp,"%e\t%f\t",-current,/*0*/stdDeviation(measurement,nSamples));
 
 		// Grab several readings and average
 		pressure=0;

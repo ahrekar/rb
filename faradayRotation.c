@@ -27,13 +27,12 @@
 #include <asm/types.h>
 #include <wiringPi.h>
 #include "mathTools.h" //includes stdDeviation
-#include "tempControl.h"
 #include "interfacing/interfacing.h"
 #include "faradayScanAnalysisTools.h"
 #include "interfacing/waveMeter.h"
 
 #define PI 3.14159265358979
-#define STEPSIZE 7.0
+#define STEPSIZE 1.0
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -57,11 +56,6 @@ int main (int argc, char **argv)
 
 
     if (argc==2){
-        /*
-        probeOffset=atof(argv[1]);
-        mag1Voltage=atof(argv[2]);
-        mag2Voltage=atof(argv[3]);
-        strcpy(comments,argv[4]);*/
         strcpy(comments,argv[1]);
     } else { 
         printf("usage '~$ sudo ./faradayRotation <comments in quotes>'\n");
@@ -145,8 +139,8 @@ int main (int argc, char **argv)
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 	fprintf(fp,"#NumVoltages:\t%d\n",1);
-//    fprintf(fp,"#PumpWavelength:\t%f\n",getPumpFreq());
-//   fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFreq());
+    fprintf(fp,"#PumpWavelength:\t%f\n",getWaveMeter());
+    //fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFreq());
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
     int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
@@ -155,7 +149,8 @@ int main (int argc, char **argv)
     //int photoDetectors[] = {PROBE_LASER,PUMP_LASER,REF_LASER};
     //char* names[]={"PRB","PMP","REF"};
     int numPhotoDetectors = 3;
-    int motor = PROBE_MOTOR;
+    //int motor = PROBE_MOTOR;
+    int motor = PUMP_MOTOR;
 
     // Write the header for the data to the file.
     fprintf(fp,"STEP");
@@ -206,7 +201,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     for (k=0;k<revolutions;k++){ //revolutions
         for (steps=0;steps < STEPSPERREV;steps+=(int)STEPSIZE){ // steps
             // (STEPSPERREV) in increments of STEPSIZE
-            delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
+            delay(300); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP. UPDATE: with the Lock-in at a time scale of 100 ms, it takes 500 ms to settle. 
+            // With time scale of 30 ms, takes 300 ms to settle.
 
             //get samples and average
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1

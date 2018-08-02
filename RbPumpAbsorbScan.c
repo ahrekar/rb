@@ -22,6 +22,7 @@
 #include "mathTools.h"
 #include "fileTools.h"
 #include "interfacing/interfacing.h"
+#include "interfacing/sacherLaser.h"
 
 #define BUFSIZE 1024
 #define NUMCHANNELS 3
@@ -67,10 +68,10 @@ int main (int argc, char **argv)
 	initializeBoard();
 	initializeUSB1208();
 
-	if (endvalue>117.5) endvalue=117.5;
-	if (startvalue>117.5) endvalue=117.5;
-	if (startvalue<0) startvalue=0;
-	if (endvalue<0) endvalue=0;
+	if (endvalue>28.110) endvalue=28.110;
+	if (startvalue>28.110) endvalue=28.110;
+	if (startvalue<27.4) startvalue=27.4;
+	if (endvalue<27.4) endvalue=27.4;
 	if (startvalue>endvalue) {
 		printf("error: startvalue > endvalue.\nYeah, i could just swap them in code.. or you could just enter them in correctly. :-)\n");
 		return 1;
@@ -95,7 +96,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-    err=setFlipMirror(WAVEMETERFLIP,0);
+    err=setMirror(0);
     if(err>0) printf("Error Occured While setting Flip Mirror: %d\n",err);
 
 	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
@@ -238,7 +239,7 @@ void writeFileHeader(char* fileName, char* comments){
     /** End System Stats Recording **/
 
 	//fprintf(fp,"VOLT\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"VOLT\tWAV\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
+	fprintf(fp,"TEMP\tWAV\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
 	fclose(fp);
 }
 
@@ -273,13 +274,13 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	float* measurement = malloc(nSamples*sizeof(float));
 
 	value=startvalue;
-	setVortexPiezo(value);
+	setLaserTemperature(value);
 	delay(10000);
 
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
         if(count%15==0) printf("          \t       \t\t\tPUMP      |        PROBE      |        REFERENCE\n");
-		setVortexPiezo(value);
-		printf("VOLT %3.1f \t",value);
+		setLaserTemperature(value);
+		printf("TEMP %2.3f \t",value);
 		fprintf(fp,"%f\t",value);
 
 		// delay to allow transients to settle

@@ -14,10 +14,7 @@ int initializeVortex(void){
 	int j;
 
 	strcpy(outData,":OUTP ?");
-	j=strlen(outData);
-	outData[j]=13;
-	outData[j+1]=0;
-	writeRS232Bridge(outData,retData,194);
+	writeRS485to232Bridge(outData,retData,VORTEX);
 j=-1;
 	if (strcmp(retData,"1")==0){
 		// laser is on. and talking to us. do nuthing
@@ -45,12 +42,8 @@ int setLaserOnOff(int state){
 	sprintf(retData,"%d",state);
 	strcpy(outData,":OUTP ");
 	strcat(outData,retData);
-	j=strlen(outData);
-	outData[j]=13;
-	outData[j+1]=0;
-	j=-1;
-	writeRS232Bridge(outData,retData,194);
 
+	writeRS485to232Bridge(outData,retData,VORTEX);
 	return 0;
 }
 
@@ -66,12 +59,10 @@ int setVortexPiezo(float volts){
 		sprintf(retData,"%2.1f",volts);
 		strcpy(outData,":SOUR:VOLT:PIEZ ");
 		strcat(outData,retData);
-		j=strlen(outData);
-		outData[j]=13;
-		outData[j+1]=0;
-	writeRS232Bridge(outData,retData,194);
+	
+	writeRS485to232Bridge(outData,retData,VORTEX);
 		j=strlen(retData);  // not expecting much back from Vortex. If we get anything, it will be a parsing, or NO RESPONSE message
-		if (j!=0) printf(retData);
+		//if (j!=0) printf(retData);
 	}
 
 	return j;
@@ -80,20 +71,11 @@ int setVortexPiezo(float volts){
 int getVortexPiezo(float* volts){
 	char retData[32];
 	char outData[32];
-	int j;
 
-	j=-1;
+	strcpy(outData,":SOUR:VOLT:PIEZ ?");
 
-		strcpy(outData,":SOUR:VOLT:PIEZ ?");
-		j=strlen(outData);
-		outData[j]=13;
-		outData[j+1]=0;
-	writeRS232Bridge(outData,retData,194);
-
+	writeRS485to232Bridge(outData,retData,VORTEX);
 	*volts=atof(retData);
-return 0;
-
+	return 0;
 }
-
-
 // chan is the rs485 channel

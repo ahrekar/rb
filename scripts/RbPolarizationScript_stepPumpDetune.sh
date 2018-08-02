@@ -5,8 +5,8 @@ if [ "$#" -ne 1 ]; then
 else
     RBC="/home/pi/RbControl"
 	COMMENTS=$1
-	STARTFREQ=27.77
-	ENDFREQ=28.27
+	STARTFREQ=27.659
+	ENDFREQ=27.752
 	STEPFREQ=.0125
 
     PUMP=1
@@ -17,7 +17,7 @@ else
 
 	for detune in $(seq $STARTFREQ $STEPFREQ $ENDFREQ); do 
 		echo "About to change freq to $detune, giving 1 minutes opportunity to cancel" 
-		#echo "About to change temperature to $detune" | mutt -s "RbPi Report" karl@huskers.unl.edu
+		echo "About to change temperature to $detune" | mutt -s "RbPi Report" karl@huskers.unl.edu
 		sleep 60
 
 		sudo $RBC/interfacing/TestLaser $detune
@@ -32,5 +32,5 @@ else
 		sudo $RBC/scripts/RbQuickPolarizationScript.sh "detune=$detune,  $COMMENTS"
 	# detune LOOP DONE
 	done 
-	#echo "Finished with pump scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu
+	echo "Finished with pump scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

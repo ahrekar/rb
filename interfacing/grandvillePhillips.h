@@ -11,6 +11,8 @@ are connected to ADC channels
 #include <math.h>
 #include "kenBoard.h"
 
+#include "RS485Devices.h"
+
 #define GP_HE_CHAN 0
 #define GP_N2_CHAN 1
 #define GP_CHAMB_CHAN 2

@@ -15,7 +15,7 @@ $RBC/scripts/takePicture.sh "RbAutoPic"
 
 $RBC/setLaserFlag $PROBE $UNBLOCKED
 $RBC/setLaserFlag $PUMP $BLOCKED
-$RBC/RbAbsorbScan 35 60 .2 "RbAutoScan"
+$RBC/RbAbsorbScan 35 70 .4 "RbAutoScan"
 
 $RBC/setLaserFlag $PROBE $UNBLOCKED
 $RBC/setLaserFlag $PUMP $UNBLOCKED

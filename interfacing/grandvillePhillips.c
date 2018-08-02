@@ -9,7 +9,7 @@
 
 int getConvectron(unsigned int chan, float* returnvalue){
     unsigned int kchan;
-    float CVGauge;
+    float Stdev,CVGauge;
     unsigned int rdata;
 int status;
 /*
@@ -40,11 +40,9 @@ int status;
 		kchan=0;
 
 	}
-	kchan = kchan + 0x0F0F; // 0x0F0F is the base 'register'
-			//(RS485 address of the slave device, which register of the PIC, and the returned data)
-	status = read_Modbus_RTU(0xD0,kchan,&rdata);
+	
+    status = readRS485AnalogRecorder(0xD0,kchan,1024.0,&CVGauge,&Stdev);
 	if (status==0){
-		    CVGauge=(float)rdata;
 		    //printf("Chan: %d\tReading:%f\t",kchan,CVGauge);
 		    CVGauge = pow(10,(0.00499*CVGauge - 4.05));
 		    *returnvalue=CVGauge;
@@ -57,11 +55,11 @@ int status;
 }
 
 int getIonGauge(float* returnvalue){
-    int kchan=0x0F0F; // this is channel 0 of the box.  
+    int kchan=0; // this is channel 0 of the box.  
 /*
 
 */
-    float IonGauge;
+    float Stdev,IonGauge;
     unsigned int rdata;
 	int status;
 
@@ -69,9 +67,8 @@ int getIonGauge(float* returnvalue){
 //    getADC(kchan,&rdata);
 
 
-	status = read_Modbus_RTU(0xD0,kchan,&rdata);
+	status =readRS485AnalogRecorder(0xD0,kchan,1024.0,&IonGauge,&Stdev);
 	if (status==0){
-	IonGauge = (float)rdata;
 	//printf("Chan: %d\tReading:%f\t",kchan,IonGauge);
 	
 //	IonGauge = pow(10,(0.0107*IonGauge-9.97)); old

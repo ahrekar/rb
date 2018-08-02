@@ -7,6 +7,7 @@
 // ADC variables
 #define BASE 100
 #define SPI_CHAN 0
+
 // wiring pi GPIO pin assigments to stepper motor drivers
 #define MTRDLY 2500
 
@@ -77,19 +78,22 @@ int closeBoard(){
 	serialClose(fd);
 	return 0;
 }
+
+// Uses <mcp3004.h> library.
 int getADC(unsigned short chan, unsigned int * returndata){
 /*
-uses MCP3004 chip attached to SPI channel 0 of RasPi GPIO
+uses MCP3008 (identical calls to MCP3004) chip 
+attached to SPI channel 0 of RasPi GPIO
 this chip has 8 analog inputs, chan 0 ... 7
 returns value 0 to 1023
 
-Cnannel descriptions present board:
+Channel descriptions present board:
 Ch0 = 0 to 10 V
 Ch1 = 0 to 10 V
 Ch2 = 0 to 5 V
-Ch3 = 
-Ch4 =
-Ch5 =
+Ch3 = 0 to 5 V
+Ch4 = 0 to 5 V
+Ch5 = 0 to 5 V
 Ch6 =
 Ch7 = 
 */
@@ -272,10 +276,10 @@ int writeDigital(unsigned short chan, unsigned short writedata){
 //
 
 int write_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int writedata){
-	char cmd[64];
-	char returndata[64];
+	unsigned char cmd[64];
+	unsigned char returndata[64];
 	short temp;
-	int len,j,z;
+	unsigned int len,j,z;
 	cmd[0]=address;
 	cmd[1]=0x06; //command to write register(s)
 	cmd[2]=((reg&0xFF00)>>8); //MSB which register
@@ -323,11 +327,11 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 	unsigned short temp;
 	unsigned int  tempint;
 	*/
-	char cmd[64];
-	char returndata[64];
+	unsigned char cmd[64];
+	unsigned char returndata[64];
 	short temp;
 	int  tempint;
-	int len,j,z,numbytes;
+	unsigned int len,j,z,numbytes;
 	//build a Modbus RTU style command message to send 
 	cmd[0]=address;
 	cmd[1]=0x03; //command to read register(s)
@@ -345,7 +349,7 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 	write_rs485BYTE(cmd,len+2, returndata, &j);
 	/* len is the  number of input bytes in the command to send. Add two for the CRC bytes
 	   and send ALL these bytes.  returndata holds any response */
-	z=-686; //my way of recording errors
+	z=-1; //my way of recording errors
 	tempint=0;
 
 	if(validateRTU(returndata,j)==0){	/* this checks the last
@@ -356,7 +360,7 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 		if(returndata[0]==cmd[0]){ // then the correct machine responded
             //printf("The correct machine responded.\n");
 			if(returndata[1] & 0x80){// then an error occured
-				z=returndata[2];
+				z=(returndata[2]<<8)|returndata[3];
 			}
 			else{ 
 				/*All good lets do something with the data.
@@ -387,10 +391,10 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 
 
 
-unsigned short modRTU_CRC(char* buff, int len){
+unsigned short modRTU_CRC(unsigned char* buff, unsigned short len){
 //calculates CRC for Modbus specs
 	unsigned short crc=0xFFFF;
-	int pos, bit;
+	unsigned short pos, bit;
 
 	for(pos=0;pos<len;pos++){
 		crc^=(unsigned short) buff[pos];
@@ -407,7 +411,7 @@ return crc;
 }
 
 
-int validateRTU(char* buff, int len){
+int validateRTU(unsigned char* buff, unsigned short len){
 	/* len is the full length of the buffer.  The last two elements in the array
 	are assumed to be  CRC bytes.
 		*/
@@ -423,11 +427,6 @@ return j;
 
 
 int initialize_rs485(int baud,int pin){
-//	if (wiringPiSetup () == -1) 
-//	  {
-//	    fprintf (stdout, "Unable to start wiringPi: %s\n", strerror (errno)) ;
-//	    return 1 ;
-//	  }
 	bd = baud;
 	wp=pin;
   if ((fd = serialOpen ("/dev/ttyAMA0", bd)) < 0)
@@ -441,13 +440,13 @@ int initialize_rs485(int baud,int pin){
 }//end initialize
 
 
-void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho){
+void write_rs485BYTE(unsigned char* cmd, unsigned int numchar, unsigned char* pszEcho, unsigned int* sizeEcho){
 
-	int a,i,j,k;
-	char buffer[64];
+	unsigned int i,j;
+	unsigned int loop;
 
 	digitalWrite(wp,LOW);// sets the control signal WRITE to the RS 485 buss
-	delayMicrosecondsHard(30);// minor wait to allow signals to settle
+	delayMicrosecondsHard(10);// minor wait to allow signals to settle
 
 	for (j=0;j<numchar;j++){
 		serialPutchar(fd,cmd[j]);
@@ -456,36 +455,25 @@ void write_rs485BYTE(char* cmd, int numchar, char* pszEcho, int* sizeEcho){
 	delayMicrosecondsHard(calcDelay(numchar));
 
 	digitalWrite(wp,HIGH);// now set control to READ (i.e. LISTEN)
+	loop=0;
+	j=0;
+	do {
+		delay(100);
+		i=0;
+		while (serialDataAvail(fd)){
+		    while (serialDataAvail (fd)){
+			pszEcho[i]=serialGetchar(fd);
+			i++;
+	    		}
+		delay(50);
+		}
+		if (i>0) loop=24;
+		loop++; j++;
+	} while(loop<24);
+	//debug printf("number of loops %d,j);
 
-    k=0;
-    do{
-        delay(100); // wait some more so that the external device has time to transmitt.  Data fills the UART buffer.
-        // this could be calculated based on what is expected.  usually, a delay of 30 works fine for 4 to 8 chars returned. 
-        // it doesnt hurt if data sets in the UART buffer until it is read.
-
-	    if(serialDataAvail (fd)){ k=10;}
-        //printf("%d\n",k);
-
-        k++;
-    }while(k<10);
-    i=0;
-    while (serialDataAvail (fd))
-    {
-        while (serialDataAvail (fd))
-        {
-            a = serialGetchar(fd);
-            buffer[i]=a;
-            i++;
-        }
-        delay(10);
-    }
-    //KARL could probably eliminate the need for buffer[]?
-    for (j=0;j<i;j++){
-		pszEcho[j]=buffer[j];
-	}
 	*sizeEcho=i;
 }
-
 
 //void erite_rs485ASCII(char* cmd, char* pszEcho, int sizeEcho){
 void write_rs485ASCII(char* cmd, char* pszEcho){
@@ -537,61 +525,3 @@ void write_rs485ASCII(char* cmd, char* pszEcho){
 }//end write_rs485
 
 
-/*
-void writeRS232Bridge(char* cmd, char* returnData, unsigned  short bridgeAddress){
-    int i,j,k;
-    char cmdOut[35];
-    char tempData[64];
-    unsigned short temp;
-
-    cmdOut[0]=bridgeAddress;
-    cmdOut[1]=0x03;
-    cmdOut[2]=0;
-    returnData[0]=0;
-
-    j=strlen(cmd); // append cmd to cmdOut
-    for (i=0;i<j;i++){
-        cmdOut[i+2]=cmd[i];
-    }
-    j=j+2;
-
-    temp = modRTU_CRC(cmdOut,j);//calculate the crc bytes
-
-    cmdOut[j+1]=(unsigned char)((temp&0xFF00)>>8);  //ensures that the MSByte is sent 
-    cmdOut[j]=(unsigned char)(temp&0x00FF);  //before the LSByte
-
-    // debug. print the cmdOut
-
-    //   printf("outdata\n");
-    //   for (i=0;i<j+2;i++){
-    //   printf("%02x ",cmdOut[i]);
-    //   }
-    //   printf("\n");
-
-
-    write_rs485BYTE(cmdOut,j+2,tempData,&k);
-
-    //debug print returnData
-	
-    //printf("return data\n");
-    //for (i=0;i<k;i++){
-    //    printf("%02x ",tempData[i]);
-    //}
-    //printf("\n");
-	
-    //  remove first two and last two bytes
-    for (i=0;i<k-4;i++){
-        returnData[i]=tempData[i+2];
-    }
-    returnData[i]=0;//append null for string manipulations
-
-
-    //   //printf("return data stripped\n");
-    //   i=0;
-    //   while (returnData[i]!=0){
-    //   //printf("%02x ",returnData[i]);
-    //   i++;
-    //   }
-
-}
-*/

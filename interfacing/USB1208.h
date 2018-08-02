@@ -15,10 +15,9 @@
 #define PUMP_LASER 1
 #define PROBE_LASER 2
 #define REF_LASER 3
-
-#define PROBEOFFSET 0
-#define HETARGET 1
-#define HPCAL 0.0310068
+ 
+#define HETARGET 0
+#define HPCAL 0.06214
 
 
 int closeUSB1208();

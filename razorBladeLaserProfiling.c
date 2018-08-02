@@ -27,7 +27,6 @@
 #include <asm/types.h>
 #include <wiringPi.h>
 #include "mathTools.h" //includes stdDeviation
-#include "tempControl.h"
 #include "interfacing/interfacing.h"
 #include "interfacing/waveMeter.h"
 

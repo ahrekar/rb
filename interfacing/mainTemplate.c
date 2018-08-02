@@ -25,9 +25,11 @@ int main (int argc, char* argv[]){
         int dwell=1;
         long returnCounts;
 		float myTemp;
-        int i;
+        int i, fileExists;
 		char buffer[BUFSIZE];
+		char systemStatsFile[]="/home/pi/recordStats.dat";
 		float volts, amps;
+        char echoData[128];
 		FILE* fp;
 
 		// We're okay to continue.
@@ -54,7 +56,11 @@ int main (int argc, char* argv[]){
 		strftime(buffer,BUFSIZE,"%S",timeinfo);
 	    sec=atoi(buffer);
 
-		fp = fopen("/home/pi/recordStats.dat","a");
+	    fileExists=access(systemStatsFile,F_OK);
+		fp = fopen(systemStatsFile,"a");
+        if(fileExists){
+            fprintf(fp,"Day\tHour\tMinute\tSecond\tTotalMinutes\tTrg. T\tRes. T\tChm. T\tHeCV\tN2CV\tMainChamber\tIonG\tKiethly 617\tCounts\tRefCell\tPRbLaser\tPumpLaser\n");
+        }
 
 		strftime(buffer,BUFSIZE,"%d\t%H\t%M\t%S\t",timeinfo);
 		fprintf(fp,"%s",buffer);
@@ -99,8 +105,10 @@ int main (int argc, char* argv[]){
 		fprintf(fp,"%2.2E\t",myTemp);
 
 		printf("\n\n_____CURRENT_____\n");
-		getUSB1208AnalogIn(K617,&myTemp);
-		printf("Kiethly 617: %.2f\n",myTemp);//the is no way to read the scale, or order of magnitude. This
+        writeRS485to232Bridge("READ?",echoData,0xCA);
+        myTemp = atof(echoData);
+		//getUSB1208AnalogIn(K617,&myTemp);
+		printf("Kiethly 617: %2.2e\n",myTemp);//the is no way to read the scale, or order of magnitude. This
 		// number is just the mantissa
 		fprintf(fp,"%.2f\t",myTemp);
 
@@ -119,9 +127,10 @@ int main (int argc, char* argv[]){
 		fprintf(fp,"%.2f\t",myTemp);
 
 		getUSB1208AnalogIn(PUMP_LASER,&myTemp);
-		printf("PumpLaser: %.2f\t",myTemp);
-		fprintf(fp,"%.2f\t",myTemp);
+		printf("PumpLaser: %.2f\n",myTemp);
+		fprintf(fp,"%.2f\n",myTemp);
 
+        /**
 		printf("\n\n_____POWERSUPPLIES_____\n");
         int bkChan = 8;
 		initializeBK1696(bkChan);
@@ -136,6 +145,7 @@ int main (int argc, char* argv[]){
 		getVoltsAmpsBK1696(bkChan,&volts,&amps);
 		printf("BK volts (other): %.2f\tamps %.2f\n",volts,amps);
 		fprintf(fp,"%.2f\t%.2f\n",volts,amps);
+        **/
 
 
 		fclose(fp);
