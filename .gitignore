@@ -63,6 +63,13 @@ setHeliumTarget
 test
 test.c
 test.sh
+RbPumpAbsorbScan
+faradayScanBPD
+getWavemeter
+setProbeDetuning
+stepTemperatureWaitForRotationAngle
+tmp.txt
+toggleFlipMirror
 
 interfacing/mainTemplate
 interfacing/getAnalogIn
@@ -80,6 +87,17 @@ interfacing/mainTestVortex
 interfacing/oldMakefile
 interfacing/setMirror
 interfacing/testLasers
+interfacing/initializeKeithley
+interfacing/monitorTemperature
+interfacing/setAout
+interfacing/slaveID
+interfacing/testComm
+interfacing/testKenBoard
+interfacing/topticaLaser
+interfacing/winBridge
+
+scripts/tmp.sh
+scripts/tmp.txt
 
 system.cfg
 

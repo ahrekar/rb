@@ -1,0 +1,1 @@
+int setProbeLaserDetuning(float detuning);
