@@ -20,7 +20,7 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbPumpAbsorbScan.c RbAbsorbScanAutoFindDetuning.c RbAbsorbScan.c quickFaradayScan.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c probeLaserControl.c
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c quickFaradayScan.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c 
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
@@ -133,8 +133,8 @@ getcounts: getcounts.o $(INTOBJECTS)
 #TESTING
 RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
-	$(LINK.c) $(OUTPUT_OPTION) $^ 
+#RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
+#	$(LINK.c) $(OUTPUT_OPTION) $^ 
 getWavemeter: getWavemeter.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)

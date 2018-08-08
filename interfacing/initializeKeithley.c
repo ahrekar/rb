@@ -5,7 +5,8 @@
 #include <string.h>
 #include "kenBoard.h"
 #include "RS485Devices.h"
-#define KEITHLY6485 0XCA
+#define KEITHLY6485 0xC6
+
 
 int main(int argc,char* argv[])
 {

@@ -148,7 +148,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	delay(10000);
 
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
-        if(count%15==0) printf("          \t       \t\t\tPUMP      |        PROBE      |        REFERENCE\n");
+        if(count%15==0) printf("          \t       \t\t\tVERTICAL      |        HORIZONTAL      |        REFERENCE\n");
 		setVortexPiezo(value);
 		printf("VOLT %3.1f \t",value);
 		fprintf(fp,"%f\t",value);
@@ -230,7 +230,7 @@ void writeFileHeader(char* fileName, char* comments){
     /** End System Stats Recording **/
 
 	//fprintf(fp,"VOLT\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"VOLT\tWAV\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
+	fprintf(fp,"VOLT\tWAV\tVERT\tVERTsd\tHORIZ\tHORIZsd\tREF\tREFsd\n");
 	fclose(fp);
 }
 

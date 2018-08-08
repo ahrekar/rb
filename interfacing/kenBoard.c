@@ -458,7 +458,6 @@ void write_rs485BYTE(unsigned char* cmd, unsigned int numchar, unsigned char* ps
 	loop=0;
 	j=0;
 	do {
-		delay(100);
 		i=0;
 		while (serialDataAvail(fd)){
 		    while (serialDataAvail (fd)){
@@ -469,6 +468,8 @@ void write_rs485BYTE(unsigned char* cmd, unsigned int numchar, unsigned char* ps
 		}
 		if (i>0) loop=24;
 		loop++; j++;
+		delay(150);
+
 	} while(loop<24);
 	//debug printf("number of loops %d,j);
 

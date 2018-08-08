@@ -149,8 +149,8 @@ int main (int argc, char **argv)
     //int photoDetectors[] = {PROBE_LASER,PUMP_LASER,REF_LASER};
     //char* names[]={"PRB","PMP","REF"};
     int numPhotoDetectors = 3;
-    //int motor = PROBE_MOTOR;
-    int motor = PUMP_MOTOR;
+    int motor = PROBE_MOTOR;
+    //int motor = PUMP_MOTOR;
 
     // Write the header for the data to the file.
     fprintf(fp,"STEP");
