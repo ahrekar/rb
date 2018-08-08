@@ -96,6 +96,8 @@ interfacing/testKenBoard
 interfacing/topticaLaser
 interfacing/winBridge
 
+RbTest/tempAndPress.tsv
+
 scripts/tmp.sh
 scripts/tmp.txt
 
