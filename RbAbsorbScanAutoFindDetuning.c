@@ -57,16 +57,20 @@ int main (int argc, char **argv)
 
 	FILE *dataCollectionFlagFile, *fp;
 
-	if (argc==3) {
-		stepSize=atof(argv[2]);
-		strcpy(comments,argv[3]);
+	printf("About to read in variables\n"); //DEBUG
+	if (argc==3){
+		stepSize=atof(argv[1]);
+		strcpy(comments,argv[2]);
+		printf("read in variables\n"); //DEBUG
 	} else {
 		printf("Usage:\n");
 		printf("$ sudo ./RbAbsorbScan <step size>  <comments>\n");
 		printf("                                             \n");
-		return 0;
+		fflush(stdout);
+		return 1;
 	}
 
+	printf("About to indicate data collection\n"); //DEBUG
 	// Indicate that data is being collected.
 	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
 	if (!dataCollectionFlagFile) {
@@ -74,6 +78,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
+	printf("About to initializeBoard()\n"); //DEBUG
 	initializeBoard();
 	initializeUSB1208();
 
@@ -94,11 +99,16 @@ int main (int argc, char **argv)
 
 	if (!fp) {
 		printf("unable to open file: %s\n",fileName);
+		fflush(stdout);
 		exit(1);
 	}
 
+	printf("About to setMirror()\n"); //DEBUG
     err=setMirror(0);
     if(err>0) printf("Error Occured While setting Flip Mirror: %d\n",err);
+
+	printf("About to call collectAndRecordData()\n"); //DEBUG
+	fflush(0);
 
 	collectAndRecordData(fileName, stepSize);
 
@@ -115,7 +125,11 @@ int main (int argc, char **argv)
 }
 
 void collectAndRecordData(char* fileName, float stepSize){
-	float value, startValue, endValue;
+	printf("Entered collectAndRecordData function\n"); // DEBUG
+	printf("with arguments:\n"); // DEBUG
+	printf("    fileName: %s\n",fileName); // DEBUG
+	printf("    stepSize: %f\n",stepSize); // DEBUG
+	float value, startValue, endValue,voltRange=25;
 	float lowDetuning,highDetuning;
 	float returnValue;
 	FILE* fp;
@@ -123,7 +137,7 @@ void collectAndRecordData(char* fileName, float stepSize){
 	int nSamples;
     int count=0;
 	float involts[NUMCHANNELS];
-	float waveLength;
+	float detuning;
 
 	fp=fopen(fileName,"a");
 	if (!fp) {
@@ -135,35 +149,35 @@ void collectAndRecordData(char* fileName, float stepSize){
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	lowDetuning=-9;
+	lowDetuning=-7;
 	highDetuning=10;
-	if(stepSize>0){
-		startValue=lowDetuning;
-		endValue=highDetuning;
-	}else{
-		startValue=highDetuning;
-		endValue=lowDetuning;
-	}
 
-	setProbeDetuning(value);
+	setProbeDetuning(lowDetuning);
+
+	getVortexPiezo(&returnValue);
+	if(stepSize>0){
+		startValue=returnValue;
+		endValue=returnValue+voltRange;
+	}else{
+		startValue=returnValue;
+		endValue=returnValue-voltRange;
+	}
+	
 	delay(10000);
 
 	for (value=startValue;value < endValue;value+=stepSize){
         if(count%15==0) printf("          \t       \t\t\tPUMP      |        PROBE      |        REFERENCE\n");
-		setProbeDetuning(value);
+		setVortexPiezo(value);
 
-		getVortexPiezo(&returnValue);
-
-		printf("VOLT %3.1f \t",returnValue);
-		fprintf(fp,"%f\t",returnValue);
+		printf("VOLT %3.1f \t",value);
+		fprintf(fp,"%f\t",value);
 
 		// delay to allow transients to settle
-		delay(200);
-		waveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
+		detuning = getProbeFrequency()-LINECENTER;// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
-		//waveLength = -1;
-		fprintf(fp,"%03.4f\t",waveLength);
-		printf("%03.4f\t",waveLength);
+		//detuning = -1;
+		fprintf(fp,"%03.4f\t",detuning);
+		printf("%03.4f\t",detuning);
 		for(k=0;k<NUMCHANNELS;k++){
 			involts[k]=0.0;	
 		}
@@ -177,7 +191,8 @@ void collectAndRecordData(char* fileName, float stepSize){
 				delay(10);
 			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
-			fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
+			fprintf(fp,"%0.4f\t%0.4f",involts[k-1],stdDeviation(measurement,nSamples));
+            if(k<NUMCHANNELS) fprintf(fp,"\t");
 			printf("  %0.4f %0.4f  ",involts[k-1],stdDeviation(measurement,nSamples));
             if(k<NUMCHANNELS) printf(" | ");
 		}
@@ -227,14 +242,10 @@ void writeFileHeader(char* fileName, char* comments){
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
-	getPVCN7500(CN_CHAMWALL,&returnFloat);
-	fprintf(fp,"#CurrTemp(Res2):\t%f\n",returnFloat);
-	getSVCN7500(CN_CHAMWALL,&returnFloat);
-	fprintf(fp,"#SetTemp(Res2):\t%f\n",returnFloat);
     /** End System Stats Recording **/
 
 	//fprintf(fp,"VOLT\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"VOLT\tWAV\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
+	fprintf(fp,"VOLT\tDET\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
 	fclose(fp);
 }
 
