@@ -55,8 +55,8 @@ int initializeBoard(){
 	    fprintf (stdout, "Unable to start wiringPi: %s\n", strerror (errno)) ;
 	    return 1 ;
 	  }
-	mcp3004Setup(BASE,SPI_CHAN);// for ADC
-	initialize_rs485(9600,25);
+	//mcp3004Setup(BASE,SPI_CHAN);// for ADC
+	initialize_rs485(9600,22);
 
 // stepper motor clock MUST be set to low at the begining and end of each function call. 
 	pinMode(MTR0CLK,OUTPUT);
