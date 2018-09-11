@@ -22,7 +22,8 @@
 #include "mathTools.h"
 #include "fileTools.h"
 #include "interfacing/interfacing.h"
-#include "interfacing/sacherLaser.h"
+#include "interfacing/topticaLaser.h"
+#include "interfacing/keithley.h"
 
 #define BUFSIZE 1024
 #define NUMCHANNELS 3
@@ -30,7 +31,7 @@
 void graphData(char* fileName);
 void writeFileHeader(char* fileName, char* comments);
 void writeTextToFile(char* fileName, char* line);
-void collectAndRecordData(char* fileName, float startvalue, float endvalue, float stepsize);
+void collectAndRecordData(char* fileName, int laserSock, float startvalue, float endvalue, float stepsize);
 float stdDeviation(float* values, int numValues);
 void findAndSetProbeMaxTransmission();
 
@@ -42,7 +43,7 @@ int main (int argc, char **argv)
 	float startvalue,endvalue,stepsize;
 	char fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
-    int err;
+    int err,laserSock;
 
 	FILE *dataCollectionFlagFile, *fp;
 
@@ -54,8 +55,11 @@ int main (int argc, char **argv)
 		strcpy(comments,argv[4]);
 	} else {
 		printf("Usage:\n");
-		printf("$ sudo ./RbAbsorbScan <begin> <end> <step>  <comments>\n");
-		printf("                      (0.0 - 117.5)                   \n");
+		printf("$ sudo ./RbPumpAbsorbScan <begin>  <end>   <step> 					<comments>\n");
+		printf("                 @170 mA  (27.52 - 27.85)  (.02 for a rough scan			  \n");
+		printf("                 @130 mA  (29.60 - 30.00)   .005 for a fine scan)			  \n");
+		printf("                 @ 90 mA  (31.50 - 31.95)                 					  \n");
+		printf("                 @ 60 mA  (33.94 - 34.50)                 					  \n");
 		return 0;
 	}
 	// Indicate that data is being collected.
@@ -65,13 +69,16 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	initializeBoard();
-	initializeUSB1208();
 
-	if (endvalue>28.110) endvalue=28.110;
-	if (startvalue>28.110) endvalue=28.110;
-	if (startvalue<27.4) startvalue=27.4;
-	if (endvalue<27.4) endvalue=27.4;
+	initializeBoard();
+	//initializeUSB1208();
+	initializeKeithley();
+	laserSock=initializeLaser();
+
+	if (endvalue>38) endvalue=38;
+	if (startvalue>38) startvalue=38;
+	if (startvalue<0) startvalue=0;
+	if (endvalue<0) endvalue=0;
 	if (startvalue>endvalue) {
 		printf("error: startvalue > endvalue.\nYeah, i could just swap them in code.. or you could just enter them in correctly. :-)\n");
 		return 1;
@@ -99,11 +106,10 @@ int main (int argc, char **argv)
     err=setMirror(0);
     if(err>0) printf("Error Occured While setting Flip Mirror: %d\n",err);
 
-	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
+	collectAndRecordData(fileName, laserSock, startvalue, endvalue, stepsize);
 
 	//homeMotor(PROBE_MOTOR);
 
-	setVortexPiezo(45.0); // Return Piezo to 45.0 V
 
 	closeUSB1208();
 
@@ -143,24 +149,18 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set key autotitle columnheader\n");
 		fprintf(gnuplot, "set xlabel 'Voltage (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
-		fprintf(gnuplot, "set yrange [-.1:*]\n");			
+		fprintf(gnuplot, "set yrange [*:*]\n");			
 		fprintf(gnuplot, "set xrange [*:*]\n");			
 		//fprintf(gnuplot, "set x2range [*:*]\n");			
 		fprintf(gnuplot, "set x2tics nomirror\n");
 		//sprintf(buffer, "plot '%s' using 1:6:7 with errorbars, '%s' using ($1*%f+%f):6:7 axes x2y1\n",fileName,fileName,aoutConv,aoutInt);
-		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
-		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:5:6 with errorbars\n",fileName);
-		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:3:4 with errorbars\n",fileName);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars,\
-						 	  '%s' using 1:5:6 with errorbars,\
-						 	  '%s' using 1:3:4 with errorbars\n", fileName,fileName,fileName);
+		sprintf(buffer, "plot '%s' using 1:2:3 with errorbars\n", fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
@@ -214,32 +214,19 @@ void writeFileHeader(char* fileName, char* comments){
 
     /** Record System Stats to File **/
     /** Pressure Gauges **/
-	getIonGauge(&returnFloat);
-	printf("IonGauge %2.2E Torr \n",returnFloat);
-	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
 
-	getConvectron(GP_N2_CHAN,&returnFloat);
-	printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
-
+	/*
 	getConvectron(GP_HE_CHAN,&returnFloat);
 	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
+	*/
 
     /** Temperature Controllers **/
-	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#CurrTemp(Res):\t%f\n",returnFloat);
-	getSVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#SetTemp(Res):\t%f\n",returnFloat);
 
-	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#CurrTemp(Targ):\t%f\n",returnFloat);
-	getSVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
-    /** End System Stats Recording **/
+	getPVCN7500(CN_TESTCHAMBER,&returnFloat);
+	fprintf(fp,"#CurrTemp(RbTest):\t%f\n",returnFloat);
 
-	//fprintf(fp,"VOLT\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"TEMP\tWAV\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
+	fprintf(fp,"VOLT\tDET\tVERT\tVERTsd\tHORIZ\tHORIZsd\tREF\tREFsd\n");
 	fclose(fp);
 }
 
@@ -254,14 +241,14 @@ void writeTextToFile(char* fileName, char* line){
 	fclose(fp);
 }
 
-void collectAndRecordData(char* fileName, float startvalue, float endvalue, float stepsize){
+void collectAndRecordData(char* fileName, int laserSock, float startvalue, float endvalue, float stepsize){
 	float value;
 	FILE* fp;
 	int k=0,i;
 	int nSamples;
     int count=0;
 	float involts[NUMCHANNELS];
-	float kensWaveLength;
+	float detuning;
 
 	fp=fopen(fileName,"a");
 	if (!fp) {
@@ -270,26 +257,22 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	}
 	// Allocate some memory to store measurements for calculating
 	// error bars.
-	nSamples = 16;
+	nSamples = 8;
 	float* measurement = malloc(nSamples*sizeof(float));
 
 	value=startvalue;
-	setLaserTemperature(value);
-	delay(10000);
+	setScanOffset(laserSock, value);
+	delay(20000);
 
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
-        if(count%15==0) printf("          \t       \t\t\tPUMP      |        PROBE      |        REFERENCE\n");
-		setLaserTemperature(value);
-		printf("TEMP %2.3f \t",value);
+		setScanOffset(laserSock, value);
+		printf("VOLT %2.3f \t",value);
 		fprintf(fp,"%f\t",value);
 
-		// delay to allow transients to settle
-		delay(300);
-		kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
-                                        // So we no longer need the previous delay statement. 
-		//kensWaveLength = -1;
-		fprintf(fp,"%03.4f\t",kensWaveLength);
-		printf("%03.4f\t",kensWaveLength);
+		detuning=getDetuning();
+		printf("DET %2.3f \t",detuning);
+		fprintf(fp,"%f\t",detuning);
+
 		for(k=0;k<NUMCHANNELS;k++){
 			involts[k]=0.0;	
 		}
