@@ -4,20 +4,13 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <netinet/in.h>
-//#include <netinet/ip.h> //For sockaddr struct
 #include <netinet/tcp.h> // Added this for the definition of SOL_TCP to set NO_DELAY
 #include <arpa/inet.h> // inet_pton()
 #include <string.h>
+#include "topticaLaser.h"
 #define PORT 1998
 #define BUFLEN 4096
-#define LASERIP "129.93.68.194"
-
-int initializeLaser();
-int setParameter(int sock, char* parameter, char* setValue);
-int readParameter(int sock, char* parameter, char* returnValue);
-int setScanOffset(int sock, float offset);
-int setMasterCurrent(int sock, float current);
-int setAmpCurrent(int sock, float current);
+#define LASERIP "129.93.68.203"
 
 int initializeLaser(){
 	int sock=0;
@@ -82,6 +75,8 @@ int setParameter(int sock, char* parameter, char* setValue){
 
 	sprintf(sendBuffer, "(param-set! '%s %s)\n", parameter, setValue);
 
+	//printf("Sending command:\n\n%s\n\n to laser",sendBuffer);	//DEBUG
+
 	send(sock, sendBuffer, strlen(sendBuffer),0);
 	//sleep(1);
 	valread = read(sock, sendBuffer, sizeof(sendBuffer)-1);
@@ -97,14 +92,23 @@ int setParameter(int sock, char* parameter, char* setValue){
 int setAmpCurrent(int sock, float current){
 	char parameterString[]="laser1:amp:cc:current-set";
 	char parameterText[512];
-	sprintf(parameterText,"%4.2f",current);
+	//printf("The value of the input is: %4.2f\n",current);		//DEBUG
+	sprintf(parameterText,"%4.5f",current);
+	//printf("The parameter to text is \n\n %s \n\n",parameterText);		//DEBUG
 	return setParameter(sock,parameterString,parameterText);
 }
 
 int setMasterCurrent(int sock, float current){
 	char parameterString[]="laser1:dl:cc:current-set";
 	char parameterText[512];
-	sprintf(parameterText,"%3.5f",current);
+	sprintf(parameterText,"%4.5f",current);
+	return setParameter(sock,parameterString,parameterText);
+}
+
+int setMasterTemperature(int sock, float temperature){
+	char parameterString[]="laser1:dl:tc:temp-set";
+	char parameterText[512];
+	sprintf(parameterText,"%2.3f",temperature);
 	return setParameter(sock,parameterString,parameterText);
 }
 
@@ -112,5 +116,39 @@ int setScanOffset(int sock, float offset){
 	char parameterString[]="laser1:scan:offset";
 	char parameterText[512];
 	sprintf(parameterText,"%3.5f",offset);
+	return setParameter(sock,parameterString,parameterText);
+}
+
+int turnOffLaser(int sock){
+	turnOffDiodeLaser(sock);
+	return turnOffAmplifier(sock);
+}
+
+int turnOffDiodeLaser(int sock){
+	char parameterString[]="laser1:dl:cc:enabled";
+	char parameterText[]="#f";
+	return setParameter(sock,parameterString,parameterText);
+}
+
+int turnOffAmplifier(int sock){
+	char parameterString[]="laser1:amp:cc:enabled";
+	char parameterText[]="#f";
+	return setParameter(sock,parameterString,parameterText);
+}
+
+int turnOnLaser(int sock){
+	turnOnDiodeLaser(sock);
+	return turnOnAmplifier(sock);
+}
+
+int turnOnDiodeLaser(int sock){
+	char parameterString[]="laser1:dl:cc:enabled";
+	char parameterText[]="#t";
+	return setParameter(sock,parameterString,parameterText);
+}
+
+int turnOnAmplifier(int sock){
+	char parameterString[]="laser1:amp:cc:enabled";
+	char parameterText[]="#t";
 	return setParameter(sock,parameterString,parameterText);
 }

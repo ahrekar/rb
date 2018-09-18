@@ -98,10 +98,18 @@ Ch6 =
 Ch7 = 
 */
 
-int x;
+    int x;
 	x=analogRead(BASE + chan);
 	*returndata=x;
-return 0;
+    return 0;
+}
+
+int getMCPAnalogIn(unsigned short chan, float* returnFloat){
+    unsigned int returndata;
+    getADC(chan,&returndata);
+    printf("returnData: %d\n",returndata);
+    *returnFloat=(float)returndata/1023.*10.;
+    return 0;
 }
 
 

@@ -9,5 +9,12 @@
 
 
 float getWaveMeter(void);
-float getProbeFreq(void);
-float getPumpFreq(void);
+float getFrequency(void);
+float getDetuning(void);
+float getWavelength(void);
+float getProbeFrequency(void);
+float getPumpFrequency(void);
+float getProbeWavelength(void);
+float getPumpWavelength(void);
+float getProbeDetuning(void);
+float getPumpDetuning(void);

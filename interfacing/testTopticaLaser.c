@@ -8,6 +8,7 @@
 #include <netinet/tcp.h> // Added this for the definition of SOL_TCP to set NO_DELAY
 #include <arpa/inet.h> // inet_pton()
 #include <string.h>
+#include "topticaLaser.h"
 #define PORT 1998
 #define BUFLEN 4096
 #define LASERIP "129.93.68.194"
@@ -25,16 +26,20 @@ int main(int argc, char* argv[]){
 
 	laserSock=initializeLaser();
 
-	setScanOffset(laserSock,value);
+	turnOffLaser(laserSock);
 
-	// char returnBuffer[BUFLEN];
-	// int valsend, valread;
+	sleep(2);
+
+	turnOnLaser(laserSock);
+
+	//char cmdBuffer[BUFLEN],returnBuffer[BUFLEN];
+	//int valsend, valread;
 	//char *arg1,*arg2;
 	//while(strcmp(cmdBuffer,"(quit)\n")){
 	//	fgets(cmdBuffer,sizeof(cmdBuffer),stdin);
 	//	arg1=strtok(cmdBuffer, " ");
 	//	arg2=strtok(NULL, " ");
-	//	setParameter(sock,arg1,arg2);
+	//	setParameter(laserSock,arg1,arg2);
 
 	//	printf("%s\n> ",returnBuffer);
 	//}
