@@ -21,12 +21,13 @@
 #include <asm/types.h>
 #include "mathTools.h"
 #include "fileTools.h"
-#include "interfacing/interfacing.h"
 #include "interfacing/topticaLaser.h"
+#include "interfacing/USB1208.h"
+#include "interfacing/kenBoard.h"
 #include "interfacing/keithley.h"
 
 #define BUFSIZE 1024
-#define NUMCHANNELS 3
+#define NUMCHANNELS 2
 
 void graphData(char* fileName);
 void writeFileHeader(char* fileName, char* comments);
@@ -71,12 +72,11 @@ int main (int argc, char **argv)
 
 
 	initializeBoard();
-	//initializeUSB1208();
-	initializeKeithley();
+	initializeUSB1208();
 	laserSock=initializeLaser();
 
-	if (endvalue>38) endvalue=38;
-	if (startvalue>38) startvalue=38;
+	if (endvalue>40) endvalue=40;
+	if (startvalue>40) startvalue=40;
 	if (startvalue<0) startvalue=0;
 	if (endvalue<0) endvalue=0;
 	if (startvalue>endvalue) {
@@ -103,7 +103,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-    err=setMirror(0);
+    err=setMirror(8);
     if(err>0) printf("Error Occured While setting Flip Mirror: %d\n",err);
 
 	collectAndRecordData(fileName, laserSock, startvalue, endvalue, stepsize);
@@ -222,11 +222,8 @@ void writeFileHeader(char* fileName, char* comments){
 	*/
 
     /** Temperature Controllers **/
-
-	getPVCN7500(CN_TESTCHAMBER,&returnFloat);
-	fprintf(fp,"#CurrTemp(RbTest):\t%f\n",returnFloat);
-
-	fprintf(fp,"VOLT\tDET\tVERT\tVERTsd\tHORIZ\tHORIZsd\tREF\tREFsd\n");
+	// Write File Header(header).
+	fprintf(fp,"VOLT\tDET\tVERT\tVERTsd\tHORIZ\tHORIZsd\n");
 	fclose(fp);
 }
 
@@ -249,6 +246,7 @@ void collectAndRecordData(char* fileName, int laserSock, float startvalue, float
     int count=0;
 	float involts[NUMCHANNELS];
 	float detuning;
+	int startChannel=1;
 
 	fp=fopen(fileName,"a");
 	if (!fp) {
@@ -262,14 +260,14 @@ void collectAndRecordData(char* fileName, int laserSock, float startvalue, float
 
 	value=startvalue;
 	setScanOffset(laserSock, value);
-	delay(20000);
+	delay(5000);
 
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
 		setScanOffset(laserSock, value);
 		printf("VOLT %2.3f \t",value);
 		fprintf(fp,"%f\t",value);
 
-		detuning=getDetuning();
+		getDetuning(&detuning);
 		printf("DET %2.3f \t",detuning);
 		fprintf(fp,"%f\t",detuning);
 
@@ -279,11 +277,11 @@ void collectAndRecordData(char* fileName, int laserSock, float startvalue, float
 
 
 		// grab several readings and average
-		for(k=1;k<NUMCHANNELS+1;k++){
+		for(k=startChannel;k<startChannel+NUMCHANNELS;k++){
 			for (i=0;i<nSamples;i++){
-				getUSB1208AnalogIn(k,&measurement[i]);
+				getMCPAnalogIn(k,&measurement[i]);
 				involts[k-1]=involts[k-1]+measurement[i];
-				delay(10);
+				delay(50);
 			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
 			fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
@@ -294,7 +292,6 @@ void collectAndRecordData(char* fileName, int laserSock, float startvalue, float
 		printf("\n");
         count++;
 	}
-	fprintf(fp,"\n");
 	fclose(fp);
 	free(measurement);
 }
