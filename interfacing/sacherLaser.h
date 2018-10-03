@@ -12,8 +12,8 @@
 #define HEAD 0xC0
 #define TA 0xC6
 
-int initializeLaser(void);
-int initializeTA(void);
+int initializeSacherLaser(void);
+int initializeSacherTA(void);
 int setLaserStatus(unsigned short status);
 float getLaserTemperature(void);
 int setLaserTemperature(float temperature);

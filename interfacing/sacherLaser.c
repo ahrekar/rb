@@ -6,8 +6,9 @@
 */
 
 #include "sacherLaser.h"
+#include "RS485Devices.h"
 
-int initializeTA(void){
+int initializeSacherTA(void){
 
 	char retData[32];
 	char outData[32];
@@ -39,7 +40,7 @@ int initializeTA(void){
 }
 
 
-int initializeLaser(void){
+int initializeSacherLaser(void){
 
 	char retData[32];
 	char outData[32];
@@ -146,7 +147,7 @@ int setLaserTemperature(float temperature){
 
 	j=-1;
 
-	if ((temperature > 27.0) & (temperature<29.0)){
+	if ((temperature > 27.0) & (temperature<35.0)){
 		sprintf(retData,"%2.3f",temperature);
 
 		strcpy(outData,":TEC:TEMP ");

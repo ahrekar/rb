@@ -56,7 +56,7 @@ int main (int argc, char **argv)
   
 
 	printf("Processing Data...");
-	analyzeData(fileName, runs,revolutions,dataPointsPerRev);
+	analyzeData(fileName, runs,revolutions,dataPointsPerRev,FOI);
 
 	printf("Plotting Data...\n");
 	char* extensionStart=strstr(fileName,".dat");

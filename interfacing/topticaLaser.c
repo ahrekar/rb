@@ -115,7 +115,7 @@ int setMasterTemperature(int sock, float temperature){
 int setScanOffset(int sock, float offset){
 	char parameterString[]="laser1:scan:offset";
 	char parameterText[512];
-	sprintf(parameterText,"%3.5f",offset);
+	sprintf(parameterText,"%3.4f",offset);
 	return setParameter(sock,parameterString,parameterText);
 }
 

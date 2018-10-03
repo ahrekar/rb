@@ -1,28 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "interfacing/interfacing.h"
+#include <math.h>
+#include "probeLaserControl.h"
+#include "interfacing/kenBoard.h"
+#include "interfacing/USB1208.h"
+#include "interfacing/vortexLaser.h"
+#include "interfacing/waveMeter.h"
 
-int setProbeDetuning(float desiredDetuning);
+
+int setProbeDetuning(float desiredDetuning){
 	float wavemeterReturn;
 	float speedOfLight=299792458; //meters/sec
 	float lineCenter=377107.463; //GHz
-	float deltaDetuning,detuningChangeRequired,returnedDetuning,desiredWavelength,piezoSetting;
+	float deltaDetuning,detuningChangeRequired,returnedDetuning,piezoSetting;
 	int correctlyDetuned=1;
 
-	initializeBoard();
-	initializeUSB1208();
+	getProbeFrequency(&wavemeterReturn);
+	returnedDetuning=wavemeterReturn-LINECENTER;
 
-	wavemeterReturn=getProbeFreq();
-	returnedDetuning=speedOfLight/(wavemeterReturn)-lineCenter;
-	desiredWavelength=speedOfLight/(desiredDetuning+lineCenter);
-
-
-	printf("The probe laser is at: %3.4f (delta=%2.1f GHz)\n",wavemeterReturn,returnedDetuning);
-	printf("Please wait while laser tunes to: %3.4f (delta=%2.1f)\n",desiredWavelength,desiredDetuning);
+	printf("The probe laser is at: %6.2f (delta=%2.2f GHz)\n",wavemeterReturn,wavemeterReturn-LINECENTER);
+	printf("Please wait while laser tunes to: %6.2f (delta=%2.2f)\n",desiredDetuning+LINECENTER,desiredDetuning);
 	while(correctlyDetuned==1){
-		wavemeterReturn=getProbeFreq();
-		returnedDetuning=speedOfLight/(wavemeterReturn)-lineCenter;
+		getProbeFrequency(&wavemeterReturn);
+		returnedDetuning=wavemeterReturn-LINECENTER;
 		detuningChangeRequired=fabs(returnedDetuning-desiredDetuning);
 		if(detuningChangeRequired>24){
 			deltaDetuning=40;

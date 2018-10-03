@@ -27,6 +27,7 @@
 #include <asm/types.h>
 #include "mathTools.h" //includes stdDeviation
 #include "fileTools.h" 
+#include "faradayScanAnalysisTools.h" 
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350	
@@ -40,12 +41,12 @@ int plotData(char* fileName);
 int plotRawData(char* fileName);
 float calculateBdotL(float mag1Volt, float mag2Volt);
 int recordNumberDensity(char* fileName);
-int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevolution);
+int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevolution,int frequencyOfInterest);
 int	readInData(char* fileName,int totalDatapoints, int numAouts, float* aouts, float* wavelength, int* steps, float* intensity, float* inensityErr,int* homeFlag);
 float calculateOneSumTerm(int trigFunc, int dataPointsPerRevolution,int revolutions,float intensity, float i,int k);
 float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevolution, int revolutions, float intensity,float intensityErr, float i, float iErr, int k);
 int fourierAnalysis(int dataPointsPerRevolution, int revolutions, int* steps, float* intensity, float* intensityErr, float* fourierCoefficients, float* fcErr);
-float calculateAngleError(float c2, float c2Err, float s2, float s2Err);
+float calculateAngleError(float c, float cErr, float s, float sErr);
 
 // Okay, so gnuplot's fitting function isn't behaving like I want it to
 // (not giving me "reasonable" answers), so I'm hacking together
@@ -208,7 +209,7 @@ int plotRawData(char* fileName){
 	gnuplot = popen("gnuplot","w"); 
 
     int stepColumnNumber=1;
-    int intensityColumnNumber=4;
+    int intensityColumnNumber=2;
 	if (gnuplot != NULL){
 		fprintf(gnuplot, "set terminal dumb size 60,14\n");
 		fprintf(gnuplot, "set output\n");			
@@ -231,7 +232,7 @@ int plotRawData(char* fileName){
 	return pclose(gnuplot);
 }
 
-int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevolution){
+int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevolution, int foi){
 	char fileNameCopy[1024];
     char comments[1024];
     int fileExists=0;
@@ -295,32 +296,32 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 
 	fclose(rawData);
 
-	fprintf(analysis,"Aout\tWavelength\tc0\ts2\ts2Err+\ts2Err-\tc2\tc2Err+\tc2Err-\tangle\tangleErr+\tangleErr-\thomeFlag\n");
+	fprintf(analysis,"Aout\tWavelength\tc0\ts\tsErr+\tsErr-\tc\tcErr+\tcErr-\tangle\tangleErr+\tangleErr-\thomeFlag\n");
     if(fileExists==-1)
-        fprintf(daily,"Filename\tComments\tAout\tWavelength\tc0\ts2\ts2Err+\ts2Err-\tc2\tc2Err+\tc2Err-\tangle\tangleErr+\tangleErr-\thomeFlag\n");
+        fprintf(daily,"Filename\tComments\tAout\tWavelength\tc0\ts\tsErr+\tsErr-\tc\tcErr+\tcErr-\tangle\tangleErr+\tangleErr-\thomeFlag\n");
 
 	float* fourierCoefficients = calloc(totalDatapointsPerRun,sizeof(float));
 	float* fcErr = calloc(totalDatapointsPerRun*2,sizeof(float));
 	int i;
-	float c0,s2,c2,angle,angleErrUp,angleErrDown,linearPart,linearPercent;
+	float c0,s,c,angle,angleErrUp,angleErrDown,linearPart,linearPercent;
 
 	printf("Beginning Data Analysis...\n");
 	for(i=0;i<numAouts;i++){
 		fourierAnalysis(dataPointsPerRevolution,revolutions,&steps[totalDatapointsPerRun*i],&intensity[totalDatapointsPerRun*i],&intensityErr[totalDatapointsPerRun*i],fourierCoefficients,fcErr);
 		c0=fourierCoefficients[cos+0];
-		s2=fourierCoefficients[sin+2];
-		c2=fourierCoefficients[cos+2];
-        linearPart=sqrt(pow(s2,2)+pow(c2,2));
+		s=fourierCoefficients[sin+foi];
+		c=fourierCoefficients[cos+foi];
+        linearPart=sqrt(pow(s,foi)+pow(c,foi));
         linearPercent=linearPart/c0;
-		angle = 0.5*atan2(c2,s2);
-		angleErrUp=calculateAngleError(c2,fcErr[pos+cos+2],s2,fcErr[pos+sin+2]);
-		angleErrDown=calculateAngleError(c2,-fcErr[neg+cos+2],s2,-fcErr[neg+sin+2]);
+		angle = 0.5*atan2(c,s);
+		angleErrUp=calculateAngleError(c,fcErr[pos+cos+foi],s,fcErr[pos+sin+foi]);
+		angleErrDown=calculateAngleError(c,-fcErr[neg+cos+foi],s,-fcErr[neg+sin+foi]);
 		angle = angle*180.0/PI;
 		angleErrUp = angleErrUp*180.0/PI;
 		angleErrDown = angleErrDown*180.0/PI;
-		printf("c0 = %f\tlinearPercent= %f\ts2 = %f\ts2Err = %f\tc2 = %f\tc2Err = %f\tangle = %f (%f)\n",c0,linearPercent,s2,fcErr[sin+pos+2],c2,fcErr[cos+pos+2],angle,angleErrUp);
-		fprintf(analysis,"%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",volts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
-		fprintf(daily,"%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",fileName,comments,volts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s2,fcErr[sin+pos+2],fcErr[sin+neg+2],c2,fcErr[cos+pos+2],fcErr[cos+neg+2],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
+		printf("c0 = %f\tlinearPercent= %f\ts = %f\tsErr = %f\tc = %f\tcErr = %f\tangle = %f (%f)\n",c0,linearPercent,s,fcErr[sin+pos+foi],c,fcErr[cos+pos+foi],angle,angleErrUp);
+		fprintf(analysis,"%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",volts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s,fcErr[sin+pos+foi],fcErr[sin+neg+foi],c,fcErr[cos+pos+foi],fcErr[cos+neg+foi],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
+		fprintf(daily,"%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",fileName,comments,volts[totalDatapointsPerRun*i],wavelength[totalDatapointsPerRun*i],c0,s,fcErr[sin+pos+foi],fcErr[sin+neg+foi],c,fcErr[cos+pos+foi],fcErr[cos+neg+foi],angle,angleErrUp,angleErrDown,homeFlag[totalDatapointsPerRun*i]);
 	}
 	free(volts);
 	free(intensity);
@@ -353,7 +354,7 @@ int readInData(char* fileName,int totalDatapoints, int numVolts, float* volts, f
         fscanf(data,"\n\n#VOLT:%f(%f)\n",&volts[j*dataPointsPerAout],&wavelength[j*dataPointsPerAout]);
         //printf("The aout is %d/%d and the code is %d and j is %d\n",volts[j*dataPointsPerAout],numVolts,code,j);
         for (i=0; i < dataPointsPerAout; i++){
-            fscanf(data,"%d\t%f\t%f\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&discard,&discard,&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard);
+            fscanf(data,"%d\t%f\t%f\t%f\t%f\t%f\t%f\n",&steps[j*dataPointsPerAout+i],&intensity[j*dataPointsPerAout+i],&intensityErr[j*dataPointsPerAout+i],&discard,&discard,&discard,&discard);
             volts[j*dataPointsPerAout+i]=volts[j*dataPointsPerAout];
             wavelength[j*dataPointsPerAout+i]=wavelength[j*dataPointsPerAout];
             //fscanf(data,"%d\t%f\t%d\t%f\t%f\t%d\n",&volts[i],&wavelength[i],&steps[i],&intensity[i],&intensityErr[i],&homeFlag[i]);
@@ -378,6 +379,7 @@ int readInData(char* fileName,int totalDatapoints, int numVolts, float* volts, f
 	return 0;
 }
 
+/* foi = Frequency of interested, the desired Frequency to calculate the angle from */;
 int fourierAnalysis(int dataPointsPerRevolution, int revolutions, int* steps, float* intensity, float* intensityErr, float* fourierCoefficients, float* fcErr){
 	float dstep=1.0/350.0;
 	int totalDatapoints = dataPointsPerRevolution*revolutions;
@@ -450,14 +452,14 @@ float calculateOneSumTermError(int trigFunc, int posOrNeg,int dataPointsPerRevol
 	return sqrt(pow(sI,2)+pow(sStep,2));
 }
 
-float calculateAngleError(float c2, float c2Err, float s2, float s2Err){
+float calculateAngleError(float c, float cErr, float s, float sErr){
 	float angle;
 	float angleErr=0;
 	float angleErrCos=0;
 	float angleErrSin=0;
-	angle = 0.5*atan2(c2,s2);
-	angleErrCos=angle-0.5*atan2(c2+c2Err,s2);
-	angleErrSin=angle-0.5*atan2(c2,s2+s2Err);
+	angle = 0.5*atan2(c,s);
+	angleErrCos=angle-0.5*atan2(c+cErr,s);
+	angleErrSin=angle-0.5*atan2(c,s+sErr);
 	angleErr=sqrt(pow(angleErrCos,2)+pow(angleErrSin,2));
 	return angleErr;
 }

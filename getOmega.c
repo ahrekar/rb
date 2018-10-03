@@ -23,8 +23,8 @@ int main (int argc, char* argv[]){
 	getSVCN7500(CN_RESERVE,&setReturnFloat);
 	getPVCN7500(CN_RESERVE,&returnFloat);
 	printf("ResTemp(degC):%3.1f/%3.1f\n",returnFloat,setReturnFloat);
-	getSVCN7500(CN_CHAMWALL,&setReturnFloat);
-	getPVCN7500(CN_CHAMWALL,&returnFloat);
+	getSVCN7500(CN_TESTCHAMBER,&setReturnFloat);
+	getPVCN7500(CN_TESTCHAMBER,&returnFloat);
 	printf("WallTemp(degC):%3.1f/%3.1f\n",returnFloat,setReturnFloat);
 
 	return 0;

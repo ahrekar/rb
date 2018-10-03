@@ -20,11 +20,11 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c quickFaradayScan.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c 
+SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c RbAbsorbScanAutoFindDetuning.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c getPhotoDiodes.c turnOffPumpLaser.c findDetuningForMaxPolarization.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
-_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c sacherLaser.c RS485Devices.c
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
 # The directory to put object files into.
@@ -133,8 +133,8 @@ getcounts: getcounts.o $(INTOBJECTS)
 #TESTING
 RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-#RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
-#	$(LINK.c) $(OUTPUT_OPTION) $^ 
+RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o probeLaserControl.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/vortexLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/grandvillePhillips.o $(INTDIR)/omegaCN7500.o $(INTDIR)/RS485Devices.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 getWavemeter: getWavemeter.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
@@ -149,9 +149,15 @@ monitorPhotodiodes: monitorPhotodiodes.o mathTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 recordEverythingAndTwistMotor: recordEverythingAndTwistMotor.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-faradayScan: faradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
+faradayScan: faradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-faradayScanBPD: faradayScanBPD.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
+faradayScanBPD: faradayScanBPD.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+getAngleBPD: getAngleBPD.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+findBPDBalance: findBPDBalance.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+findDetuningForMaxPolarization: findDetuningForMaxPolarization.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTDIR)/topticaLaser.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 quickFaradayScan: quickFaradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -169,9 +175,11 @@ getOmega: getOmega.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setProbeLaser: setProbeLaser.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setProbeDetuning: setProbeDetuning.o $(INTOBJECTS)
+setProbeDetuning: setProbeDetuning.o probeLaserControl.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setTACurrent: setTACurrent.o fileTools.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+turnOffPumpLaser: turnOffPumpLaser.o $(INTDIR)/topticaLaser.o $(INTDIR)/kenBoard.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 toggleLaserFlag: toggleLaserFlag.o interfacing/laserFlag.c interfacing/laserFlag.h $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -197,4 +205,5 @@ polarizationScriptAnalysis: polarizationScriptAnalysis.o polarizationAnalysisToo
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 faradayScanAnalysis: faradayScanAnalysis.o faradayScanAnalysisTools.o mathTools.o fileTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-
+getPhotoDiodes: getPhotoDiodes.o mathTools.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o
+	$(LINK.c) $(OUTPUT_OPTION) $^ 

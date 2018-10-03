@@ -27,11 +27,13 @@
 #include <asm/types.h>
 #include "mathTools.h" //includes stdDeviation
 
+#define FOI 4
+
 int plotData(char* fileName);
 int plotRawData(char* fileName);
 int calculateNumberDensity(char* fileName,int leftDataExclude, int rightDataExclude);
 int recordNumberDensity(char* fileName);
-int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRev);
+int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRev,int frequencyOfInterest);
 int getNumberOfAouts(char* fileName);
 int getRevPerRun(char* filename);
 int getRuns(char* filename);

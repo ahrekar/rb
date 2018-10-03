@@ -32,7 +32,7 @@
 #include "interfacing/waveMeter.h"
 
 #define PI 3.14159265358979
-#define STEPSIZE 1.0
+#define STEPSIZE 7.0
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -70,12 +70,16 @@ int main (int argc, char **argv)
         exit(1);
     }
 
+    //printf("Data collection flag file created!\n");  //DEBUG
+
     revolutions=1;
     dataPointsPerRevolution=(int)STEPSPERREV/STEPSIZE;
 
     // Set up interfacing devices
     initializeBoard();
     initializeUSB1208();
+
+    //printf("Initialized Board\n"); //DEBUG
 
     // Get file name.  Use format "FDayScan"+$DATE+$TIME+".dat"
     time(&rawtime);
@@ -103,7 +107,7 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-    fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
+    fprintf(fp,"#Filename:\t%s\n#Comments:\t%s\n",fileName,comments);
 
     getIonGauge(&returnFloat);
     //printf("IonGauge %2.2E Torr \n",returnFloat);
@@ -139,16 +143,16 @@ int main (int argc, char **argv)
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 	fprintf(fp,"#NumVoltages:\t%d\n",1);
-    fprintf(fp,"#PumpWavelength:\t%f\n",getWaveMeter());
+    fprintf(fp,"#PumpWavelength:\t%f\n",getWaveMeter(&returnFloat));
     //fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFreq());
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
-    int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
-    char* names[]={"PMP","PRB","REF"};
+    int numPhotoDetectors = 2;
+    int photoDetectors[] = {BOTLOCKIN,TOPLOCKIN};
+    char* names[]={"HORIZ","VERT"};
     // UNCOMMENT THE FOLLOWING LINES WHEN USING THE FLOATING PD
     //int photoDetectors[] = {PROBE_LASER,PUMP_LASER,REF_LASER};
     //char* names[]={"PRB","PMP","REF"};
-    int numPhotoDetectors = 3;
     int motor = PROBE_MOTOR;
     //int motor = PUMP_MOTOR;
 
@@ -167,11 +171,11 @@ int main (int argc, char **argv)
 
     fclose(fp);
 
-    printf("Processing Data...\n");
+    //printf("Processing Data...\n");
 
     plotRawData(fileName);
 
-    analyzeData(fileName, 1, revolutions, dataPointsPerRevolution);
+    analyzeData(fileName, 1, revolutions, dataPointsPerRevolution, FOI);
 
     closeUSB1208();
 
@@ -201,14 +205,15 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     for (k=0;k<revolutions;k++){ //revolutions
         for (steps=0;steps < STEPSPERREV;steps+=(int)STEPSIZE){ // steps
             // (STEPSPERREV) in increments of STEPSIZE
-            delay(300); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP. UPDATE: with the Lock-in at a time scale of 100 ms, it takes 500 ms to settle. 
-            // With time scale of 30 ms, takes 300 ms to settle.
+            delay(300); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP. 
+            // UPDATE: With the Lock-in at a time scale of 100 ms, it takes 500 ms to settle. 
+            // UPDATE: With time scale of 30 ms, takes 300 ms to settle.
 
             //get samples and average
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
                 for (i=0;i<nSamples;i++){ // nSamples
-                        getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+                        getMCPAnalogIn(photoDetector[j],&measurement[i]);
                         involts[j]=involts[j]+fabs(measurement[i]);
                         delay(WAITTIME);
                 } // nSamples
@@ -223,7 +228,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 else
                     fprintf(fp,"%f\t%f\n",involts[j],stdDev[j]);
             }
-            angle=2.0*PI*(steps-69)/STEPSPERREV;
+            angle=2.0*PI*(steps)/STEPSPERREV;
             sumSin+=involts[0]*sin(2*angle);
             sumCos+=involts[0]*cos(2*angle);
 

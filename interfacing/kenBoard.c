@@ -107,7 +107,6 @@ Ch7 =
 int getMCPAnalogIn(unsigned short chan, float* returnFloat){
     unsigned int returndata;
     getADC(chan,&returndata);
-    printf("returnData: %d\n",returndata);
     *returnFloat=(float)returndata/1023.*10.;
     return 0;
 }
@@ -354,6 +353,7 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 	cmd[len+1]=(unsigned char)((temp&0xFF00)>>8);  //ensures that the MSByte is sent 
 	cmd[len]=(unsigned char)(temp&0x00FF);  //before the LSByte
 
+    
 	write_rs485BYTE(cmd,len+2, returndata, &j);
 	/* len is the  number of input bytes in the command to send. Add two for the CRC bytes
 	   and send ALL these bytes.  returndata holds any response */

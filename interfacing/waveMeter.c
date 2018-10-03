@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <stdlib.h> //atof()
 #include <stdio.h>
 #include <time.h>
 #include <fcntl.h>
@@ -11,20 +11,21 @@
 #define SPEEDOFLIGHT 299792458 // meters/sec
 #define LINECENTER 377107.463  // GHz
 
-float getProbeFrequency(void){
+float getProbeFrequency(float* returnFrequency){
     int mirrorPos;
-
+    
     mirrorPos=getMirror();
     if (mirrorPos!=0) setMirror(0);
-    return getFrequency();
+    return getFrequency(returnFrequency);
 }
 
-float getProbeDetuning(void){
+float getProbeDetuning(float* returnFrequency){
     int mirrorPos;
+    float tmp;
 
     mirrorPos=getMirror();
     if (mirrorPos!=0) setMirror(0);
-    return getDetuning();
+    return getDetuning(returnFrequency);
 }
 
 float getProbeWavelength(void){
@@ -34,18 +35,19 @@ float getProbeWavelength(void){
     return getWavelength();
 }
 
-float getPumpFrequency(void){
+float getPumpFrequency(float *returnFrequency){
     int mirrorPos;
     mirrorPos=getMirror();
     if (mirrorPos!=8) setMirror(8);
-    return getFrequency();
+    return getFrequency(returnFrequency);
 }
 
 float getPumpDetuning(void){
     int mirrorPos;
+    float tmp;
     mirrorPos=getMirror();
     if (mirrorPos!=8) setMirror(8);
-    return getDetuning();
+    return getDetuning(&tmp);
 }
 
 float getPumpWavelength(void){
@@ -55,7 +57,7 @@ float getPumpWavelength(void){
     return getWavelength();
 }
 
-float getWaveMeter(void){
+float getWaveMeter(float* wavemeterReturn){
 	unsigned char retData[32];
 	unsigned char outData[32];
 	int i, status;
@@ -66,11 +68,12 @@ float getWaveMeter(void){
 	status=setRS485BridgeReads(2,WAV);
 	writeRS485to232Bridge(outData,retData,WAV);
 	temp=atof((char*) retData);
+    *wavemeterReturn=temp;
 
 	return temp;
 }
 
-float getDetuning(void){
+float getDetuning(float* returnFloat){
 	unsigned char retData[32];
 	unsigned char outData[32];
 	int i, status;
@@ -83,23 +86,23 @@ float getDetuning(void){
 	temp=atof((char*) retData);
     temp=SPEEDOFLIGHT/temp - LINECENTER;
 
+    *returnFloat=temp;
 	return temp;
 }
 
-float getFrequency(void){
+float getFrequency(float *returnFrequency){
 	unsigned char retData[32];
 	unsigned char outData[32];
 	int i, status;
-	float temp;
 
 	strcpy((char*) outData," ");
 
 	status=setRS485BridgeReads(2,WAV);
 	writeRS485to232Bridge(outData,retData,WAV);
-	temp=atof((char*) retData);
-    temp=SPEEDOFLIGHT/temp;
+	*returnFrequency=atof((char*) retData);
+    *returnFrequency=SPEEDOFLIGHT/ *returnFrequency;
 
-	return temp;
+	return *returnFrequency;
 }
 
 float getWavelength(void){

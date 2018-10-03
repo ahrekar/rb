@@ -8,13 +8,13 @@
 #define WAV 0xC8
 
 
-float getWaveMeter(void);
-float getFrequency(void);
-float getDetuning(void);
+float getWaveMeter(float *returnFloat);
+float getFrequency(float *returnFloat);
+float getDetuning(float *returnFloat);
 float getWavelength(void);
-float getProbeFrequency(void);
-float getPumpFrequency(void);
+float getProbeFrequency(float *returnFloat);
+float getPumpFrequency(float *returnFloat);
 float getProbeWavelength(void);
 float getPumpWavelength(void);
-float getProbeDetuning(void);
+float getProbeDetuning(float *returnFloat);
 float getPumpDetuning(void);

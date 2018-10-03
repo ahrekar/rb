@@ -10,7 +10,7 @@
 #include "kenBoard.h"
 
 #define CN_RESERVE 5
-#define CN_CHAMWALL 7
+#define CN_TESTCHAMBER 7
 #define CN_TARGET 3
 
 int getPVCN7500(unsigned short chan, float* temperature);

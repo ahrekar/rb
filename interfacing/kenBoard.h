@@ -42,6 +42,9 @@ MODBUS RTU LAYER::
 #include <wiringPi.h>
 #include <wiringSerial.h>
 
+#define BOTLOCKIN 1
+#define TOPLOCKIN 2
+
 #define POL_MOTOR	0
 #define PROBE_MOTOR	1
 #define PUMP_MOTOR	2
@@ -56,6 +59,7 @@ int initializeBoard();
 int closeBoard();
 
 int getADC(unsigned short chan, unsigned int * returndata);
+int getMCPAnalogIn(unsigned short chan, float* returnFloat);
 // uses MCP3008 ADC conected to SPI channel 0.
 
 int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps);

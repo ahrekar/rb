@@ -155,7 +155,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 
 		// delay to allow transients to settle
 		delay(200);
-		kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
+		getWaveMeter(&kensWaveLength);// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
 		//kensWaveLength = -1;
 		fprintf(fp,"%03.4f\t",kensWaveLength);
@@ -223,9 +223,9 @@ void writeFileHeader(char* fileName, char* comments){
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
-	getPVCN7500(CN_CHAMWALL,&returnFloat);
+	getPVCN7500(CN_TESTCHAMBER,&returnFloat);
 	fprintf(fp,"#CurrTemp(Res2):\t%f\n",returnFloat);
-	getSVCN7500(CN_CHAMWALL,&returnFloat);
+	getSVCN7500(CN_TESTCHAMBER,&returnFloat);
 	fprintf(fp,"#SetTemp(Res2):\t%f\n",returnFloat);
     /** End System Stats Recording **/
 

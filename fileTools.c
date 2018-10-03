@@ -48,6 +48,7 @@ int getCommentLineFromFile(char* inputFile, char* commentDescText, char* returnS
 	}
 	do{
 		fgets(returnString,1024,data);
+        printf("Searching for comment line...\n");
 	} while(strncmp(returnString,commentDescText,strlen(commentDescText)));
 	pointer = strtok(returnString,"\t");
 	pointer = strtok(NULL,"\t");

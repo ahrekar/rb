@@ -1,7 +1,7 @@
 #!/bin/bash
 
-MIN=69
-MAX=73
+MIN=70
+MAX=84
 STEP=1
 RBC=/home/pi/RbControl
 

@@ -22,14 +22,16 @@
 #include "mathTools.h"
 #include "fileTools.h"
 #include "interfacing/interfacing.h"
+#include "probeLaserControl.h"
 
 #define BUFSIZE 1024
 #define WAITTIME 2
 
+
 void graphData(char* fileName);
 void writeFileHeader(char* fileName, char* comments);
 void writeTextToFile(char* fileName, char* line);
-void collectAndRecordData(char* fileName, float startvalue, float endvalue, float stepsize, float* maxes, float* mins, int* channels, int numChannels);
+void collectAndRecordData(char* fileName, float* maxes, float* mins, int* channels, int numChannels);
 float stdDeviation(float* values, int numValues);
 void findAndSetProbeMaxTransmission();
 void findMaxMinIntensity(float* maxes,int* maxLoc, float* mins, int* minLoc, int* channels, int numChannels, int stepRange, int motor);
@@ -37,33 +39,29 @@ void findMaxMinIntensity(float* maxes,int* maxLoc, float* mins, int* minLoc, int
 int main (int argc, char **argv)
 {
 	// Variables for finding the max and min.
-	int numChannels=3;
-	int channels[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
-	int stepRange=100;
+	int numChannels=2;
+	int channels[] = {BOTLOCKIN,TOPLOCKIN};
+	int stepRange=87;
 	int motor=PROBE_MOTOR;
 	float* maxes = calloc(numChannels,sizeof(float));
 	int* maxLoc = calloc(numChannels,sizeof(int));
 	float* mins = calloc(numChannels,sizeof(float));
 	int* minLoc = calloc(numChannels,sizeof(int));
 
-    // Variables for recording the time. 
-	time_t rawtime;
-	struct tm * timeinfo;
-	float startvalue,endvalue,stepsize;
+	float startvalue=0,endvalue=117,stepsize=2;
 	char fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
     int err;
 
 	FILE *dataCollectionFlagFile, *fp;
 
-	if (argc==5) {
-		startvalue=atof(argv[1]);
-		endvalue=atof(argv[2]);
-		stepsize=atof(argv[3]);
-		strcpy(comments,argv[4]);
+	if (argc==2) {
+		strcpy(comments,argv[1]);
 	} else {
+		printf("WARNING:\n");
+		printf("  findBPDBalance should be run before running this program to ensure its maximum usefulness.\n");
 		printf("Usage:\n");
-		printf("$ sudo ./faradayScanBPD <begin> <end> <step>  <comments>\n");
+		printf("$ sudo ./faradayScanBPD <comments>\n");
 		printf("                      (0.0 - 117.5)                   \n");
 		return 0;
 	}
@@ -77,16 +75,11 @@ int main (int argc, char **argv)
 	initializeBoard();
 	initializeUSB1208();
 
-	if (endvalue>117.5) endvalue=117.5;
-	if (startvalue>117.5) endvalue=117.5;
-	if (startvalue<0) startvalue=0;
-	if (endvalue<0) endvalue=0;
-	if (startvalue>endvalue) {
-		printf("error: startvalue > endvalue.\nYeah, i could just swap them in code.. or you could just enter them in correctly. :-)\n");
-		return 1;
-	}
 
-	// get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
+    // Variables for recording the time. 
+	time_t rawtime;
+	struct tm * timeinfo;
+	// get file name.  use format "FSCanBPD"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
@@ -105,22 +98,21 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
+	//Read in the maxes and mins
+	char* mmFilename=".minMax";
+	FILE* mmFp = fopen(mmFilename,"r");
+	if (!mmFp) {
+		printf("Unable to open file %s\n",mmFilename);
+		exit(1);
+	}
+	fscanf(mmFp,"%f\n%f\n%f\n%f",&mins[0],&maxes[0],&mins[1],&maxes[1]);
+
     err=setMirror(0);
     if(err>0) printf("Error Occured While setting Flip Mirror: %d\n",err);
 
-
-	//findMaxMinIntensity(maxes, maxLoc, mins, minLoc, channels, numChannels, stepRange, motor);
-	//printf("Max Intensity PD1: %f\nMin Intensity PD1: %f\nMax Loc PD1: %d\nMin Loc PD1: %d\n",maxes[0],mins[0],maxLoc[0],minLoc[0]);
-
-//	int equalSignalLoc=(maxLoc[0]+minLoc[0])/2;
-
-//	homeMotor(motor);
-//	stepMotor(motor,CLK,equalSignalLoc);
 	setVortexPiezo(45.0); // Return Piezo to 45.0 V
 
-	collectAndRecordData(fileName, startvalue, endvalue, stepsize, maxes, mins, channels, numChannels);
-
-	homeMotor(PROBE_MOTOR);
+	collectAndRecordData(fileName, maxes, mins, channels, numChannels);
 
 	setVortexPiezo(45.0); // Return Piezo to 45.0 V
 
@@ -163,66 +155,33 @@ void graphData(char* fileName){
 		//fprintf(gnuplot, "set x2range [*:*]\n");			
 		fprintf(gnuplot, "set x2tics nomirror\n");
 		//sprintf(buffer, "plot '%s' using 1:6:7 with errorbars, '%s' using ($1*%f+%f):6:7 axes x2y1\n",fileName,fileName,aoutConv,aoutInt);
-		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
-		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:5:6 with errorbars\n",fileName);
-		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:3:4 with errorbars\n",fileName);
+		sprintf(buffer, "plot '%s' using 2:18\n",fileName);
 		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars,\
-						 	  '%s' using 1:5:6 with errorbars,\
-						 	  '%s' using 1:3:4 with errorbars\n", fileName,fileName,fileName);
+		sprintf(buffer, "plot '%s' using 2:18\n", fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
 }
 
-void findAndSetProbeMaxTransmission(){
-	int i;
-	int numMoves=0;
-	int stepsPerRevolution=350;
-	int moveSize=stepsPerRevolution/4;
-	int foundMax=0;
-	float returnFloat;
-	float maxIntensity=0;
-	int numMovesBackToMax=0;
-	do{
-		getUSB1208AnalogIn(PROBE_LASER,&returnFloat);
-		if(fabs(returnFloat)>maxIntensity){
-			numMovesBackToMax=4-numMoves;
-			maxIntensity=fabs(returnFloat);
-		}
-		stepMotor(PROBE_MOTOR,CLK,moveSize);
-		numMoves++;
-		if(numMoves==4){
-			// Go back to the maximum
-			for(i=0;i<numMovesBackToMax+1;i++){
-				stepMotor(PROBE_MOTOR,CCLK,moveSize);
-			}
-			if(moveSize==1){
-				stepMotor(PROBE_MOTOR,CLK,moveSize);
-			}
-			moveSize=moveSize/2;
-			numMoves=0;
-		}
-		if(moveSize==0){
-			foundMax=1;
-		}
-	}while(!foundMax);
-}
 
 void writeFileHeader(char* fileName, char* comments){
-	FILE* fp;
+	FILE* fp,*configFile;
 	float returnFloat;
 	fp=fopen(fileName,"w");
 	if (!fp) {
 		printf("unable to open file: %s\n",fileName);
 		exit(1);
 	}
+
+    configFile=fopen("/home/pi/RbControl/system.cfg","r");
+    if (!configFile) {
+        printf("Unable to open config file\n");
+        exit(1);
+    }
 
 	fprintf(fp,"#Filename:\t%s\n",fileName);
 	fprintf(fp,"#Comments:\t%s\n",comments);
@@ -252,14 +211,20 @@ void writeFileHeader(char* fileName, char* comments){
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
-	getPVCN7500(CN_CHAMWALL,&returnFloat);
-	fprintf(fp,"#CurrTemp(Res2):\t%f\n",returnFloat);
-	getSVCN7500(CN_CHAMWALL,&returnFloat);
-	fprintf(fp,"#SetTemp(Res2):\t%f\n",returnFloat);
+	/** Pull in the information from the system.cfg file. **/
+    char line[1024];
+	fgets(line,1024,configFile);
+	while(line[0]=='#'){
+		fprintf(fp,"%s",line);
+		fgets(line,1024,configFile);
+	}
+
+	fclose(configFile);
     /** End System Stats Recording **/
 
 	//fprintf(fp,"VOLT\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"VOLT\tWAV\tPMP\tPMPsd\tPMPmax\tPMPmin\tPMPnrm\tPRB\tPRBsd\tPRBmax\tPRBmin\tPRBnrm\tREF\tREFsd\tREFmax\tREFmin\tREFnrm\tANGLE\n");
+	// File header (Header)
+	fprintf(fp,"VOLT\tFREQ\tPMP\tPMPsd\tPMPmax\tPMPmin\tPMPnrm\tPRB\tPRBsd\tPRBmax\tPRBmin\tPRBnrm\tANGLE\n");
 	fclose(fp);
 }
 
@@ -274,7 +239,7 @@ void writeTextToFile(char* fileName, char* line){
 	fclose(fp);
 }
 
-void collectAndRecordData(char* fileName, float startvalue, float endvalue, float stepsize, float* maxes, float* mins, int* channels, int numChannels){
+void collectAndRecordData(char* fileName, float* maxes, float* mins, int* channels, int numChannels){
 	float value;
 	FILE* fp;
 	int k=0,i;
@@ -285,6 +250,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	float involts[numChannels];
 	float kensWaveLength;
 	float returnFloat;
+	float startvalue,endvalue,stepsize;
 
 	fp=fopen(fileName,"a");
 	if (!fp) {
@@ -293,25 +259,32 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	}
 	// Allocate some memory to store measurements for calculating
 	// error bars.
-	nSamples = 50;
+	nSamples = 24;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	value=startvalue;
-	//setVortexPiezo(value);
+	//int numDet=12;
+	//float scanDet[]={-33,-30,-23,-20,-13,-10,10,13,20,23,30,33};
+	int numDet=18;
+	float scanDet[]={-33,-30,-19,-18,-9,-5,-4.5,-4,-3.5,6,6.5,7,7.5,11,20,21,30,33};
+
+	setProbeDetuning(scanDet[0]);
 	delay(10000);
 
-	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
+
+	int j;
+	for(j=0;j<numDet;j++){
 	//returnFloat=1;
 	//while(returnFloat!=0){
         if(count%15==0) printf("          \t       \t\t\tHORIZ      |        PERP	|  REF   |  ANGLE\n");
-		setVortexPiezo(value);
+		setProbeDetuning(scanDet[j]);
+		getVortexPiezo(&value);
 		printf("VOLT %3.1f \t",value);
 		fprintf(fp,"%f\t",value);
 
 		// delay to allow transients to settle
-		delay(10000);
+		delay(1000);
 		//scanf("%f",&returnFloat);
-		kensWaveLength = getWaveMeter();// Getting the wavelength invokes a significant delay
+		kensWaveLength = getProbeFrequency(&returnFloat);// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
 		//kensWaveLength = -1;
 		fprintf(fp,"%03.4f\t",kensWaveLength);
@@ -322,8 +295,9 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 
 		// grab several readings and average
 		for(k=0;k<numChannels;k++){
+			involts[k]=0.0;	
 			for (i=0;i<nSamples;i++){
-				getUSB1208AnalogIn(channels[k],&measurement[i]);
+				getMCPAnalogIn(channels[k],&measurement[i]);
 				involts[k]=involts[k]+measurement[i];
 				delay(10);
 			}
@@ -334,8 +308,8 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 			printf("  %0.4f %0.4f  ",involts[k],stdDeviation(measurement,nSamples));
             if(k<numChannels) printf(" | ");
 		}
-		//angle=atan((involts[0]-mins[0])/(maxes[0]-mins[0])/(involts[1]-mins[1])*(maxes[1]-mins[1]));
-		angle=atan(sqrt((involts[0])/(involts[1])));
+		angle=atan(sqrt((involts[0]-mins[0])/(maxes[0]-mins[0])/(involts[1]-mins[1])*(maxes[1]-mins[1])));
+		//angle=atan(sqrt((involts[0])/(involts[1]))); //WITHOUT NORMALIZATION
 		fprintf(fp,"%02.3f\t",angle);
 		fprintf(fp,"\n");
 		printf("%02.3f\n",angle);
@@ -382,7 +356,7 @@ void findMaxMinIntensity(float* maxes,int* maxLoc, float* mins, int* minLoc, int
         for(j=0;j<numChannels;j++){ // numPhotoDet1
             involts=0;
             for (i=0;i<nSamples;i++){ // nSamples
-                getUSB1208AnalogIn(channels[j],&measurement);
+                getMCPAnalogIn(channels[j],&measurement);
                 involts=involts+fabs(measurement);
                 delay(WAITTIME);
             } // nSamples

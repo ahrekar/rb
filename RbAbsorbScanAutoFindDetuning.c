@@ -28,9 +28,10 @@
 #include "interfacing/RS485Devices.h" // For talking to wavemeter, Omega, etc. 
 #include "interfacing/grandvillePhillips.h" // For getting pressures. 
 #include "interfacing/interfacing.h"
+#include "interfacing/laserFlag.h"
 
 #define BUFSIZE 1024
-#define NUMCHANNELS 3
+#define NUMCHANNELS 2
 #define WAITTIME 2
 
 void graphData(char* fileName);
@@ -40,6 +41,8 @@ void collectAndRecordData(char* fileName, float stepSize);
 float stdDeviation(float* values, int numValues);
 void findAndSetProbeMaxTransmission();
 void findMaxMinIntensity(float* maxes, float* mins,int* channels, int numChannels, int stepRange);
+
+float mins[NUMCHANNELS];
 
 int main (int argc, char **argv)
 {
@@ -57,11 +60,9 @@ int main (int argc, char **argv)
 
 	FILE *dataCollectionFlagFile, *fp;
 
-	printf("About to read in variables\n"); //DEBUG
 	if (argc==3){
 		stepSize=atof(argv[1]);
 		strcpy(comments,argv[2]);
-		printf("read in variables\n"); //DEBUG
 	} else {
 		printf("Usage:\n");
 		printf("$ sudo ./RbAbsorbScan <step size>  <comments>\n");
@@ -70,7 +71,6 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	printf("About to indicate data collection\n"); //DEBUG
 	// Indicate that data is being collected.
 	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
 	if (!dataCollectionFlagFile) {
@@ -78,7 +78,6 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	printf("About to initializeBoard()\n"); //DEBUG
 	initializeBoard();
 	initializeUSB1208();
 
@@ -107,7 +106,6 @@ int main (int argc, char **argv)
     err=setMirror(0);
     if(err>0) printf("Error Occured While setting Flip Mirror: %d\n",err);
 
-	printf("About to call collectAndRecordData()\n"); //DEBUG
 	fflush(0);
 
 	collectAndRecordData(fileName, stepSize);
@@ -125,11 +123,7 @@ int main (int argc, char **argv)
 }
 
 void collectAndRecordData(char* fileName, float stepSize){
-	printf("Entered collectAndRecordData function\n"); // DEBUG
-	printf("with arguments:\n"); // DEBUG
-	printf("    fileName: %s\n",fileName); // DEBUG
-	printf("    stepSize: %f\n",stepSize); // DEBUG
-	float value, startValue, endValue,voltRange=25;
+	float value, startValue, endValue,voltRange=30;
 	float lowDetuning,highDetuning;
 	float returnValue;
 	FILE* fp;
@@ -173,7 +167,7 @@ void collectAndRecordData(char* fileName, float stepSize){
 		fprintf(fp,"%f\t",value);
 
 		// delay to allow transients to settle
-		detuning = getProbeFrequency()-LINECENTER;// Getting the wavelength invokes a significant delay
+		detuning = getProbeFrequency(&returnValue)-LINECENTER;// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
 		//detuning = -1;
 		fprintf(fp,"%03.4f\t",detuning);
@@ -186,14 +180,15 @@ void collectAndRecordData(char* fileName, float stepSize){
 		// grab several readings and average
 		for(k=1;k<NUMCHANNELS+1;k++){
 			for (i=0;i<nSamples;i++){
-				getUSB1208AnalogIn(k,&measurement[i]);
+				//getUSB1208AnalogIn(k,&measurement[i]);
+				getMCPAnalogIn(k,&measurement[i]);
 				involts[k-1]=involts[k-1]+measurement[i];
 				delay(10);
 			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
-			fprintf(fp,"%0.4f\t%0.4f",involts[k-1],stdDeviation(measurement,nSamples));
+			fprintf(fp,"%0.4f\t%0.4f",involts[k-1]-mins[k-1],stdDeviation(measurement,nSamples));
             if(k<NUMCHANNELS) fprintf(fp,"\t");
-			printf("  %0.4f %0.4f  ",involts[k-1],stdDeviation(measurement,nSamples));
+			printf("  %0.4f %0.4f  ",involts[k-1]-mins[k-1],stdDeviation(measurement,nSamples));
             if(k<NUMCHANNELS) printf(" | ");
 		}
 		fprintf(fp,"\n");
@@ -207,6 +202,7 @@ void collectAndRecordData(char* fileName, float stepSize){
 
 void writeFileHeader(char* fileName, char* comments){
 	FILE* fp;
+	int k;
 	float returnFloat;
 	fp=fopen(fileName,"w");
 	if (!fp) {
@@ -242,10 +238,23 @@ void writeFileHeader(char* fileName, char* comments){
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
+	/** Minimums of photodiode signals. **/
+		
+	setFlag(PROBEFLAG,8);
+	delay(3000);
+	for(k=1;k<NUMCHANNELS+1;k++){
+		//getUSB1208AnalogIn(k,&mins[(k-1)]);
+		getMCPAnalogIn(k,&mins[(k-1)]);
+		fprintf(fp,"#MinimumPD%0d:\t%f\n",k,mins[(k-1)]);
+		printf("#MinimumPD%0d:\t%f\n",k,mins[(k-1)]);
+	}
+	setFlag(PROBEFLAG,0);
+
     /** End System Stats Recording **/
 
 	//fprintf(fp,"VOLT\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"VOLT\tDET\tPMP\tPMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
+	//fprintf(fp,"VOLT\tDET\tHORIZ\tHORIZsd\tVERT\tVERTsd\tREF\tREFsd\n");
+	fprintf(fp,"VOLT\tDET\tHORIZ\tHORIZsd\tVERT\tVERTsd\n");
 	fclose(fp);
 }
 
@@ -310,38 +319,4 @@ void graphData(char* fileName){
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
-}
-
-void findAndSetProbeMaxTransmission(){
-	int i;
-	int numMoves=0;
-	int stepsPerRevolution=350;
-	int moveSize=stepsPerRevolution/4;
-	int foundMax=0;
-	float returnFloat;
-	float maxIntensity=0;
-	int numMovesBackToMax=0;
-	do{
-		getUSB1208AnalogIn(PROBE_LASER,&returnFloat);
-		if(fabs(returnFloat)>maxIntensity){
-			numMovesBackToMax=4-numMoves;
-			maxIntensity=fabs(returnFloat);
-		}
-		stepMotor(PROBE_MOTOR,CLK,moveSize);
-		numMoves++;
-		if(numMoves==4){
-			// Go back to the maximum
-			for(i=0;i<numMovesBackToMax+1;i++){
-				stepMotor(PROBE_MOTOR,CCLK,moveSize);
-			}
-			if(moveSize==1){
-				stepMotor(PROBE_MOTOR,CLK,moveSize);
-			}
-			moveSize=moveSize/2;
-			numMoves=0;
-		}
-		if(moveSize==0){
-			foundMax=1;
-		}
-	}while(!foundMax);
 }

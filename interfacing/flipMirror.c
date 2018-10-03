@@ -31,8 +31,8 @@ int getMirror(void){
 		printf("Error occured: %d\n",z);
 		return z;
 	}
-	if(i==0)printf("Measuring Probe Beam\n");
-	if(i==8)printf("Measuring Pump Beam\n");
+	//if(i==0)printf("Measuring Probe Beam\n");
+	//if(i==8)printf("Measuring Pump Beam\n");
 
-	return 0 ;
+	return i;
 }

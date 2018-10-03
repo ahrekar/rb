@@ -112,6 +112,7 @@ int main (int argc, char **argv)
 
 
 	closeUSB1208();
+	close(laserSock);
 
 	graphData(fileName);
 
@@ -166,39 +167,6 @@ void graphData(char* fileName){
 	pclose(gnuplot);
 }
 
-void findAndSetProbeMaxTransmission(){
-	int i;
-	int numMoves=0;
-	int stepsPerRevolution=350;
-	int moveSize=stepsPerRevolution/4;
-	int foundMax=0;
-	float returnFloat;
-	float maxIntensity=0;
-	int numMovesBackToMax=0;
-	do{
-		getUSB1208AnalogIn(PROBE_LASER,&returnFloat);
-		if(fabs(returnFloat)>maxIntensity){
-			numMovesBackToMax=4-numMoves;
-			maxIntensity=fabs(returnFloat);
-		}
-		stepMotor(PROBE_MOTOR,CLK,moveSize);
-		numMoves++;
-		if(numMoves==4){
-			// Go back to the maximum
-			for(i=0;i<numMovesBackToMax+1;i++){
-				stepMotor(PROBE_MOTOR,CCLK,moveSize);
-			}
-			if(moveSize==1){
-				stepMotor(PROBE_MOTOR,CLK,moveSize);
-			}
-			moveSize=moveSize/2;
-			numMoves=0;
-		}
-		if(moveSize==0){
-			foundMax=1;
-		}
-	}while(!foundMax);
-}
 
 void writeFileHeader(char* fileName, char* comments){
 	FILE* fp;
@@ -223,6 +191,7 @@ void writeFileHeader(char* fileName, char* comments){
 
     /** Temperature Controllers **/
 	// Write File Header(header).
+	//fprintf(fp,"VOLT\tDET\tVERT\tVERTsd\tHORIZ\tHORIZsd\n");
 	fprintf(fp,"VOLT\tDET\tVERT\tVERTsd\tHORIZ\tHORIZsd\n");
 	fclose(fp);
 }
@@ -279,6 +248,7 @@ void collectAndRecordData(char* fileName, int laserSock, float startvalue, float
 		// grab several readings and average
 		for(k=startChannel;k<startChannel+NUMCHANNELS;k++){
 			for (i=0;i<nSamples;i++){
+				//getUSB1208AnalogIn(k,&measurement[i]);
 				getMCPAnalogIn(k,&measurement[i]);
 				involts[k-1]=involts[k-1]+measurement[i];
 				delay(50);

@@ -30,6 +30,7 @@
 #include "interfacing/interfacing.h"
 #include "faradayScanAnalysisTools.h"
 #include "interfacing/waveMeter.h"
+#include "probeLaserControl.h"
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
@@ -49,6 +50,7 @@ int main (int argc, char **argv)
 	int VoltStart2,VoltStop2;
     int revolutions,dataPointsPerRevolution;
 	time_t rawtime;
+    float value;
 	float returnFloat;
 	float wavelength;
 	struct tm * timeinfo;
@@ -59,13 +61,10 @@ int main (int argc, char **argv)
 	FILE *fp,*dataCollectionFlagFile,*configFile;
 
 
-	if (argc==5){
-        VoltStart1=atoi(argv[1]);
-        VoltStop1=atoi(argv[2]);
-        deltaVolt=atoi(argv[3]);
-		strcpy(comments,argv[4]);
+	if (argc==2){
+		strcpy(comments,argv[1]);
 	} else { 
-		printf("usage '~$ sudo ./faradayScan <startVoltage> <endVoltage> <deltaVoltage> <comments in quotes>'\n");
+		printf("usage '~$ sudo ./faradayScan <comments in quotes>'\n");
 		return 1;
 	}
 
@@ -75,6 +74,7 @@ int main (int argc, char **argv)
 		printf("unable to open file:\t%s\n",dataCollectionFileName);
 		exit(1);
 	}
+    printf("Data flag file created!\n"); //DEBUG
 
     revolutions=1;
     dataPointsPerRevolution=(int)STEPSPERREV/STEPSIZE;
@@ -82,6 +82,7 @@ int main (int argc, char **argv)
 	// Set up interfacing devices
 	initializeBoard();
 	initializeUSB1208();
+    printf("Initialized Board!\n"); //DEBUG
 
 	// Get file name.  Use format "FDayScan"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -94,23 +95,24 @@ int main (int argc, char **argv)
 	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo); //INCLUDE
 	strftime(dailyFileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F.dat",timeinfo); //INCLUDE
 
+    printf("Created data file\n"); //DEBUG
+
 	printf("%s\n",fileName);
 	printf("%s\n",comments);
 
 	fp=fopen(fileName,"w");
 	if (!fp) {
 		printf("Unable to open file: %s\n",fileName);
+        fflush(stdout);
 		exit(1);
 	}
 
     configFile=fopen("/home/pi/RbControl/system.cfg","r");
     if (!configFile) {
         printf("Unable to open config file\n");
+        fflush(stdout);
         exit(1);
     }
-
-    int totalVolts=0;
-    totalVolts+=(VoltStop1-VoltStart1)/deltaVolt+1;
 
 	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
@@ -150,54 +152,53 @@ int main (int argc, char **argv)
 
 	fclose(configFile);
 
+	int numDet=18,j;
+	float scanDet[]={-33,-30,-19,-18,-9,-5,-4.5,-4,-3.5,6,6.5,7,7.5,11,20,21,30,33};
+
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
-	fprintf(fp,"#NumVolts:\t%d\n",totalVolts);
+	fprintf(fp,"#NumVolts:\t%d\n",numDet);
 	fprintf(fp,"#StepSize:\t%d\n",STEPSIZE);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"STEP\tPUMP\tPUMPsd\tPRB\tPRBsd\n");
+	fprintf(fp,"STEP\tPUMP\tPUMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
     fclose(fp);
 
 	printf("Homing motor...\n");
 	homeMotor(PROBE_MOTOR);
 
-    int numPd=3;
-    int pd[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+//    int numPd=3;
+//    int pd[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+    int numPd=2;
+    int pd[] = {BOTLOCKIN,TOPLOCKIN};
 
 	fp=fopen(fileName,"a");
-    // We frequently see hysterisis when changing the voltage. This is an attempt to mitigate 
-    // this effect when running multiple faradayScans in a row for polarization purposes. 
-	setVortexPiezo(45);
-    delay(500);
-    setVortexPiezo(VoltStart1);
-    delay(500);
-	setVortexPiezo(VoltStop1);
-    delay(500);
 
-	for(Volt=VoltStart1;Volt<=VoltStop1;Volt+=deltaVolt){// start for Volt
-        setVortexPiezo(Volt);
+	setProbeDetuning(scanDet[0]);
+	delay(10000);
+
+
+	for(j=0;j<numDet;j++){
+		setProbeDetuning(scanDet[j]);
+		getVortexPiezo(&value);
 		delay(1000); 
 
-	    wavelength=getWaveMeter();
+	    getProbeFrequency(&wavelength);
 	   // wavelength=-1;
 
-        fprintf(fp,"\n\n#VOLT:%d(%f)\n",Volt,wavelength);
-        printf("VOLT:%d(%f)\t",Volt,wavelength);
+        fprintf(fp,"\n\n#VOLT:%f(%f)\n",value,wavelength);
+        printf("VOLT:%f(%f)\t",value,wavelength);
         fflush(stdout);
 
-        delay(1000);
-        
         quickHomeMotor(PROBE_MOTOR);
         collectDiscreteFourierData(fp,pd,numPd /*numPhotoDet*/,PROBE_MOTOR,revolutions);
 	}//end for Volt
 
-    setVortexPiezo(45);
 	fclose(fp);
 
 
 	printf("Processing Data...\n");
-	analyzeData(fileName, totalVolts, revolutions, dataPointsPerRevolution);
+	analyzeData(fileName, numDet, revolutions, dataPointsPerRevolution, FOI);
 
 	char* extensionStart;
 	extensionStart=strstr(fileName,".dat");
@@ -239,7 +240,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
                 for (i=0;i<nSamples;i++){ // nSamples
-                        getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+                        getMCPAnalogIn(photoDetector[j],&measurement[i]);
                         involts[j]=involts[j]+measurement[i];
                         delay(WAITTIME);
                 } // nSamples
