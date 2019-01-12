@@ -31,7 +31,7 @@
 #include "interfacing/laserFlag.h"
 
 #define BUFSIZE 1024
-#define NUMCHANNELS 2
+#define NUMCHANNELS 3
 #define WAITTIME 2
 
 void graphData(char* fileName);
@@ -180,7 +180,6 @@ void collectAndRecordData(char* fileName, float stepSize){
 		// grab several readings and average
 		for(k=1;k<NUMCHANNELS+1;k++){
 			for (i=0;i<nSamples;i++){
-				//getUSB1208AnalogIn(k,&measurement[i]);
 				getMCPAnalogIn(k,&measurement[i]);
 				involts[k-1]=involts[k-1]+measurement[i];
 				delay(10);
@@ -190,6 +189,11 @@ void collectAndRecordData(char* fileName, float stepSize){
             if(k<NUMCHANNELS) fprintf(fp,"\t");
 			printf("  %0.4f %0.4f  ",involts[k-1]-mins[k-1],stdDeviation(measurement,nSamples));
             if(k<NUMCHANNELS) printf(" | ");
+		}
+		for (i=0;i<nSamples;i++){
+			getUSB1208AnalogIn(k,&measurement[i]);
+			involts[k-1]=involts[k-1]+measurement[i];
+			delay(10);
 		}
 		fprintf(fp,"\n");
 		printf("\n");
