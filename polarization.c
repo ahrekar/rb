@@ -40,6 +40,7 @@ int main (int argc, char **argv)
     int ammeterScale;
 	
 	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; 
+    char configFileName[]="/home/pi/RbControl/system.cfg";
 	char buffer[1024];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
@@ -147,6 +148,8 @@ int main (int argc, char **argv)
 	fprintf(rawData,"#STPPERREV:\t%d\n",STEPSPERREV);
 	fprintf(rawData,"#DATPTS:\t%d\n",DATAPOINTS);
 	fprintf(rawData,"#DWELL(s):\t%d\n",dwell);
+	getCommentLineFromFile(configFileName,"#PumpQWPAngle(step):",buffer);
+	fprintf(rawData,"#QWP(STEP):\t%s\n",buffer);
 
 	fclose(rawData);
 

@@ -72,7 +72,7 @@ int main (int argc, char **argv)
 		printf("                                                                                               \n");
 		printf("    Usage:                                                                                     \n");
 		printf("           sudo ./excitationfn <filament bias> <N2 Offset> <N2 Sweep> <He offset> <scan range> <step size> <dwell time> <orderOfMagnitudeOfCurrent> <comments>\n");
-		printf("                                (remember neg.)                     (remember neg.!) (   0-30   ) (  1-24   )    (1-5)s       \n");
+		printf("                                (remember neg.)                     (remember neg.!) (   0-60   ) (  1-24   )    (1-5)s       \n");
 		printf("                                                                                               \n");
 		printf("   Step sizes:                                                                                 \n");
 		printf("               1: %1.3fV    9: %1.3fV   17: %1.3fV           \n",1*HPCAL,9*HPCAL,17*HPCAL );
