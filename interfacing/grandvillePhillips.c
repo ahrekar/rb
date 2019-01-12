@@ -10,7 +10,7 @@
 int getConvectron(unsigned int chan, float* returnvalue){
     unsigned int kchan;
     float Stdev,CVGauge;
-    unsigned int rdata;
+    //unsigned int rdata;
 int status;
 /*
     switch (chan){
@@ -60,7 +60,7 @@ int getIonGauge(float* returnvalue){
 
 */
     float Stdev,IonGauge;
-    unsigned int rdata;
+    //unsigned int rdata;
 	int status;
 
 
