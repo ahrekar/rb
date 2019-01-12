@@ -152,8 +152,13 @@ int main (int argc, char **argv)
 
 	fclose(configFile);
 
+    /*
 	int numDet=18,j;
 	float scanDet[]={-33,-30,-19,-18,-9,-5,-4.5,-4,-3.5,6,6.5,7,7.5,11,20,21,30,33};
+    */
+
+	int numDet=10,j;
+	float scanDet[]={-33,-30,-19,-18,-9,11,20,21,30,33};
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
