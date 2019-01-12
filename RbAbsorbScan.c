@@ -8,25 +8,15 @@
    RasPi connected to USB 1208LS.
 */
 
-#include <stdlib.h>
-#include <math.h>
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <asm/types.h>
-#include "mathTools.h"
-#include "fileTools.h"
+#include "mathTools.h" // For calculating standard deviations
 #include "interfacing/kenBoard.h" // For controlling stepper motors. 
 #include "interfacing/USB1208.h" // For accessing the photodiode signals
 #include "interfacing/vortexLaser.h" // For changing the detuning of the laser.
 #include "interfacing/RS485Devices.h" // For talking to wavemeter, Omega, etc. 
 #include "interfacing/grandvillePhillips.h" // For getting pressures. 
-#include "interfacing/interfacing.h"
+#include "interfacing/flipMirror.h" // For manipulating the flip mirror.
+#include "interfacing/omegaCN7500.h" // For accessing temperatures
+#include "interfacing/waveMeter.h" // For accessing the laser's frequency
 
 #define BUFSIZE 1024
 #define NUMCHANNELS 3
@@ -34,10 +24,7 @@
 
 void graphData(char* fileName);
 void writeFileHeader(char* fileName, char* comments);
-void writeTextToFile(char* fileName, char* line);
 void collectAndRecordData(char* fileName, float startvalue, float endvalue, float stepsize);
-float stdDeviation(float* values, int numValues);
-void findAndSetProbeMaxTransmission();
 void findMaxMinIntensity(float* maxes, float* mins,int* channels, int numChannels, int stepRange);
 
 int main (int argc, char **argv)
@@ -55,7 +42,8 @@ int main (int argc, char **argv)
     int err;
 
 	FILE *dataCollectionFlagFile, *fp;
-
+    
+    /* Check to make sure that the proper arguments were supplied. */
 	if (argc==5) {
 		startvalue=atof(argv[1]);
 		endvalue=atof(argv[2]);
@@ -87,7 +75,7 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	// get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
+	// Get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
@@ -155,7 +143,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 
 		// delay to allow transients to settle
 		delay(200);
-		getWaveMeter(&kensWaveLength);// Getting the wavelength invokes a significant delay
+		getProbeDetuning(&kensWaveLength);// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
 		//kensWaveLength = -1;
 		fprintf(fp,"%03.4f\t",kensWaveLength);
@@ -166,17 +154,31 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 
 
 		// grab several readings and average
-		for(k=1;k<NUMCHANNELS+1;k++){
+		for(k=1;k<NUMCHANNELS;k++){
 			for (i=0;i<nSamples;i++){
-				getUSB1208AnalogIn(k,&measurement[i]);
+				getMCPAnalogIn(k,&measurement[i]);
 				involts[k-1]=involts[k-1]+measurement[i];
 				delay(10);
 			}
+//			for (i=0;i<nSamples;i++){
+//				getUSB1208AnalogIn(k,&measurement[i]);
+//				involts[k-1]=involts[k-1]+measurement[i];
+//				delay(10);
+//			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
 			fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
 			printf("  %0.4f %0.4f  ",involts[k-1],stdDeviation(measurement,nSamples));
             if(k<NUMCHANNELS) printf(" | ");
 		}
+		for (i=0;i<nSamples;i++){
+			getUSB1208AnalogIn(k,&measurement[i]);
+			involts[k-1]=involts[k-1]+measurement[i];
+			delay(10);
+		}
+        involts[k-1]=fabs(involts[k-1])/(float)nSamples;
+        fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
+        printf("  %0.4f %0.4f  ",involts[k-1],stdDeviation(measurement,nSamples));
+
 		fprintf(fp,"\n");
 		printf("\n");
         count++;
@@ -223,28 +225,12 @@ void writeFileHeader(char* fileName, char* comments){
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
 
-	getPVCN7500(CN_TESTCHAMBER,&returnFloat);
-	fprintf(fp,"#CurrTemp(Res2):\t%f\n",returnFloat);
-	getSVCN7500(CN_TESTCHAMBER,&returnFloat);
-	fprintf(fp,"#SetTemp(Res2):\t%f\n",returnFloat);
     /** End System Stats Recording **/
 
 	//fprintf(fp,"VOLT\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
-	fprintf(fp,"VOLT\tWAV\tVERT\tVERTsd\tHORIZ\tHORIZsd\tREF\tREFsd\n");
+	fprintf(fp,"VOLT\tDET\tVERT\tVERTsd\tHORIZ\tHORIZsd\tREF\tREFsd\n");
 	fclose(fp);
 }
-
-void writeTextToFile(char* fileName, char* line){
-	FILE* fp;
-	fp=fopen(fileName,"a");
-	if (!fp) {
-		printf("unable to open file: %s\n",fileName);
-		exit(1);
-	}
-	fprintf(fp,"%s",line);
-	fclose(fp);
-}
-
 
 void graphData(char* fileName){
 	char fileNameBase[1024];
@@ -258,11 +244,6 @@ void graphData(char* fileName){
 	strcpy(fileNameBase,fileName);
 	extension = strstr(fileNameBase,".dat");
 	strcpy(extension,"");
-
-	//getCommentLineFromFile(fileName,"#ProbeOffset:",buffer);
-	//probeOffset=atof(buffer);
-	//aoutConv=9e-6*pow(probeOffset,2)+.0012*probeOffset-.0651;
-	//aoutInt=.6516*probeOffset-22.851;
 
 	if (gnuplot != NULL){
 		fprintf(gnuplot, "set terminal dumb size 80,32\n");
@@ -295,38 +276,4 @@ void graphData(char* fileName){
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);
-}
-
-void findAndSetProbeMaxTransmission(){
-	int i;
-	int numMoves=0;
-	int stepsPerRevolution=350;
-	int moveSize=stepsPerRevolution/4;
-	int foundMax=0;
-	float returnFloat;
-	float maxIntensity=0;
-	int numMovesBackToMax=0;
-	do{
-		getUSB1208AnalogIn(PROBE_LASER,&returnFloat);
-		if(fabs(returnFloat)>maxIntensity){
-			numMovesBackToMax=4-numMoves;
-			maxIntensity=fabs(returnFloat);
-		}
-		stepMotor(PROBE_MOTOR,CLK,moveSize);
-		numMoves++;
-		if(numMoves==4){
-			// Go back to the maximum
-			for(i=0;i<numMovesBackToMax+1;i++){
-				stepMotor(PROBE_MOTOR,CCLK,moveSize);
-			}
-			if(moveSize==1){
-				stepMotor(PROBE_MOTOR,CLK,moveSize);
-			}
-			moveSize=moveSize/2;
-			numMoves=0;
-		}
-		if(moveSize==0){
-			foundMax=1;
-		}
-	}while(!foundMax);
 }
