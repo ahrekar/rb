@@ -95,6 +95,7 @@ interfacing/manualRTU
 interfacing/mirrorTemplate
 interfacing/setBKAmps
 interfacing/setBKVolts
+interfacing/setBKvolts
 interfacing/TestBridge
 interfacing/TestBridgeDebug
 interfacing/TestLaser
