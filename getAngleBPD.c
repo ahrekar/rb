@@ -34,7 +34,7 @@ int main (int argc, char **argv)
 	float normInt; /*normalization of probe intensity factor*/
 	float involts[numChannels];
 	float angle,angleErrPlus,angleErrMinus;
-	float frequency;
+	float frequency=-12;
 	int channels[] = {BOTLOCKIN,TOPLOCKIN};
 	int motor=PROBE_MOTOR;
 	float* maxes = calloc(numChannels,sizeof(float));
@@ -44,6 +44,9 @@ int main (int argc, char **argv)
 	int j,k,nSamples=4,nAngleReadings=14,i;
 	float* measurement = calloc(nSamples,sizeof(float));
 	float* angleReadings = calloc(nAngleReadings,sizeof(float));
+	char dailyFilename[BUFSIZE];
+	char hrMinSec[BUFSIZE];
+	FILE *fp;
 
 	if (argc==1) {
 		printf("DON'T FORGET TO RUN THE BALANCE PROGRAM FIRST!\n");
@@ -57,12 +60,12 @@ int main (int argc, char **argv)
     // Variables for recording the time. 
 	time_t rawtime;
 	struct tm * timeinfo;
-    int err;
+    struct stat st = {0};
 
-	FILE *dataCollectionFlagFile, *fp;
+	FILE *dataCollectionFlagFile;
 
 	//Read in the maxes and mins
-	char* mmFilename=".minMax";
+	char* mmFilename="/home/pi/RbControl/.minMax";
 	FILE* mmFp = fopen(mmFilename,"r");
 	if (!mmFp) {
 		printf("Unable to open file %s\n",mmFilename);
@@ -73,14 +76,32 @@ int main (int argc, char **argv)
 	initializeBoard();
 	initializeUSB1208();
 
+    // Get file name.  Use format "FDayScan"+$DATE+$TIME+".dat"
+    time(&rawtime);
+    timeinfo=localtime(&rawtime);
+    strftime(dailyFilename,BUFSIZE,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+    strftime(hrMinSec,BUFSIZE,"%H\t%M\t%S",timeinfo); //INCLUDE
+    if (stat(dailyFilename, &st) == -1){
+        mkdir(dailyFilename,S_IRWXU | S_IRWXG | S_IRWXO );
+    }
+
+    strftime(dailyFilename,BUFSIZE,"/home/pi/RbData/%F/PBSCAngles%F.dat",timeinfo); //INCLUDE
+    fp=fopen(dailyFilename,"a");
+    if (!fp) {
+        printf("Unable to open file: %s\n",dailyFilename);
+        exit(1);
+    }
+
 	getUSB1208AnalogIn(REF_LASER,&normInt);
 	normInt=fabs(normInt);
 
-	getProbeFrequency(&frequency);// Getting the wavelength invokes a significant delay
+	//getProbeFrequency(&frequency);// Getting the wavelength invokes a significant delay
 									// So we no longer need the previous delay statement. 
 	//kensWaveLength = -1;
-	printf("%03.4f\n",frequency);
+	//printf("Frequency: %03.4f\n",frequency);
+	//printf("Detuning: %03.4f\n",frequency-LINECENTER);
 
+	printf("Sig. 1\tSig. 2\n",frequency);
 	angle=0;
 	// grab several readings and average
 	for(j=0;j<nAngleReadings;j++){
@@ -102,7 +123,8 @@ int main (int argc, char **argv)
 	}
 	printf("\n");
 	angle=angle/nAngleReadings;
-	printf("%02.4f\t%02.4f\n",angle,stdDeviation(angleReadings,nAngleReadings));
+	printf("Angle: %02.4f\tError: %02.4f\n",angle,stdDeviation(angleReadings,nAngleReadings));
+    fprintf(fp,"%s\t%f\t%f\t%f\n",hrMinSec,angle,stdDeviation(angleReadings,nAngleReadings),frequency);
 
 	closeUSB1208();
 
