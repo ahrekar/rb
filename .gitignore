@@ -70,6 +70,23 @@ setProbeDetuning
 stepTemperatureWaitForRotationAngle
 tmp.txt
 toggleFlipMirror
+RbAbsorbScanAutoFindDetuning
+findBPDBalance
+findDetuningForMaxPolarization
+getADC
+interfacing/testSorensen
+getAngleBPD
+getPhotoDiodes
+interfacing/readGPIOAnalog
+interfacing/testTopticaLaser
+interfacing/topticaLaserSocket
+interfacing/topticaLaserTest
+monitorAngleBPD
+quickPolarization
+tmp.sh
+tmp2.sh
+turnOffPumpLaser
+.minMax
 
 interfacing/mainTemplate
 interfacing/getAnalogIn
