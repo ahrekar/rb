@@ -11,9 +11,9 @@ int main(int argc, char** argv){
 //	printf("The laser is at: %f\n", getWaveMeter());
 	
 
-	wavemeterReturn=getPumpFreq();
+	wavemeterReturn=getPumpFrequency(&wavemeterReturn);
 	printf("The pump laser is at: %f (%f)\n",wavemeterReturn,speedOfLight/(wavemeterReturn));
-	wavemeterReturn=getProbeFreq();
+	wavemeterReturn=getProbeFrequency(&wavemeterReturn);
 	printf("The probe laser is at: %f (%f)\n",wavemeterReturn,speedOfLight/(wavemeterReturn));
 
 	return 0;
