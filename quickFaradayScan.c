@@ -45,8 +45,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
 int main (int argc, char **argv)
 {
-	int numVolts=14;
-	float volts[]={0,2,26,30,40,44,48,52,66,70,80,84,115,117};
+	int numVolts=15;
+	float volts[]={3,8,39,40,41,43,44,45,46.6,59.4,60.4,61.7,62.8,64.1,89};
 	//int numVolts=20;
 	//float volts[20];
 	//int j;
@@ -157,7 +157,7 @@ int main (int argc, char **argv)
 	fprintf(fp,"#StepSize:\t%d\n",STEPSIZE);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"STEP\tPUMP\tPUMPsd\tPRB\tPRBsd\n");
+	fprintf(fp,"STEP\tDET1\tDET1sd\tDET2\tDET2sd\tDET3\tDET3sd\n");
     fclose(fp);
 
 	printf("Homing motor...\n");
@@ -183,7 +183,7 @@ int main (int argc, char **argv)
 		//Wait 10 seconds for laser to settle. 
 		delay(10000); 
 
-	    wavelength=getWaveMeter();
+	    getWaveMeter(&wavelength);
 
         fprintf(fp,"\n\n#VOLT:%f(%f)\n",volts[i],wavelength);
         printf("VOLT:%f(%f)\t",volts[i],wavelength);
@@ -196,7 +196,7 @@ int main (int argc, char **argv)
 
 
 	printf("Processing Data...\n");
-	analyzeData(fileName, numVolts, revolutions, dataPointsPerRevolution);
+	analyzeData(fileName, numVolts, revolutions, dataPointsPerRevolution,FOI);
 
 	char* extensionStart;
 	extensionStart=strstr(fileName,".dat");
