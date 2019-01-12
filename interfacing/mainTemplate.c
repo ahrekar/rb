@@ -59,7 +59,7 @@ int main (int argc, char* argv[]){
 	    fileExists=access(systemStatsFile,F_OK);
 		fp = fopen(systemStatsFile,"a");
         if(fileExists){
-            fprintf(fp,"Day\tHour\tMinute\tSecond\tTotalMinutes\tTrg. T\tRes. T\tChm. T\tHeCV\tN2CV\tMainChamber\tIonG\tKiethly 617\tCounts\tRefCell\tPRbLaser\tPumpLaser\n");
+            fprintf(fp,"Day\tHour\tMinute\tSecond\tTotalMinutes\tTrg. T\tRes. T\tHeCV\tN2CV\tMainChamber\tIonG\tKiethly 617\tCounts\tRefCell\tPRbLaser\tPumpLaser\n");
         }
 
 		strftime(buffer,BUFSIZE,"%d\t%H\t%M\t%S\t",timeinfo);
@@ -82,11 +82,6 @@ int main (int argc, char* argv[]){
             printf("Res. T= %.1f\n",myTemp);
 		fprintf(fp,"%.2f\t",myTemp);
 
-		i=getPVCN7500(CN_CHAMWALL,&myTemp);
-        if(i==0)
-            printf("Chm. T= %.1f\n",myTemp);
-		fprintf(fp,"%.2f\t",myTemp);
-
 		printf("\n\n_____PRESSURE_____\n");
 		getConvectron(GP_HE_CHAN,&myTemp);
 		printf("HeCV: %2.2E\n",myTemp);
@@ -105,9 +100,9 @@ int main (int argc, char* argv[]){
 		fprintf(fp,"%2.2E\t",myTemp);
 
 		printf("\n\n_____CURRENT_____\n");
-        writeRS485to232Bridge("READ?",echoData,0xCA);
-        myTemp = atof(echoData);
-		//getUSB1208AnalogIn(K617,&myTemp);
+        //writeRS485to232Bridge("READ?",echoData,0xCA);
+        //myTemp = atof(echoData);
+		getUSB1208AnalogIn(K617,&myTemp);
 		printf("Kiethly 617: %2.2e\n",myTemp);//the is no way to read the scale, or order of magnitude. This
 		// number is just the mantissa
 		fprintf(fp,"%.2f\t",myTemp);
