@@ -15,16 +15,8 @@ if [ "$#" -ne 1 ]; then
 	#echo "                                      4 = NP, pi, S+, S- )            "
 else
 	COMMENTS=$1
-    PIPOS=76
-    SPLUSPOS=30
-    SMINUSPOS=118
 
-    PUMP=1
-    PROBE=0
-
-    BLOCKED=1
-    UNBLOCKED=0
-    RBC=/home/pi/RbControl
+	source LoadWaveplatePositions.sh
 
 	echo "setting the probe laser to a proper detuning"
 	sudo $RBC/setProbeDetuning 10

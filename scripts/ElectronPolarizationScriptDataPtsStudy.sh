@@ -14,16 +14,8 @@ else
     COMMENTS=$4
 	LEAKCURRENT=0
 
-    PIPOS=76
-    SPLUSPOS=30
-    SMINUSPOS=118
+	source LoadWaveplatePositions.sh
 
-    PUMP=1
-    PROBE=0
-
-    BLOCKED=1
-    UNBLOCKED=0
-    RBC=/home/pi/RbControl
 
 	echo "Blocking probe beam..."
 	sudo $RBC/setLaserFlag $PROBE $BLOCKED

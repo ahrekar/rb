@@ -14,16 +14,7 @@ else
     COMMENTS=$4
 	LEAKCURRENT=0
 
-    PIPOS=76
-    SPLUSPOS=30
-    SMINUSPOS=118
-
-    PUMP=1
-    PROBE=0
-
-    BLOCKED=1
-    UNBLOCKED=0
-    RBC=/home/pi/RbControl
+	source LoadWaveplatePositions.sh
 
 	echo "Blocking probe beam..."
 	sudo $RBC/setLaserFlag $PROBE $BLOCKED
@@ -37,9 +28,9 @@ else
 	echo "Unblocking pump beam..."
 	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 
-	echo "Setting pump to Pi..."
-	sudo $RBC/setWavePlate $PIPOS
-	sudo $RBC/polarization "$AOUT" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT=$AOUT, pump=pi"
+##	echo "Setting pump to Pi..."
+##	sudo $RBC/setWavePlate $PIPOS
+##	sudo $RBC/polarization "$AOUT" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT=$AOUT, pump=pi"
 
 	echo "Setting pump to S+..."
 	sudo $RBC/setWavePlate $SPLUSPOS

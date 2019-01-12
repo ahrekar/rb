@@ -10,17 +10,7 @@ if [ "$#" -ne 1 ]; then
 else
     COMMENTS=$1
 
-    PUMP=1
-    PROBE=0
-
-    PIPOS=76
-    SPLUSPOS=30
-    SMINUSPOS=118
-
-    BLOCKED=1
-    UNBLOCKED=0
-
-    RBC=/home/pi/RbControl
+	source LoadWaveplatePositions.sh
 
     echo "Unblocking both beams."
     $RBC/setLaserFlag $PUMP $UNBLOCKED
