@@ -311,7 +311,7 @@ int analyzeData(char* fileName, int runs, int revolutions, int dataPointsPerRevo
 		c0=fourierCoefficients[cos+0];
 		s=fourierCoefficients[sin+foi];
 		c=fourierCoefficients[cos+foi];
-        linearPart=sqrt(pow(s,foi)+pow(c,foi));
+        linearPart=sqrt(pow(s,2)+pow(c,2));
         linearPercent=linearPart/c0;
 		angle = 0.5*atan2(c,s);
 		angleErrUp=calculateAngleError(c,fcErr[pos+cos+foi],s,fcErr[pos+sin+foi]);
