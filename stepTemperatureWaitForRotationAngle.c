@@ -185,7 +185,7 @@ int main (int argc, char **argv)
 		fclose(fp);
 
 		printf("Processing Data...\n");
-		analyzeData(fileName, 1, revolutions, dataPointsPerRevolution);
+		analyzeData(fileName, 1, revolutions, dataPointsPerRevolution,FOI);
 	}while(angle > desiredAngle + .4 || angle < desiredAngle -.4);
 
     closeUSB1208();
