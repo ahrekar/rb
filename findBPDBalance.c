@@ -23,7 +23,7 @@
 #include "probeLaserControl.h"
 
 #define BUFSIZE 1024
-#define WAITTIME 2
+#define WAITTIME 10
 
 void findMaxMinIntensity(char* fileName, float* maxes,int* maxLoc, float* mins, int* minLoc, int* channels, int numChannels, int stepRange, int motor, float normInt);
 
@@ -120,15 +120,15 @@ int main (int argc, char **argv)
 		for (i=0;i<nSamples;i++){
 			getMCPAnalogIn(channels[k],&measurement[i]);
 			involts[k]=involts[k]+measurement[i];
-			delay(30);
+			delay(WAITTIME);
 		}
 		involts[k]=fabs(involts[k])/(float)nSamples;
 
 		//printf("  %0.4f %0.4f  ",involts[k],stdDeviation(measurement,nSamples));
 	}
-	printf("Min0: %f, Min1: %f\n",mins[0],mins[1]);
-	printf("Max0: %f, Max1: %f\n",maxes[0],maxes[1]);
-	angle=atan(sqrt((involts[0]-mins[0])/(maxes[0]-mins[0])/(involts[1]-mins[1])*(maxes[1]-mins[1])));
+	printf("Min0: %f, Min1: %f\n",mins[0]/normInt,mins[1]/normInt);
+	printf("Max0: %f, Max1: %f\n",maxes[0]/normInt,maxes[1]/normInt);
+	angle=atan(sqrt((involts[0]/normInt-mins[0])/(maxes[0]-mins[0])/(involts[1]/normInt-mins[1])*(maxes[1]-mins[1])));
 	printf("%02.3f(%02.2f)\n",angle,angle*180/3.14159265);
 
 	fclose(mmFp);
