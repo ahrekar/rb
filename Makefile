@@ -20,7 +20,7 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c stepmotor.c homemotor.c setProbeLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c RbAbsorbScanAutoFindDetuning.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c getPhotoDiodes.c turnOffPumpLaser.c findDetuningForMaxPolarization.c
+SOURCES=excitationfn.c getcounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c RbAbsorbScanAutoFindDetuning.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c getPhotoDiodes.c turnOffPumpLaser.c findDetuningForMaxPolarization.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
@@ -155,9 +155,11 @@ faradayScanBPD: faradayScanBPD.o mathTools.o faradayScanAnalysisTools.o fileTool
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 getAngleBPD: getAngleBPD.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
+monitorAngleBPD: monitorAngleBPD.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 findBPDBalance: findBPDBalance.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-findDetuningForMaxPolarization: findDetuningForMaxPolarization.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTDIR)/topticaLaser.o $(INTOBJECTS)
+findDetuningForMaxPolarization: findDetuningForMaxPolarization.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 quickFaradayScan: quickFaradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -168,6 +170,8 @@ faradayRotation: faradayRotation.o mathTools.o faradayScanAnalysisTools.o fileTo
 stepTemperatureWaitForRotationAngle: stepTemperatureWaitForRotationAngle.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+quickPolarization: quickPolarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setOmega: setOmega.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 

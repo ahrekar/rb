@@ -51,5 +51,5 @@ setBKamps: setBKamps.o kenBoard.o USB1208.o BK1696.o
 testLasers: testLasers.o vortexLaser.o
 	$(CC) $(CFLAGS) $(PIFLAGS) $@.o BK1696.o kenBoard.o USB1208.o vortexLaser.o RS485Devices.o -o $@
 
-TestLaser: TestLaser.o sacherLaser.o
-	$(CC) $(CFLAGS) $(PIFLAGS) $@.o BK1696.o kenBoard.o USB1208.o sacherLaser.o RS485Devices.o -o $@
+TestLaser: TestLaser.o topticaLaser.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $@.o BK1696.o kenBoard.o USB1208.o topticaLaser.o RS485Devices.o -o $@
