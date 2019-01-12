@@ -14,12 +14,12 @@ else
 	N2SWEEP=$3
 	HEOFFSET=$4
 	CURRENTSCALE=$5
-	SCANRANGE=31
+	SCANRANGE=63
 	STEPSIZE=24
 	DWELL=$6
 	NUMRUN=$7
 	COMMENTS=$8
-	AOUTS=(696)
+	AOUTS=(0)
 
 	RBSCANLOW=35
 	RBSCANHIGH=70
@@ -37,11 +37,11 @@ else
 	echo "Unblocking probe laser..."
 	sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 
-	sudo $RBC/RbAbsorbScan $RBSCANLOW $RBSCANHIGH $RBSCANSTEP "Run $i/$NUMRUN, $COMMENTS, prelude"
+	sudo $RBC/RbAbsorbScan $RBSCANLOW $RBSCANHIGH $RBSCANSTEP "$COMMENTS, prelude"
 
 	echo "Unblocking pump laser..."
 	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	sudo $RBC/scripts/RbPolarizationScript.sh "Run $i/$NUMRUN, $COMMENTS, prelude" 
+	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, prelude" 
 
 	echo "Blocking probe laser..."
 	sudo $RBC/setLaserFlag $PROBE $BLOCKED
@@ -50,7 +50,7 @@ else
 
 	echo "Unblocking pump beam..."
 	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	sudo $RBC/scripts/takePictureAndSendToEmail.sh "Run $i/$NUMRUN, Prelude"
+	sudo $RBC/scripts/takePictureAndSendToEmail.sh "Prelude"
 	echo "About to start next set of polarization runs. Pausing for 5 seconds to give the opportunity to cancel the run."
 	sleep 5
 
@@ -84,5 +84,4 @@ else
 	sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 
 	echo "Completed set of repeat polarization runs, $COMMENTS" | mutt -s "RbPi Report" karl@huskers.unl.edu
-
 fi
