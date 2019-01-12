@@ -29,11 +29,16 @@
 #define MTR2DLY MTRDLY
 #define MTR2SPR 350
 
+#define RS485CONTROL 25
+#define BAUD 9600
+
 void delayMicrosecondsHard(unsigned int howLong);
+int initialize_rs485(void);
 int x_stepMotor(unsigned int clkpin, unsigned int steps, unsigned int dirpin,unsigned int dir, unsigned int dly);
 
-int fd, bd, wp;
+
 // these are for RS485 communications
+int fd;
 
 long int calcDelay(int size){
 	long int del;
@@ -42,11 +47,15 @@ long int calcDelay(int size){
 	 /* (10=8bits+2parity)  bits per character  *  1000000 microseconds per second
 		  8 bits per char plus start and stop bits. 
 		Tested watching an O-scope with 4 to 10 input chars. */
-	del=del/bd; // * 1 second per baud 
+	del=del/BAUD; // * 1 second per baud 
 return del;
 }
 
+void delay_uS(int x){
 
+delayMicrosecondsHard(x);
+
+}
 
 int initializeBoard(){
 
@@ -56,7 +65,7 @@ int initializeBoard(){
 	    return 1 ;
 	  }
 	mcp3004Setup(BASE,SPI_CHAN);// for ADC
-	initialize_rs485(9600,25);
+	initialize_rs485();
 
 // stepper motor clock MUST be set to low at the begining and end of each function call. 
 	pinMode(MTR0CLK,OUTPUT);
@@ -72,6 +81,18 @@ int initializeBoard(){
 return 0;
 
 }
+
+int initialize_rs485(void){
+
+  if ((fd = serialOpen ("/dev/ttyAMA0", BAUD)) < 0)
+  {
+    fprintf (stderr, "Unable to open serial device: %s\n", strerror (errno)) ;
+    return 1 ;
+  }
+	pinMode(RS485CONTROL,OUTPUT);
+	digitalWrite(RS485CONTROL,HIGH);
+	return 0;
+}//end initialize
 
 
 int closeBoard(){
@@ -154,7 +175,7 @@ int homeMotor(unsigned short mtr){
         printf("Error: Home state not changing, trying once more...");
         return homeMotor(mtr);
     } else{
-        printf("Found home in %d steps\n",stepsTaken);
+        //printf("Found home in %d steps\n",stepsTaken);
     }
 	return stepsTaken;
 }
@@ -434,38 +455,26 @@ return j;
 }
 
 
-int initialize_rs485(int baud,int pin){
-	bd = baud;
-	wp=pin;
-  if ((fd = serialOpen ("/dev/ttyAMA0", bd)) < 0)
-  {
-    fprintf (stderr, "Unable to open serial device: %s\n", strerror (errno)) ;
-    return 1 ;
-  }
-	pinMode(wp,OUTPUT);
-	digitalWrite(wp,HIGH);
-	return 0;
-}//end initialize
-
 
 void write_rs485BYTE(unsigned char* cmd, unsigned int numchar, unsigned char* pszEcho, unsigned int* sizeEcho){
 
 	unsigned int i,j;
 	unsigned int loop;
 
-	digitalWrite(wp,LOW);// sets the control signal WRITE to the RS 485 buss
+	digitalWrite(RS485CONTROL,LOW);// sets the control signal WRITE to the RS 485 buss
 	delayMicrosecondsHard(10);// minor wait to allow signals to settle
 
 	for (j=0;j<numchar;j++){
 		serialPutchar(fd,cmd[j]);
 	}
 	// cannot read in from UART until done transmitting, so wait . . . 
-	delayMicrosecondsHard(calcDelay(numchar));
+	delayMicrosecondsHard(calcDelay(numchar+2));
 
-	digitalWrite(wp,HIGH);// now set control to READ (i.e. LISTEN)
+	digitalWrite(RS485CONTROL,HIGH);// now set control to READ (i.e. LISTEN)
 	loop=0;
 	j=0;
 	do {
+        delay(100);
 		i=0;
 		while (serialDataAvail(fd)){
 		    while (serialDataAvail (fd)){
@@ -474,11 +483,9 @@ void write_rs485BYTE(unsigned char* cmd, unsigned int numchar, unsigned char* ps
 	    		}
 		delay(50);
 		}
-		if (i>0) loop=24;
+		if (i>0) loop=100;
 		loop++; j++;
-		delay(150);
-
-	} while(loop<24);
+	} while(loop<100);
 	//debug printf("number of loops %d,j);
 
 	*sizeEcho=i;
@@ -500,7 +507,7 @@ void write_rs485ASCII(char* cmd, char* pszEcho){
 	last element in the array*/
 
 
-	digitalWrite(wp,LOW);// sets the control signal WRITE to the RS 485 buss
+	digitalWrite(RS485CONTROL,LOW);// sets the control signal WRITE to the RS 485 buss
 //	delay(1);
 	delayMicrosecondsHard(10);// minor wait to allow signals to settle
 //	serialPuts (fd, cmd);
@@ -512,7 +519,7 @@ void write_rs485ASCII(char* cmd, char* pszEcho){
 	// cannot read in from UART until done transmitting, so wait . . . 
 	delayMicrosecondsHard(calcDelay(length));
 
-	digitalWrite(wp,HIGH);// now set control to READ (i.e. LISTEN)
+	digitalWrite(RS485CONTROL,HIGH);// now set control to READ (i.e. LISTEN)
 
 	delay(200); // wait some more so that the external device has time to transmitt.  Data fills the UART buffer.
 	// this could be calculated based on what is expected.  usually, a delay of 30 works fine for 4 to 8 chars returned. 

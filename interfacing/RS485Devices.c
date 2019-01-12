@@ -17,6 +17,37 @@ void printHexData(unsigned char* buff, unsigned short len){
 printf("\n");
 }
 
+int changeRS485Address(unsigned short Address, unsigned short newAddress){
+	unsigned char outData[16],rtnData[16];
+	    unsigned short temp,bytes_to_write;
+	unsigned int k;
+	int status;
+	outData[0] = (unsigned char) (Address & 0x00FF);	
+	outData[1] = 0x06;
+	outData[2] = 0x00;
+	outData[3] = 0xF0;
+	outData[4] = Address & 0x00FF;
+	outData[5] = newAddress & 0x00FF;
+
+	// calculate the CRC
+	temp=modRTU_CRC(outData,6);
+	// append the CRC in the correct order
+	outData[7]=(temp & 0xFF00)>>8;
+	outData[6]=(temp & 0x00FF);
+	// establish the correct number of bytes to send out
+	bytes_to_write=8;
+		//printf("out:\t");printHexData(outData,bytes_to_write);
+	write_rs485BYTE(outData,bytes_to_write,rtnData,&k);
+		//printf("rtn:\t");printHexData(rtnData,k);
+	status=0;
+	if (rtnData[1] & 0x80){
+		status = (rtnData[2]<<8) | rtnData[3];
+		//debuging information
+		printHexData(rtnData,k);
+	}
+return status;
+}
+
 
 int getRS485SlaveID(unsigned char* returnData, unsigned  short Address){
 
@@ -225,7 +256,7 @@ unsigned int readRS485AnalogRecorder(unsigned short RS485Chan, unsigned short An
 		temp=0;
 	} else {
 		temp=returndata[2]<<8|returndata[3];
-		printf("process retunred erro code %04x \n",temp);
+		printf("process returned erro code %04x \n",temp);
 	}
 return temp;
 }
@@ -332,4 +363,178 @@ int getRS485BridgeTimeout(unsigned short* timeout, unsigned short Address){
 	status = read_Modbus_RTU(Address,BASEREG485BRIDGE232+2, &temp);
 	*timeout = temp;
 	return status;
+}
+
+int setRS485BridgeDebugPrint(unsigned short debug, unsigned short Address){
+	int status;
+	status = write_Modbus_RTU(Address,BASEREG485BRIDGE232+4,debug);
+	return status;
+}
+
+
+int getRS485GPIBStatus(unsigned short* GPIBStatus, unsigned short Address){
+	int status;
+	unsigned int temp;
+	status = read_Modbus_RTU(Address,BASEREG485BRIDGE232+3, &temp);
+	*GPIBStatus = temp;
+	return status;
+}
+
+int resetGPIBBridge(unsigned short Address){
+	int status;
+	status = write_Modbus_RTU(Address,BASEREG485BRIDGE232+3,0x00);
+	return status;
+}
+
+
+int sendGPIBCommand(unsigned char* cmd, unsigned short Address){
+// see www.ni.com/white-paper/3389/en/  table 1 for full list of commands.
+
+	 int length,j, status;
+	unsigned char outData[64];
+	unsigned char rtnData[64];
+	unsigned int k;
+	unsigned short temp,bytes_to_write;
+
+	outData[0] = (unsigned char) (Address & 0x00FF);
+	outData[1] = 0x06;
+	outData[2] = (unsigned char)(((BASEREG485BRIDGE232+16) & 0xFF00)>>8);
+	outData[3] = (unsigned char)((BASEREG485BRIDGE232+16)&0x00FF);
+	length = strlen((char*)cmd);
+	for (j=0;j<length;j++){
+			outData[j+4]=cmd[j];
+	}
+//	printf(">>>>Strlen %d\n",length);
+//	outData[length+4]=13; //append a CR
+	// calculate the CRC
+	temp=modRTU_CRC(outData,length+5);
+	// append the CRC in the correct order
+	outData[length+5]=(temp & 0xFF00)>>8;
+	outData[length+4]=(temp & 0x00FF);
+	// establish the correct number of bytes to send out
+	bytes_to_write=length+6;
+//		printf("out:\t");printHexData(outData,bytes_to_write);
+	write_rs485BYTE(outData,bytes_to_write,rtnData,&k);
+//		printf("rtn:\t");printHexData(rtnData,k);
+	status=0;
+	if (rtnData[1] & 0x80){
+		status = (rtnData[2]<<8) | rtnData[3];
+		printf("sendGPIBCommand %s return error code %d\n",cmd,status);
+		printHexData(rtnData,k);
+
+	}
+return status;
+}
+
+
+int closeGPIBBridge(unsigned short Address){
+	unsigned char command[4];
+	int status;
+	command[0]=0x01;
+	command[1]=0x00;
+
+	status=sendGPIBCommand(command,Address);
+	return status;
+
+}
+
+int sendGPIBData(unsigned char *cmd, char gpibaddress, unsigned short Address){
+	int length,j, status;
+	unsigned char outData[64];
+	unsigned char rtnData[64];
+	unsigned int k;
+	unsigned short temp,bytes_to_write;
+
+	outData[0] = (unsigned char) (Address & 0x00FF);
+	outData[1] = 0x06;
+	outData[2] = (unsigned char)(((BASEREG485BRIDGE232+32) & 0xFF00)>>8);
+	outData[3] = (unsigned char)((BASEREG485BRIDGE232+32)&0x00FF);
+	outData[4] = gpibaddress;// GPIB address. The bridge will instruct this instrument to "listen"
+		// then issue unlisten to all devices
+	length = strlen((char*)cmd);
+	for (j=0;j<length;j++){
+			outData[j+5]=cmd[j];
+	}
+//	outData[length+5]=13; //append a CR  dont do this here.  any terminator must be at the end of cmdstring because
+// different instruments require different terminators.. or a sequence of terminators.
+	// calculate the CRC
+	temp=modRTU_CRC(outData,length+5);
+	// append the CRC in the correct order
+	outData[length+6]=(temp & 0xFF00)>>8;
+	outData[length+5]=(temp & 0x00FF);
+	// establish the correct number of bytes to send out
+	bytes_to_write=length+7;
+//		printf("out:\t");printHexData(outData,bytes_to_write);
+	write_rs485BYTE(outData,bytes_to_write,rtnData,&k);
+//		printf("rtn:\t");printHexData(rtnData,k);
+	status=0;
+	if (rtnData[1] & 0x80){
+		status = (rtnData[2]<<8) | rtnData[3];
+		printf("sendGPIBData %s return error code %d\n",cmd,status);
+//debuging information
+		printHexData(rtnData,k);
+	}
+return status;
+}
+
+int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address){
+
+	 int i,length, status;
+	unsigned char outData[64];
+	unsigned char rtnData[64];
+	unsigned int k;
+	unsigned short temp,bytes_to_write;
+
+	outData[0] = (unsigned char) (Address & 0x00FF);
+	outData[1] = 0x03;
+	outData[2] = (unsigned char)(((BASEREG485BRIDGE232+32) & 0xFF00)>>8);
+	outData[3] = (unsigned char)((BASEREG485BRIDGE232+32) & 0x00FF);
+
+	outData[4]=gpibaddress;// GPIB address.  The bridge will instruct this instrument to "talk".
+			// then issue untalk to all devices afterwards.
+	outData[5]=terminator;// the terminator in the data string to know when to stop receiving. if terminator=0;
+			// then the bridge senses the EOI control line of the GPIB buss
+	// calculate the CRC
+	length=0;
+	temp=modRTU_CRC(outData,length+6);
+	// append the CRC in the correct order
+	outData[length+7]=(temp & 0xFF00)>>8;
+	outData[length+6]=(temp & 0x00FF);
+	// establish the correct number of bytes to send out
+	bytes_to_write=length+8;
+		//printf("out:\t");printHexData(outData,bytes_to_write);
+	write_rs485BYTE(outData,bytes_to_write,rtnData,&k);
+		//printf("rtn:\t");printHexData(rtnData,k);
+
+	status=0;
+	if(k>0){
+		if (!(rtnData[1] & 0x80)){
+			if ((rtnData[2]+5)==k) {
+				for (i=0;i<rtnData[2];i++){
+					returnData[i]=rtnData[i+3];
+				}
+				returnData[i]=0;
+			} else {
+				status = 1;
+				printf("writeRS232Bridge process returned an unexpected number of bytes\n");
+				printHexData(rtnData,k);
+				printf("%s\n",rtnData);
+				returnData[0]=0;
+			}
+		} else {
+			status= rtnData[2]<<8 | rtnData[3];
+			returnData[0]=0;
+			printf("ListenGPIBBridge process returned error code %04x \n",temp);
+			printHexData(rtnData,k);
+
+		}
+	} else {
+		status=1;
+		returnData[0]=0;
+		printf("No Response from bridge at address %02X=%d \n",outData[0],outData[0]);
+	}
+		//printf("%s\n",returnData);
+return status;
+
+
 }

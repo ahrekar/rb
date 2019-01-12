@@ -16,6 +16,7 @@ Universal ID function.  All slave devices will respond to this.
 
 */
 int getRS485SlaveID(unsigned char* returnData, unsigned  short Address);
+int changeRS485Address(unsigned short Address, unsigned short newAddress);
 
 /* **************************************************************************************************
 
@@ -88,5 +89,51 @@ int setRS485BridgeReads(unsigned short reads, unsigned short Address);
 int getRS485BridgeReads(unsigned short* reads, unsigned short Address);
 int setRS485BridgeTimeout(unsigned short timeout,unsigned short Address);
 int getRS485BridgeTimeout(unsigned short* timout,unsigned short Address);
+
+// common to both bridges
+int setRS485BridgeDebugPrint(unsigned short debug, unsigned short Address);
+// debug = 0 or 1 to turn off/on local debug printing to attached screen
+
+// RS485 to GPIB bridge functions
+
+int getRS485GPIBStatus(unsigned short* GPIBStatus, unsigned short Address);
+/*
+This is more of a debugging thing. indicates the current status of the control lines on the GPIB bus.
+probaably not useful for much of anything else.
+Address is the RS485 device address
+*/
+
+int resetGPIBBridge(unsigned short Address); // Reasserts REN, and sends InterFaceClear (IFC) to all devices
+//Address is the RS485 device address
+//int sendGPIBCommand(unsigned char* cmd, unsigned short Address);  // lets not make it public
+//but it is used by 'closeGPIBBridge(); 
+// this is used for MANUALLY controlling the GPIB bus.  probably not needed for most instances.
+
+
+int closeGPIBBridge(unsigned short Address);
+// basically issues a GoToLocal (GTL) command .
+
+
+int sendGPIBData(unsigned char *cmd, char gpibaddress, unsigned short Address);
+
+/* sendGPIBCData( command to send, RS485 address of bridge device)
+//Address is the RS485 device address
+The Bridge tells the device at gpibaddress to listen, then sends cmd as data (not a command). The difference
+is whether or not ATN is asserted. Then, an unlisten command is issued afterwards.  All of these steps are 
+handled on the Bridge.
+
+The return is an error status. status==0 means no errors.
+
+The character array cmd must be a NULL terminated string, since the functions in this library determine the number of bytes
+to send based on the length of the string. 
+*/
+
+
+int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address);
+/* listenGPIBData( buffer for return data, RS485 address of bridge device)
+//Address is the RS485 device address
+// gpibaddress is the GPIB address of the instrument connected to RS485bridge
+
+*/
 
 

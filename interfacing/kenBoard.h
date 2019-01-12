@@ -61,6 +61,7 @@ int closeBoard();
 int getADC(unsigned short chan, unsigned int * returndata);
 int getMCPAnalogIn(unsigned short chan, float* returnFloat);
 // uses MCP3008 ADC conected to SPI channel 0.
+void delay_uS(int x);
 
 int stepMotor(unsigned short mtr,unsigned int dir, unsigned int steps);
 int homeMotor(unsigned short mtr);
@@ -110,6 +111,6 @@ int read_Modbus_RTU(unsigned short address, unsigned short reg, unsigned int* cn
 //same errors are returned.
 //if an error is returned then cnReturnData is junk
 
-int initialize_rs485(int baud, int pin);
+int initialize_rs485();
 
 //void writeRS232Bridge(char* cmd, char* returnData, unsigned short bridgeAddress);
