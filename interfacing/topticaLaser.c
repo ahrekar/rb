@@ -105,6 +105,16 @@ int setMasterCurrent(int sock, float current){
 	return setParameter(sock,parameterString,parameterText);
 }
 
+float getMasterCurrent(int sock){
+	float current;
+	char parameterString[]="laser1:dl:cc:current-set";
+	char parameterText[512];
+	readParameter(sock,parameterString,parameterText);
+	current=atof(parameterText);
+
+	return current; 
+}
+
 int setMasterTemperature(int sock, float temperature){
 	char parameterString[]="laser1:dl:tc:temp-set";
 	char parameterText[512];
