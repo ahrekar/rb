@@ -34,9 +34,25 @@ int main (int argc, char *argv[])
     switch (device) {
         case 1:
 			setFlag(PUMPFLAG,value);
+			switch (value){
+				case 8:
+					printf("pump laser blocked\n");
+					break;
+				case 0:
+					printf("pump laser unblocked\n");
+					break;
+			}
             break;
         case 0:
 			setFlag(PROBEFLAG,value);
+			switch (value){
+				case 8:
+					printf("probe laser blocked\n");
+					break;
+				case 0:
+					printf("probe laser unblocked\n");
+					break;
+			}
             break;
         default:
             printf("invalid device number\n");
