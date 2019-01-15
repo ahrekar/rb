@@ -32,13 +32,21 @@ Usage:
 #include <wiringPi.h>
 #include "interfacing/interfacing.h"
 #include "mathTools.h"
+#include "interfacing/kenBoard.h"
+#include "interfacing/RS485Devices.h"
+#include "interfacing/Sorensen120.h"
+
 #define BUFSIZE 1024
+#define GPIBBRIDGE1 0XC9 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
+// this is the GPIB addresses of each respective instrument attached to this bridge
+#define SORENSEN120 0x0C
 
 void graphData(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int i,stepsize,steprange;
+	int i;
+    float stepsize,steprange;
 	int minstepsize,maxstepsize, nSamples;
 	int dwell,magnitude;
 	time_t rawtime;
@@ -50,7 +58,7 @@ int main (int argc, char **argv)
 	float current, pressure;
 	long returnCounts;
 	FILE *fp,*dataCollectionFlagFile;
-	__u16 value;
+	float value;
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
@@ -61,7 +69,7 @@ int main (int argc, char **argv)
         N2Sweep = atof(argv[3]);
 		HeOffset = atof(argv[4]);
 		scanrange =atof(argv[5]);
-		stepsize = atoi(argv[6]);
+		stepsize = atof(argv[6]);
 		dwell= atoi(argv[7]);
 		magnitude= atoi(argv[8]);
 		strcpy(comments,argv[9]);
@@ -96,7 +104,10 @@ int main (int argc, char **argv)
 
 	// set up USB interface
 	initializeBoard();
-	initializeUSB1208();
+    initializeUSB1208();
+	i=resetGPIBBridge(GPIBBRIDGE1);
+	delay(200);
+	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -121,21 +132,21 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPCAL);
 
-	steprange = 1+(int)(scanrange/(HPCAL));
-    printf("Step range:%d\n",steprange);
-	if (steprange>1023) steprange = 1023;
-	if (steprange < 8 ) steprange = 8;
+//        steprange = 1+(int)(scanrange/(HPCAL));
+//        printf("Step range:%d\n",steprange);
+//        if (steprange>120) steprange = 120;
+//        if (steprange < 1 ) steprange = 1;
 
-	minstepsize=1;
-	maxstepsize=24;
-	if (stepsize<minstepsize){
-		printf("Step size too small, using %d (%0.3fV) instead.\n",minstepsize,minstepsize*HPCAL);
-		stepsize=minstepsize;
-	}
-	else if (stepsize > maxstepsize){
-		printf("Step size too large, using %d (%0.3fV) instead.\n",maxstepsize,maxstepsize*HPCAL);
-		stepsize=maxstepsize;
-	}
+//	minstepsize=1;
+//	maxstepsize=24;
+//	if (stepsize<minstepsize){
+//		printf("Step size too small, using %d (%0.3fV) instead.\n",minstepsize,minstepsize*HPCAL);
+//		stepsize=minstepsize;
+//	}
+//	else if (stepsize > maxstepsize){
+//		printf("Step size too large, using %d (%0.3fV) instead.\n",maxstepsize,maxstepsize*HPCAL);
+//		stepsize=maxstepsize;
+//	}
 
 	fprintf(fp,"#FilamentBias:\t%f\n",bias);
 	fprintf(fp,"#NumberOfSecondsPerCountMeasurement:\t%d\n",dwell);
@@ -176,21 +187,21 @@ int main (int argc, char **argv)
 	float* measurement = malloc(nSamples*sizeof(float));
 	char echoData[128];
 
-	for (value=0;value<steprange;value+=stepsize){
-		setUSB1208AnalogOut(HETARGET,value);
+	for (value=0.0;value<scanrange;value+=stepsize){
+		i = setSorensen120Volts(value,SORENSEN120,GPIBBRIDGE1);
 		printf("Aout %d \t",value);
 		fprintf(fp,"%d\t",value);
 
 		fprintf(fp,"%4.4f\t",bias);
 		fprintf(fp,"%4.4f\t",N2Offset);
 		fprintf(fp,"%4.4f\t",N2Sweep);
-		fprintf(fp,"%4.4f\t",HeOffset - HPCAL*(float)value);
+		fprintf(fp,"%4.4f\t",HeOffset - value);
 
-		primaryEnergy = (HeOffset - HPCAL*(float)value) - bias;
+		primaryEnergy = (HeOffset - value) - bias;
 		printf("eV %4.2f\t",primaryEnergy);
 		fprintf(fp,"%4.4f\t",primaryEnergy);
 
-		secondaryEnergy = (HeOffset - HPCAL*(float)value) - (bias + N2Offset) ;
+		secondaryEnergy = (HeOffset - value) - (bias + N2Offset) ;
 		printf("eV %4.2f\t",secondaryEnergy);
 		fprintf(fp,"%4.4f\t",secondaryEnergy);
 
