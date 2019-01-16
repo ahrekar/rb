@@ -35,17 +35,19 @@ Usage:
 #include "interfacing/kenBoard.h"
 #include "interfacing/RS485Devices.h"
 #include "interfacing/Sorensen120.h"
+#include "interfacing/K617meter.h"
 
 #define BUFSIZE 1024
 #define GPIBBRIDGE1 0XC9 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
 // this is the GPIB addresses of each respective instrument attached to this bridge
 #define SORENSEN120 0x0C
+#define K617METER 0x08
 
 void graphData(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int i;
+	int i,j;
     float stepsize,steprange;
 	int minstepsize,maxstepsize, nSamples;
 	int dwell,magnitude;
@@ -108,6 +110,8 @@ int main (int argc, char **argv)
 	i=resetGPIBBridge(GPIBBRIDGE1);
 	delay(200);
 	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+	delay(200);
+	i=initializeK617(K617METER,GPIBBRIDGE1);
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -183,7 +187,7 @@ int main (int argc, char **argv)
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
-	nSamples = 16;
+	nSamples = 8;
 	float* measurement = malloc(nSamples*sizeof(float));
 	char echoData[128];
 
@@ -214,8 +218,10 @@ int main (int argc, char **argv)
 		current = 0.0;
 		// grab several readings and average
 		for (i=0;i<nSamples;i++){
+            //j=getReadingK617(&measurement[i], K617METER,GPIBBRIDGE1);
 			getUSB1208AnalogIn(K617,&measurement[i]);
 			current+=measurement[i];
+            delay(15);
 		}
 
 		current=current/(float)nSamples;
@@ -235,7 +241,8 @@ int main (int argc, char **argv)
 		fprintf(fp,"%2.4E\t%2.4E\n",pressure,0.);
 	}
 
-	setUSB1208AnalogOut(HETARGET,0);
+    i = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
+	//setUSB1208AnalogOut(HETARGET,0);
 
 	closeUSB1208();
 
