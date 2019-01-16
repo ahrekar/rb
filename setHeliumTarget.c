@@ -19,13 +19,20 @@
 #include <sys/types.h>
 #include <asm/types.h>
 #include "interfacing/interfacing.h"
+#include "interfacing/RS485Devices.h"
+#include "interfacing/Sorensen120.h"
+
+#define GPIBBRIDGE1 0XC9 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
+// this is the GPIB addresses of each respective instrument attached to this bridge
+#define SORENSEN120 0x0C
 
 int main (int argc, char *argv[])
 {
-	int value = 0;
+	float value = 0;
+	int i;
 
 	if (argc==2) {
-		value=atoi(argv[1]);
+		value=atof(argv[1]);
 	}else{
 		printf("Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024\n");
 		value=0;
@@ -33,17 +40,22 @@ int main (int argc, char *argv[])
 
 	if (value<0) value=0;
 
-	if (value>1023) value=1023;
+	if (value>120) value=120;
 
 	initializeBoard();
 	initializeUSB1208();
 
-       	setUSB1208AnalogOut(HETARGET,value);//sets vout such that 0 v at the probe laser
-       	//setUSB1208AnalogOut(0,value);//sets vout such that 0 v at the probe laser
+	i=resetGPIBBridge(GPIBBRIDGE1);
+	delay(200);
+	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+
+	i = setSorensen120Volts(value,SORENSEN120,GPIBBRIDGE1);
+	if(i!=0){
+		printf("Error setting Sorensen Code: %d\n",i);
+	}
 
 	closeUSB1208();
 
-	printf("Aout %d \n",value);
 
 	return 0;
 }

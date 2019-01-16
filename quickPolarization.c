@@ -21,6 +21,7 @@
 #include "polarizationAnalysisTools.h"
 #include "interfacing/interfacing.h"
 #include "interfacing/RS485Devices.h"
+#include "interfacing/Sorensen120.h"
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 	#include "mathTools.h"
@@ -40,13 +41,14 @@
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
 
-int getPolarizationData(char* fileName, int aout, int dwell, int nMeasurements, float leakageCurrent);
+int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, float leakageCurrent);
 void plotCommand(FILE* gnuplot, char* fileName, char* buffer);
 void plotData(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int aout, dwell;
+	int i,dwell;
+	float VHe;
 	float leakageCurrent;
     int ammeterScale,nMeasurements;
 	
@@ -69,7 +71,7 @@ int main (int argc, char **argv)
 
 	// Get parameters.
 	if (argc==7){
-		aout=atoi(argv[1]);
+		VHe=atoi(argv[1]);
 		dwell=atoi(argv[2]);
 		nMeasurements=atoi(argv[3]);
 		ammeterScale=atof(argv[4]);
@@ -78,7 +80,7 @@ int main (int argc, char **argv)
 		strcpy(backgroundFileName,"NONE");
 	} else {
 		printf("There is one option for using this program: \n\n");
-		printf("usage '~$ sudo ./quickPolarization <aout_for_HeTarget> (0-1023)\n");
+		printf("usage '~$ sudo ./quickPolarization <VHe> (0-1023)\n");
 		printf("                                   <dwell>             (1-5)s  \n");
 		printf("                                   <nMeasurements>             \n");
 		printf("                                   <ammeterScale>      (assumed neg.)\n");
@@ -97,10 +99,22 @@ int main (int argc, char **argv)
 
 	initializeBoard();
 	initializeUSB1208();
+	
+	// Set up GPIB devices.
+	i=resetGPIBBridge(GPIBBRIDGE1);
+	if(i!=0){
+		printf("Error resetting GPIB Bridge. Code: %d\n",i);
+	}
+	delay(200);
+	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+	if(i!=0){
+		printf("Error Initializing Sorensen. Code: %d\n",i);
+	}
+
 
 	// RUDAMENTARIY ERROR CHECKING
-	if (aout<0) aout=0;
-	if (aout>1023) aout=1023;
+	if (VHe<0) VHe=0;
+	if (VHe>120) VHe=120;
 
 	// Create Directory for the day
 	strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); 
@@ -153,10 +167,9 @@ int main (int argc, char **argv)
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(rawData,"#SETTEMP_T(degC):\t%f\n",returnFloat);
 
-	fprintf(rawData,"#AOUT:\t%d\n",aout);
+	fprintf(rawData,"#V_He:\t%f\n",VHe);
 	fprintf(rawData,"#LEAKCURR:\t%f\n",leakageCurrent);
 	fprintf(rawData,"#SCALE:\t%d\n",ammeterScale);
-	fprintf(rawData,"#AOUTCONV:\t%2.6f\n",HPCAL);
 	fprintf(rawData,"#REV:\t%d\n",REVOLUTIONS);
 	fprintf(rawData,"#DATAPPR:\t%d\n",DATAPOINTSPERREV);
 	fprintf(rawData,"#STPPERREV:\t%d\n",STEPSPERREV);
@@ -166,7 +179,7 @@ int main (int argc, char **argv)
 	fclose(rawData);
 
 	// Collect raw data
-	getPolarizationData(rawDataFileName, aout, dwell, nMeasurements, leakageCurrent); 
+	getPolarizationData(rawDataFileName, VHe, dwell, nMeasurements, leakageCurrent); 
 
 	closeUSB1208();
 
@@ -198,16 +211,19 @@ int getCountsAndCurrent(int dwell,long *sumCounts,float *avgCurrent){
 	return 0;
 }
 
-int getPolarizationData(char* fileName, int aout, int dwell, int nMeasurements, float leakageCurrent){
+int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, float leakageCurrent){
 	// Variables for stepper motor control.
-	int j;
+	int j,i;
 
 	// Variables for data collections.
 	long sumCounts;
 	float current;
 
 	// Write Aout for He traget here
-	setUSB1208AnalogOut(HETARGET,aout);//sets vout such that 0 v at the probe laser
+    i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
+	if(i!=0){
+		printf("Error setting Sorensen. Code: %d\n",i);
+	}
 	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
 
@@ -239,7 +255,10 @@ int getPolarizationData(char* fileName, int aout, int dwell, int nMeasurements, 
 	fclose(rawData);
 
 	// Reset Helium Target Offset back to zero
-	setUSB1208AnalogOut(HETARGET,0);
+    i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
+	if(i!=0){
+		printf("Error setting Sorensen. Code: %d\n",i);
+	}
 
 	return 0;
 }
