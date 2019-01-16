@@ -1,7 +1,0 @@
-excitationfn.c:		setUSB1208AnalogOut(HETARGET,value);
-excitationfn.c:	setUSB1208AnalogOut(HETARGET,0);
-polarization.c:	setUSB1208AnalogOut(HETARGET,aout);//sets vout such that 0 v at the probe laser
-polarization.c:	setUSB1208AnalogOut(HETARGET,0);
-quickPolarization.c:	setUSB1208AnalogOut(HETARGET,aout);//sets vout such that 0 v at the probe laser
-quickPolarization.c:	setUSB1208AnalogOut(HETARGET,0);
-setHeliumTarget.c:       	setUSB1208AnalogOut(HETARGET,value);//sets vout such that 0 v at the probe laser
