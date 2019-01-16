@@ -24,7 +24,7 @@ SOURCES=excitationfn.c getcounts.c polarization.c quickPolarization.c stepmotor.
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
-_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c Sorensen120.c K617meter.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
 # The directory to put object files into.
