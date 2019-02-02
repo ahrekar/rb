@@ -2,13 +2,22 @@
 
 RBC=/home/pi/RbControl
 
-if [ "$#" -ne 2 ]; then
-	echo "usage: ./repeatElectronPolarization.sh <number of runs> <comments>"
+if [ "$#" -ne 5 ]; then
+	echo "usage: ./repeatElectronPolarization.sh <HE target Voltage> "
+	echo "                                       <dwell time> "
+	echo "                                       <order of magnitude of current> "
+	echo "                                       <number of runs> "
+	echo "                                       <comments>"
 	echo "                                                  "
 else
-	for i in $(seq $1); do
-		echo "Run number ${i}/$1, pausing for 3 seconds to allow the opportunity to cancel"
+	AOUT=$1
+	DWELL=$2
+	EXP=$3
+	NUMRUN=$4
+	COMMENTS=$5
+	for i in $(seq $NUMRUN); do
+		echo "Run number ${i}/$NUMRUN, pausing for 3 seconds to allow the opportunity to cancel"
 		sleep 3
-		sudo $RBC/scripts/ElectronPolarizationScript.sh 240 1 6 "A few polarized runs so I can feel like I'm doing something as I try to organize data and my life NOW at 1700 mA on the Tapered ampilfier current. Run${i}/$1"
+		sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT $DWELL $EXP "$COMMENTS, Run${i}/$NUMRUN"
 	done
 fi
