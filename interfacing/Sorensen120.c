@@ -77,7 +77,6 @@ int setSorensen120Volts(float volts, char gpibaddress, unsigned short RS485Addre
 return status;
 }
 
-
 int initSorensen120(char gpibaddress, unsigned short RS485Address){
 	unsigned char cmdData[16];
 	unsigned int i;
