@@ -113,6 +113,7 @@ interfacing/testComm
 interfacing/testKenBoard
 interfacing/topticaLaser
 interfacing/winBridge
+interfacing/testK617
 
 RbTest/tempAndPress.tsv
 
