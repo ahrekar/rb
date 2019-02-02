@@ -10,7 +10,7 @@
 #include "topticaLaser.h"
 #define PORT 1998
 #define BUFLEN 4096
-#define LASERIP "129.93.68.203"
+#define LASERIP "129.93.68.209"
 
 int initializeLaser(){
 	int sock=0;
@@ -127,6 +127,15 @@ int setScanOffset(int sock, float offset){
 	char parameterText[512];
 	sprintf(parameterText,"%3.4f",offset);
 	return setParameter(sock,parameterString,parameterText);
+}
+
+int getPowerStatusOfLaser(int sock){
+	int retValue;
+	char parameterString[]="laser1:dl:cc:enabled";
+	char parameterText[512];
+	retValue = readParameter(sock,parameterString,parameterText);
+	printf("Diode Laser Status: %s\n",parameterText);
+	return 	retValue;
 }
 
 int turnOffLaser(int sock){
