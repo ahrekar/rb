@@ -25,12 +25,12 @@ int setProbeDetuning(float desiredDetuning){
 		getProbeFrequency(&wavemeterReturn);
 		returnedDetuning=wavemeterReturn-LINECENTER;
 		detuningChangeRequired=fabs(returnedDetuning-desiredDetuning);
-		if(detuningChangeRequired>24){
-			deltaDetuning=40;
-		}else if(detuningChangeRequired>2.4){
-			deltaDetuning=4;
-		}else if(detuningChangeRequired>.24){
-			deltaDetuning=.4;
+		if(detuningChangeRequired>12){
+			deltaDetuning=20;
+		}else if(detuningChangeRequired>1.2){
+			deltaDetuning=2;
+		}else if(detuningChangeRequired>.12){
+			deltaDetuning=.2;
 		}else{
 			deltaDetuning=.1;
 		}
