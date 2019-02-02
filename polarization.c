@@ -235,7 +235,7 @@ int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent
 
 		angle = (float)steps/STEPSPERREV*2.0*PI;
 
-		printf("%d\t%ld\t%e\n",steps,sumCounts,current+leakageCurrent);
+		printf("%d\t%ld\t%1.2e\n",steps,sumCounts,current+leakageCurrent);
 		fprintf(rawData,"%d\t%ld\t%e\t%f\t%f\n",steps,sumCounts,current+leakageCurrent,currentErr,angle);
 	}
 	fclose(rawData);
