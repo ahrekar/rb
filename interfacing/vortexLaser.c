@@ -2,7 +2,6 @@
    notes and comments 
    useful information
    to follow
-
 */
 
 #include "vortexLaser.h"
@@ -60,7 +59,7 @@ int setVortexPiezo(float volts){
 		strcpy(outData,":SOUR:VOLT:PIEZ ");
 		strcat(outData,retData);
 	
-	writeRS485to232Bridge(outData,retData,VORTEX);
+		writeRS485to232Bridge(outData,retData,VORTEX);
 		j=strlen(retData);  // not expecting much back from Vortex. If we get anything, it will be a parsing, or NO RESPONSE message
 		//if (j!=0) printf(retData);
 	}
