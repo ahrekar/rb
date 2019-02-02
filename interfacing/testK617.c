@@ -3,14 +3,10 @@
  * to new data collection files that are created. 
 */
 
-#include "piBoard.h"
+#include "kenBoard.h"
 #include "RS485Devices.h"
 //#include "omegaCN7500.h"
-#include "K485ammeter.h"
 #include "K617meter.h"
-#include "Fluke8840.h"
-#include "BK1696.h"
-#include "Sorensen120.h"
 
 
 #define GPIBBRIDGE1 0XC9 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
