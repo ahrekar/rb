@@ -2,4 +2,8 @@
 
 RBC=/home/pi/RbControl
 
-echo "$($RBC/interfacing/systemStatus)" | mutt -a $(ls /home/pi/RbData/2018-03-10/*.png | tail -n 1) -- karl@huskers.unl.edu
+SYSTEMINFO=$(sudo $RBC/interfacing/mainTemplate)
+IPADDRESS=$(sudo hostname -I)
+DATAFILENAME=$(ls /home/pi/RbData/$(date +%Y-%m-%d)/*.png | tail -n 1)
+
+echo "$SYSTEMINFO" | mutt -s "RbPi($IPADDRESS)" -a $DATAFILENAME -- karl@huskers.unl.edu
