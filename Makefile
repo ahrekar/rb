@@ -24,7 +24,7 @@ SOURCES=excitationfn.c getcounts.c polarization.c quickPolarization.c stepmotor.
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
-_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c Sorensen120.c K617meter.c
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c Sorensen120.c K617meter.c laserFlag.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
 # The directory to put object files into.
@@ -185,11 +185,11 @@ setTACurrent: setTACurrent.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 turnOffPumpLaser: turnOffPumpLaser.o $(INTDIR)/topticaLaser.o $(INTDIR)/kenBoard.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-toggleLaserFlag: toggleLaserFlag.o interfacing/laserFlag.c interfacing/laserFlag.h $(INTOBJECTS)
+toggleLaserFlag: toggleLaserFlag.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 toggleFlipMirror: toggleFlipMirror.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setLaserFlag: setLaserFlag.o $(INTOBJECTS) interfacing/laserFlag.c interfacing/laserFlag.h
+setLaserFlag: setLaserFlag.o $(INTOBJECTS) interfacing/laserFlag.h
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setHeliumTarget: setHeliumTarget.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
