@@ -27,7 +27,7 @@ int main (int argc, char *argv[])
         printf("Pump = 1\t\tBlocked = 1\n");
         return 1;
     }
-	if(value>0){value=8;}else{value=0;}
+	if(value>0){value=BLOCKED;}else{value=UNBLOCKED;}
 
 	initializeBoard();
 
@@ -35,10 +35,10 @@ int main (int argc, char *argv[])
         case 1:
 			setFlag(PUMPFLAG,value);
 			switch (value){
-				case 8:
+				case BLOCKED:
 					printf("pump laser blocked\n");
 					break;
-				case 0:
+				case UNBLOCKED:
 					printf("pump laser unblocked\n");
 					break;
 			}
@@ -46,10 +46,10 @@ int main (int argc, char *argv[])
         case 0:
 			setFlag(PROBEFLAG,value);
 			switch (value){
-				case 8:
+				case BLOCKED:
 					printf("probe laser blocked\n");
 					break;
-				case 0:
+				case UNBLOCKED:
 					printf("probe laser unblocked\n");
 					break;
 			}
