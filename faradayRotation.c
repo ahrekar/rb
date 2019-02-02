@@ -173,9 +173,9 @@ int main (int argc, char **argv)
 
     //printf("Processing Data...\n");
 
-    plotRawData(fileName);
+    //plotRawData(fileName);
 
-    analyzeData(fileName, 1, revolutions, dataPointsPerRevolution, FOI);
+    //analyzeData(fileName, 1, revolutions, dataPointsPerRevolution, FOI);
 
     closeUSB1208();
 

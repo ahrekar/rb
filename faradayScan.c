@@ -202,15 +202,15 @@ int main (int argc, char **argv)
 	fclose(fp);
 
 
-	printf("Processing Data...\n");
-	analyzeData(fileName, numDet, revolutions, dataPointsPerRevolution, FOI);
+	//printf("Processing Data...\n");
+	//analyzeData(fileName, numDet, revolutions, dataPointsPerRevolution, FOI);
 
 	char* extensionStart;
 	extensionStart=strstr(fileName,".dat");
 	strcpy(extensionStart,"RotationAnalysis.dat");
 
-	printf("Plotting Data...\n");
-	plotData(fileName);
+	//printf("Plotting Data...\n");
+	//plotData(fileName);
 	//printf("Calculating number density...\n");
 	//calculateNumberDensity(fileName, 0, 0);
 	//printf("Recording number density to file...\n");
