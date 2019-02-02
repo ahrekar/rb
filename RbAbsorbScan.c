@@ -15,6 +15,7 @@
 #include "interfacing/RS485Devices.h" // For talking to wavemeter, Omega, etc. 
 #include "interfacing/grandvillePhillips.h" // For getting pressures. 
 #include "interfacing/flipMirror.h" // For manipulating the flip mirror.
+#include "interfacing/laserFlag.h" // For blocking the lasers.
 #include "interfacing/omegaCN7500.h" // For accessing temperatures
 #include "interfacing/waveMeter.h" // For accessing the laser's frequency
 
@@ -135,6 +136,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	setVortexPiezo(value);
 	delay(10000);
 
+
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
         if(count%15==0) printf("          \t       \t\t\tVERTICAL      |        HORIZONTAL      |        REFERENCE\n");
 		setVortexPiezo(value);
@@ -183,6 +185,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 		printf("\n");
         count++;
 	}
+
 	fprintf(fp,"\n");
 	fclose(fp);
 	free(measurement);
