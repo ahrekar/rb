@@ -74,7 +74,6 @@ int main (int argc, char **argv)
 		printf("unable to open file:\t%s\n",dataCollectionFileName);
 		exit(1);
 	}
-    printf("Data flag file created!\n"); //DEBUG
 
     revolutions=1;
     dataPointsPerRevolution=(int)STEPSPERREV/STEPSIZE;
@@ -82,7 +81,6 @@ int main (int argc, char **argv)
 	// Set up interfacing devices
 	initializeBoard();
 	initializeUSB1208();
-    printf("Initialized Board!\n"); //DEBUG
 
 	// Get file name.  Use format "FDayScan"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -95,7 +93,6 @@ int main (int argc, char **argv)
 	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo); //INCLUDE
 	strftime(dailyFileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F.dat",timeinfo); //INCLUDE
 
-    printf("Created data file\n"); //DEBUG
 
 	printf("%s\n",fileName);
 	printf("%s\n",comments);
