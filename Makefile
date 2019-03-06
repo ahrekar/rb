@@ -20,7 +20,7 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c RbAbsorbScanAutoFindDetuning.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c getPhotoDiodes.c turnOffPumpLaser.c findDetuningForMaxPolarization.c
+SOURCES=excitationfn.c getcounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c RbAbsorbScanAutoFindDetuning.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c getPhotoDiodes.c turnOffPumpLaser.c findDetuningForMaxPolarization.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
@@ -177,9 +177,13 @@ setOmega: setOmega.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 getOmega: getOmega.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setProbeLaser: setProbeLaser.o $(INTOBJECTS)
+setProbeLaser: setProbeLaser.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/vortexLaser.o
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setPumpLaser: setPumpLaser.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/topticaLaser.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setProbeDetuning: setProbeDetuning.o probeLaserControl.o $(INTOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+setPumpDetuning: setPumpDetuning.o pumpLaserControl.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setTACurrent: setTACurrent.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
