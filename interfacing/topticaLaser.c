@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h> // For delay()
 #include <unistd.h> // close()
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <stdlib.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h> // Added this for the definition of SOL_TCP to set NO_DELAY
 #include <arpa/inet.h> // inet_pton()
@@ -44,7 +45,7 @@ int initializeLaser(){
 	//	return -1;
 	//}
 	
-	//sleep(1);
+	sleep(1);
 	read(sock, returnBuffer, sizeof(returnBuffer)-1); // The laser wants to display a welcome message. 
 													// receive this message so it will not be received
 													// when trying to read a parameter.
@@ -54,16 +55,29 @@ int initializeLaser(){
 int readParameter(int sock, char* parameter, char* returnValue){
 	char sendBuffer[BUFLEN];
 	int valsend, valread;
+	int cutoff=3; // Number of characters to cut off the end of the return, see below.
+	struct timespec ts = {.tv_sec = 0, .tv_nsec=5e8};
 
 	sprintf(sendBuffer, "(param-ref '%s)\n", parameter);
+	//printf("Sending command:\n\n%s\n\n to laser\n",sendBuffer);	//DEBUG
 
 	valsend = send(sock, sendBuffer, strlen(sendBuffer),0);
-	//sleep(1);
+
+    //printf("Send Buffer after send:\n\n%s\n\n to laser\n",sendBuffer);	//DEBUG
+	//printf("VALSEND: %d\n",valsend);  			//Debugging
+	
+	// The first value returned is just an acknowledgment of sorts.
+	nanosleep(&ts,NULL);
 	valread = read(sock, sendBuffer, sizeof(sendBuffer)-1);
-	//printf("VALREAD: %d\n",valread);  			//Debugging
-	strncpy(returnValue,sendBuffer,valread-3); // The program returns the value, followed by a carriage return/lf, then a "> "
-											// we don't need these last three things, so we don't read them in. 
-	returnValue[valread-3]='\0';
+	//printf("VALREAD: %d\n",valread);  			//Debugging number of characters read.
+	//printf("RAWCHRS: %s\n",sendBuffer);  			//Debugging number of characters read.
+
+	strncpy(returnValue,sendBuffer,valread-cutoff); // The program returns the value, 
+											   // followed by a carriage return/lf, then a "> "
+											   // we don't need these last three 
+											   // things, so we don't read them in. 
+	returnValue[valread-cutoff]='\0';
+	//printf("RETURN STRING: %s\n",returnValue);
 
 	return valsend;
 }
@@ -75,16 +89,19 @@ int setParameter(int sock, char* parameter, char* setValue){
 
 	sprintf(sendBuffer, "(param-set! '%s %s)\n", parameter, setValue);
 
-	//printf("Sending command:\n\n%s\n\n to laser",sendBuffer);	//DEBUG
+	//printf("Sending command:\n\n%s\n\n to laser\n",sendBuffer);	//DEBUG
 
 	send(sock, sendBuffer, strlen(sendBuffer),0);
-	//sleep(1);
+
+	//printf("Send Buffer after send:\n\n%s\n\n to laser\n",sendBuffer);	//DEBUG
+	sleep(1);
 	valread = read(sock, sendBuffer, sizeof(sendBuffer)-1);
 	//printf("VALREAD: %d\n",valread);  			//Debugging
 	strncpy(returnValue,sendBuffer,valread-3); // The program returns the value, followed by a carriage return/lf, then a "> "
 											// we don't need these last three things, so we don't read them in. 
 	returnValue[valread-3]='\0';
 	laserResponse=atoi(returnValue);
+	//printf("Laser response converted to integer\n");
 
 	return laserResponse;
 }
@@ -123,10 +140,23 @@ int setMasterTemperature(int sock, float temperature){
 }
 
 int setScanOffset(int sock, float offset){
+	//printf("Set Scan Offset Function Called\n");
 	char parameterString[]="laser1:scan:offset";
 	char parameterText[512];
 	sprintf(parameterText,"%3.4f",offset);
 	return setParameter(sock,parameterString,parameterText);
+}
+
+float getScanOffset(int sock){
+	float offset;
+	char parameterString[]="laser1:scan:offset";
+	char parameterText[512];
+	readParameter(sock,parameterString,parameterText);
+	//printf("Parameter Text: %s\n",parameterText);
+	offset=atof(parameterText);
+	//printf("Offset After atof(): %f\n",offset);
+
+	return offset;
 }
 
 int getPowerStatusOfLaser(int sock){
@@ -134,7 +164,7 @@ int getPowerStatusOfLaser(int sock){
 	char parameterString[]="laser1:dl:cc:enabled";
 	char parameterText[512];
 	retValue = readParameter(sock,parameterString,parameterText);
-	printf("Diode Laser Status: %s\n",parameterText);
+	//printf("Diode Laser Status: %s\n",parameterText);
 	return 	retValue;
 }
 

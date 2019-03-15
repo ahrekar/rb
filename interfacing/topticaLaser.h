@@ -2,6 +2,7 @@ int initializeLaser();
 int setParameter(int sock, char* parameter, char* setValue);
 int readParameter(int sock, char* parameter, char* returnValue);
 int setScanOffset(int sock, float offset);
+float getScanOffset(int sock);
 int setMasterCurrent(int sock, float current);
 float getMasterCurrent(int sock);
 int setMasterTemperature(int sock, float temperature);
