@@ -85,6 +85,8 @@ monitorAngleBPD
 quickPolarization
 tmp.sh
 tmp2.sh
+setPumpDetuning
+setPumpLaser
 turnOffPumpLaser
 .minMax
 
