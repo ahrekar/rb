@@ -15,11 +15,11 @@ else
 	HEOFFSET=$4
 	CURRENTSCALE=$5
 	SCANRANGE=63
-	STEPSIZE=24
+	STEPSIZE=16
 	DWELL=$6
 	NUMRUN=$7
 	COMMENTS=$8
-	AOUTS=(0)
+	AOUTS="528 672"
 
 	RBSCANLOW=35
 	RBSCANHIGH=70
@@ -31,14 +31,6 @@ else
     BLOCKED=1
     UNBLOCKED=0
 
-
-	echo "Blocking pump laser..."
-	sudo $RBC/setLaserFlag $PUMP $BLOCKED
-	echo "Unblocking probe laser..."
-	sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
-
-	sudo $RBC/RbAbsorbScan $RBSCANLOW $RBSCANHIGH $RBSCANSTEP "$COMMENTS, prelude"
-
 	echo "Unblocking pump laser..."
 	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, prelude" 
@@ -46,7 +38,7 @@ else
 	echo "Blocking probe laser..."
 	sudo $RBC/setLaserFlag $PROBE $BLOCKED
 
-	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "Run $i/$NUMRUN, $COMMENTS, prelude"
+	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, prelude"
 
 	echo "Unblocking pump beam..."
 	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
@@ -55,20 +47,12 @@ else
 	sleep 5
 
 	for i in $(seq 1 $NUMRUN); do 
-		for AOUT in ${AOUTS[@]}; do 
-			echo "About to start next energy polarization run ($i/$NUMRUN). Pausing for 5 seconds to give the opportunity to cancel the run."
-			sleep 5
-			sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT $DWELL $CURRENTSCALE "Run $i/$NUMRUN, AOUT=$AOUT, $COMMENTS"
-		done
+		sudo $RBC/setPumpDetuning 2.75
+		echo "About to start next energy polarization run ($i/$NUMRUN). Pausing for 5 seconds to give the opportunity to cancel the run."
+		sleep 5
+		sudo $RBC/scripts/ElectronPolarizationScript.sh "$AOUT" $DWELL $CURRENTSCALE "Run $i/$NUMRUN, AOUT=$AOUT, $COMMENTS"
 	# EXACT REPEAT DONE
 	done
-
-	echo "Blocking pump laser..."
-	sudo $RBC/setLaserFlag $PUMP $BLOCKED
-	echo "Unblocking probe laser..."
-	sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
-
-	sudo $RBC/RbAbsorbScan $RBSCANLOW $RBSCANHIGH $RBSCANSTEP "$COMMENTS, postscript"
 
 	echo "Unblocking pump laser..."
 	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
