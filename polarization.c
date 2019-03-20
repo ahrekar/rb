@@ -44,7 +44,7 @@ void plotData(char* fileName);
 int main (int argc, char **argv)
 {
 	int dwell;
-    float VHe; /* (V)oltage of (He)lium Target */
+    int VHe; /* (V)oltage of (He)lium Target */
 	float leakageCurrent;
     int ammeterScale;
 	
@@ -68,7 +68,7 @@ int main (int argc, char **argv)
 
 	// Get parameters.
 	if (argc==6){
-		VHe=atof(argv[1]);
+		VHe=atoi(argv[1]);
 		dwell=atoi(argv[2]);
 		ammeterScale=atof(argv[3]);
 		leakageCurrent=atof(argv[4]);
@@ -95,7 +95,7 @@ int main (int argc, char **argv)
 
 	// RUDAMENTARIY ERROR CHECKING
 	if (VHe<0) VHe=0;
-	if (VHe>120) VHe=120;
+	if (VHe>1023) VHe=1023;
 
 	// Create Directory for the day
 	strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); 
@@ -139,16 +139,17 @@ int main (int argc, char **argv)
 	fprintf(rawData,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
 
-	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(rawData,"#CURTEMP_R(degC):\t%f\n",returnFloat);
-	getSVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(rawData,"#SETTEMP_R(degC):\t%f\n",returnFloat);
-	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(rawData,"#CURTEMP_T(degC):\t%f\n",returnFloat);
-	getSVCN7500(CN_TARGET,&returnFloat);
-	fprintf(rawData,"#SETTEMP_T(degC):\t%f\n",returnFloat);
+    returnFloat=-1.0;
+	//getPVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(rawData,"#T_res:\t%f\n",returnFloat);
+	//getSVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(rawData,"#T_res_set:\t%f\n",returnFloat);
+	//getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(rawData,"#T_trg:\t%f\n",returnFloat);
+	//getSVCN7500(CN_TARGET,&returnFloat);
+	fprintf(rawData,"#T_trg_set:\t%f\n",returnFloat);
 
-	fprintf(rawData,"#Voltage_He:\t%f\n",VHe);
+	fprintf(rawData,"#V_he:\t%d\n",VHe);
 	fprintf(rawData,"#LEAKCURR:\t%f\n",leakageCurrent);
 	fprintf(rawData,"#SCALE:\t%d\n",ammeterScale);
 	fprintf(rawData,"#AOUTCONV:\t%2.6f\n",HPCAL);
@@ -187,15 +188,16 @@ int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent
 	// Variables for data collections.
 	long returnCounts;
 	long sumCounts;
-	float current,angle;
+	float current1, current2,angle;
 	float currentErr;
 	float* measurement = calloc(dwell*2,sizeof(float));
 
 	// Write Aout for He traget here
-    i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
-    if(i!=0){
-        printf("Error setting Sorensen. Code: %d\n",i);
-    }
+    setUSB1208AnalogOut(HETARGET,(__u16)VHe);
+    //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
+    //if(i!=0){
+    //    printf("Error setting Sorensen. Code: %d\n",i);
+    //}
 	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
 
@@ -218,25 +220,31 @@ int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent
 	for (steps=0;steps<nsteps;steps+=ninc){
 		stepMotor(POL_MOTOR,CCLK,ninc); 
 
-		current=0.0;
+		current1=0.0;
+		current2=0.0;
 		sumCounts=0;
 		for(i=0;i<dwell;i++){
             //writeRS485to232Bridge("READ?",echoData,0xCA);
 			//current += atof(echoData);
-
-			getUSB1208AnalogIn(0,&current);
+            do{
+			getUSB1208AnalogIn(0,&current1);
+            }while(current1 == 0);
 
 			getUSB1208Counter(10,&returnCounts);
 			sumCounts += returnCounts;
+
+            do{
+			getUSB1208AnalogIn(0,&current2);
+            }while(current2 == 0);
 		}
 
 
-        currentErr=0;
+        currentErr=(current1-current2)/(current1+current2);
 
 		angle = (float)steps/STEPSPERREV*2.0*PI;
 
-		printf("%d\t%ld\t%1.2e\n",steps,sumCounts,current+leakageCurrent);
-		fprintf(rawData,"%d\t%ld\t%e\t%f\t%f\n",steps,sumCounts,current+leakageCurrent,currentErr,angle);
+		printf("%d\t%ld\t%1.2e\n",steps,sumCounts,current1+leakageCurrent);
+		fprintf(rawData,"%d\t%ld\t%e\t%f\t%f\n",steps,sumCounts,current1+leakageCurrent,currentErr,angle);
 	}
 	fclose(rawData);
 
