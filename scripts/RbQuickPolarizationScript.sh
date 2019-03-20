@@ -6,7 +6,7 @@
 #
 #		./RbQuickPolarizationScript <aout start> <aout end> <step size> <RbScan start> <RbScan end> <additional comments>
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
 	echo "usage: ./RbQuickPolarizationScript.sh <comments>"
 #if [ "$#" -ne 2 ]; then
 	#echo "usage: ./RbQuickPolarizationScript.sh <number of files>    <comments>"
@@ -14,12 +14,18 @@ if [ "$#" -ne 1 ]; then
 	#echo "                                      3 = NP, S+, S-          	   "
 	#echo "                                      4 = NP, pi, S+, S- )            "
 else
-	COMMENTS=$1
+	if [ "$#" -eq 2 ];then
+		PROBEDETUNE=$1
+		COMMENTS=$2
+	else
+		COMMENTS=$1
+		PROBEDETUNE=10
+	fi
 
 	source LoadWaveplatePositions.sh
 
 	echo "setting the probe laser to a proper detuning"
-	sudo $RBC/setProbeDetuning 10
+	sudo $RBC/setProbeDetuning $PROBEDETUNE
 
 	#set laser flag to unblock the probe beam.
 	echo "Unblocking probe Beam."
