@@ -66,23 +66,32 @@ int main (int argc, char **argv)
 		magnitude= atoi(argv[8]);
 		strcpy(comments,argv[9]);
 	} else{
-		printf("Hey, DUMBASS. you made an error in your input, please examine\n");
+		printf("Hey, DUMBASS. you made an error in\n");
+        printf("your input, please examine\n");
 		printf("the following usage to fix your error.\n");
-		printf("...dumbass. You supplied %d arguments, %d were expected\n", argc-1,expectedArguments-1);
-		printf("                                                                                               \n");
-		printf("    Usage:                                                                                     \n");
-		printf("           sudo ./excitationfn <filament bias> <N2 Offset> <N2 Sweep> <He offset> <scan range> <step size> <dwell time> <orderOfMagnitudeOfCurrent> <comments>\n");
-		printf("                                (remember neg.)                     (remember neg.!) (   0-60   ) (  1-24   )    (1-5)s       \n");
-		printf("                                                                                               \n");
-		printf("   Step sizes:                                                                                 \n");
-		printf("               1: %1.3fV    9: %1.3fV   17: %1.3fV           \n",1*HPCAL,9*HPCAL,17*HPCAL );
-		printf("               2: %1.3fV   10: %1.3fV   18: %1.3fV           \n",2*HPCAL,10*HPCAL,18*HPCAL);
-		printf("               3: %1.3fV   11: %1.3fV   19: %1.3fV           \n",3*HPCAL,11*HPCAL,19*HPCAL);
-		printf("               4: %1.3fV   12: %1.3fV   20: %1.3fV           \n",4*HPCAL,12*HPCAL,20*HPCAL);
-		printf("               5: %1.3fV   13: %1.3fV   21: %1.3fV           \n",5*HPCAL,13*HPCAL,21*HPCAL);
-		printf("               6: %1.3fV   14: %1.3fV   22: %1.3fV           \n",6*HPCAL,14*HPCAL,22*HPCAL);
-		printf("               7: %1.3fV   15: %1.3fV   23: %1.3fV           \n",7*HPCAL,15*HPCAL,23*HPCAL);
-		printf("               8: %1.3fV   16: %1.3fV   24: %1.3fV           \n",8*HPCAL,16*HPCAL,24*HPCAL);
+		printf("...dumbass.\n");
+        printf("You supplied %d arguments, %d were expected\n", argc-1,expectedArguments-1);
+		printf("\n");
+		printf("Usage:\n");
+		printf("  sudo ./excitationfn <filament bias> (remember neg.)\n");
+        printf("                      <N2 Offset>\n");
+        printf("                      <N2 Sweep>\n");
+        printf("                      <He Offset> (remember neg.!)\n");
+        printf("                      <scan range> ( 0-63 )\n");
+        printf("                      <step size> ( 1-24 )\n");
+        printf("                      <dwell time> ( 1-5 s ) \n");
+        printf("                      <Order of magnitude of current>\n");
+        printf("                      <comments>\n");
+		printf("\n");
+		printf("Step sizes:\n");
+		printf("  1: %1.2fV    9: %1.2fV   17: %1.2fV\n",1*HPCAL,9*HPCAL,17*HPCAL );
+		printf("  2: %1.2fV   10: %1.2fV   18: %1.2fV\n",2*HPCAL,10*HPCAL,18*HPCAL);
+		printf("  3: %1.2fV   11: %1.2fV   19: %1.2fV\n",3*HPCAL,11*HPCAL,19*HPCAL);
+		printf("  4: %1.2fV   12: %1.2fV   20: %1.2fV\n",4*HPCAL,12*HPCAL,20*HPCAL);
+		printf("  5: %1.2fV   13: %1.2fV   21: %1.2fV\n",5*HPCAL,13*HPCAL,21*HPCAL);
+		printf("  6: %1.2fV   14: %1.2fV   22: %1.2fV\n",6*HPCAL,14*HPCAL,22*HPCAL);
+		printf("  7: %1.2fV   15: %1.2fV   23: %1.2fV\n",7*HPCAL,15*HPCAL,23*HPCAL);
+		printf("  8: %1.2fV   16: %1.2fV   24: %1.2fV\n",8*HPCAL,16*HPCAL,24*HPCAL);
 		printf("                                                                                               \n");
 		return 1;
 	}
@@ -137,7 +146,9 @@ int main (int argc, char **argv)
 		stepsize=maxstepsize;
 	}
 
-	fprintf(fp,"#FilamentBias:\t%f\n",bias);
+	fprintf(fp,"#V_fil:\t%.2f\n",bias);
+	fprintf(fp,"#V_N2:\t%.2f\n",N2Offset);
+	fprintf(fp,"#V_sw:\t%.2f\n",N2Sweep);
 	fprintf(fp,"#NumberOfSecondsPerCountMeasurement:\t%d\n",dwell);
 	fprintf(fp,"#Comments:\t%s\n",comments);
 
@@ -155,15 +166,15 @@ int main (int argc, char **argv)
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
-	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#CurrTemp(Res):\t%f\n",returnFloat);
-	getSVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#SetTemp(Res):\t%f\n",returnFloat);
+	//getPVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#T_res:\t%f\n",returnFloat);
+	//getSVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
-	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#CurrTemp(Targ):\t%f\n",returnFloat);
-	getSVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
+	//getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
+	//getSVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
 
@@ -174,17 +185,16 @@ int main (int argc, char **argv)
 	// error bars.
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
-	char echoData[128];
 
 	for (value=0;value<steprange;value+=stepsize){
 		setUSB1208AnalogOut(HETARGET,value);
 		printf("Aout %d \t",value);
 		fprintf(fp,"%d\t",value);
 
-		fprintf(fp,"%4.4f\t",bias);
-		fprintf(fp,"%4.4f\t",N2Offset);
-		fprintf(fp,"%4.4f\t",N2Sweep);
-		fprintf(fp,"%4.4f\t",HeOffset - HPCAL*(float)value);
+		fprintf(fp,"%4.2f\t",bias);
+		fprintf(fp,"%4.2f\t",N2Offset);
+		fprintf(fp,"%4.2f\t",N2Sweep);
+		fprintf(fp,"%4.2f\t",HeOffset - HPCAL*(float)value);
 
 		primaryEnergy = (HeOffset - HPCAL*(float)value) - bias;
 		printf("eV %4.2f\t",primaryEnergy);
@@ -208,9 +218,6 @@ int main (int argc, char **argv)
 		}
 
 		current=current/(float)nSamples;
-
-        //writeRS485to232Bridge("READ?",echoData,0xCA);
-        //current += atof(echoData);
 
 		printf("Current %e\t",current);
 
