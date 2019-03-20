@@ -36,6 +36,7 @@
 #define NUMSTEPS 350
 #define STEPSIZE 7
 #define STEPSPERREV 350.0
+#define DATAPTSPERREV STEPSPERREV/STEPSIZE
 #define WAITTIME 2
 
 #define BUFSIZE 1024
@@ -46,14 +47,13 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
 int main (int argc, char **argv)
 {
-	int VoltStart1,VoltStop1,deltaVolt,Volt;
-	int VoltStart2,VoltStop2;
-    int revolutions,dataPointsPerRevolution;
+    float value, returnFloat, wavelength;
+    int revolutions;
+
+    /* Variables for generating a file name with date and time */
 	time_t rawtime;
-    float value;
-	float returnFloat;
-	float wavelength;
 	struct tm * timeinfo;
+
 	char fileName[BUFSIZE], comments[BUFSIZE];
 	char dailyFileName[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
@@ -76,7 +76,6 @@ int main (int argc, char **argv)
 	}
 
     revolutions=1;
-    dataPointsPerRevolution=(int)STEPSPERREV/STEPSIZE;
 
 	// Set up interfacing devices
 	initializeBoard();
@@ -92,7 +91,6 @@ int main (int argc, char **argv)
 	}
 	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo); //INCLUDE
 	strftime(dailyFileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F.dat",timeinfo); //INCLUDE
-
 
 	printf("%s\n",fileName);
 	printf("%s\n",comments);
@@ -111,7 +109,7 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
+	fprintf(fp,"#Filename:\t%s\n#Comments:\t%s\n",fileName,comments);
 
     /** Record System Stats to File **/
     /** Pressure Gauges **/
@@ -128,15 +126,15 @@ int main (int argc, char **argv)
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
-	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#CurrTemp(Res):\t%f\n",returnFloat);
-	getSVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#SetTemp(Res):\t%f\n",returnFloat);
+	//getPVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#T_res:\t%f\n",returnFloat);
+	//getSVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
-	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#CurrTemp(Targ):\t%f\n",returnFloat);
-	getSVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
+	//getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
+	//getSVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
     /** End System Stats Recording **/
 
@@ -155,10 +153,10 @@ int main (int argc, char **argv)
     */
 
 	int numDet=10,j;
-	float scanDet[]={-33,-30,-19,-18,-9,11,20,21,30,33};
+	float scanDet[]={-30,-27,-19,-18,-9,11,20,21,30,33};
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
-	fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
+	fprintf(fp,"#DataPointsPerRev:\t%f\n",DATAPTSPERREV);
 	fprintf(fp,"#NumVolts:\t%d\n",numDet);
 	fprintf(fp,"#StepSize:\t%d\n",STEPSIZE);
 

@@ -115,7 +115,7 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-    fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
+    fprintf(fp,"#Filename:\t%s\n#Comments:\t%s\n",fileName,comments);
 
     getIonGauge(&returnFloat);
     //printf("IonGauge %2.2E Torr \n",returnFloat);
@@ -130,14 +130,14 @@ int main (int argc, char **argv)
     fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     getPVCN7500(CN_RESERVE,&returnFloat);
-    fprintf(fp,"#CurrTemp(Res):\t%f\n",returnFloat);
+    fprintf(fp,"#T_res:\t%f\n",returnFloat);
     getSVCN7500(CN_RESERVE,&returnFloat);
-    fprintf(fp,"#SetTemp(Res):\t%f\n",returnFloat);
+    fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
     getPVCN7500(CN_TARGET,&returnFloat);
-    fprintf(fp,"#CurrTemp(Targ):\t%f\n",returnFloat);
+    fprintf(fp,"#T_trg:\t%f\n",returnFloat);
     getSVCN7500(CN_TARGET,&returnFloat);
-    fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
+    fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
     char line[1024];
 	fgets(line,1024,configFile);

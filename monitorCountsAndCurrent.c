@@ -14,7 +14,7 @@
 
 Usage: 
 
-./excitationfn.c <filament bias> <target offset> <scan range (0-30)> <step size> <comments>
+./monitorCountsAndCurrent.c <filament bias> <target offset> <scan range (0-30)> <step size> <comments>
 
  */
 
@@ -109,10 +109,18 @@ int main (int argc, char **argv)
 	getConvectron(GP_HE_CHAN,&returnFloat);
 	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
+
+    /** Temperature Controllers **/
 	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#CellTemp(Res):\t%f\n",returnFloat);
+	fprintf(fp,"#T_res:\t%f\n",returnFloat);
+	getSVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
+
 	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#CellTemp(Targ):\t%f\n",returnFloat);
+	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
+	getSVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
+
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
 
 	int numPhotoDetectors = 3;
@@ -120,7 +128,7 @@ int main (int argc, char **argv)
     char* names[]={"PMP","PRB","REF"};
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\tCCellTemp");
+	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev");
     for(i=0;i<numPhotoDetectors;i++){
         fprintf(fp,"\t%s\t%ssd",names[i],names[i]);
     }
@@ -153,16 +161,6 @@ int main (int argc, char **argv)
 		fprintf(fp,"%ld\t%Lf\t",returnCounts,sqrtl(returnCounts));
 		fprintf(fp,"%f\t%f\t",-current,stdDeviation(measurement,nSamples));
 
-		// Record Pressure
-		pressure=0;
-		for (i=0;i<nSamples;i++){
-			getIonGauge(&measurement[i]);
-			pressure+=measurement[i];
-		}
-		pressure=pressure/(float)nSamples;
-		printf("IG= %2.2E\t",pressure);
-		fprintf(fp,"%2.4E\t%2.4E\t",pressure,stdDeviation(measurement,nSamples));
-
 		// Record photodiode signals
 		for(k=0;k<numPhotoDetectors;k++){ // numPhotoDet1
 			involts[k]=0.0;	
@@ -174,10 +172,6 @@ int main (int argc, char **argv)
 			involts[k]=involts[k]/(float)nSamples; 
 			stdDev[k]=stdDeviation(measurement,nSamples);
 		} // numPhotoDet1
-
-		getPVCN7500(CN_TARGET,&returnFloat);
-		printf("%f\t",returnFloat);
-		fprintf(fp,"%f\n",returnFloat);
 
 		for(k=0;k<numPhotoDetectors;k++){
 			if(k!=numPhotoDetectors-1){

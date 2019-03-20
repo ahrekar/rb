@@ -121,15 +121,15 @@ int main (int argc, char **argv)
     //printf("CVGauge(He) %2.2E Torr\n", returnFloat);
     fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
-    getPVCN7500(CN_RESERVE,&returnFloat);
-    fprintf(fp,"#CurrTemp(Res):\t%f\n",returnFloat);
-    getSVCN7500(CN_RESERVE,&returnFloat);
-    fprintf(fp,"#SetTemp(Res):\t%f\n",returnFloat);
+    //getPVCN7500(CN_RESERVE,&returnFloat);
+    fprintf(fp,"#T_res:\t%f\n",returnFloat);
+    //getSVCN7500(CN_RESERVE,&returnFloat);
+    fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
-    getPVCN7500(CN_TARGET,&returnFloat);
-    fprintf(fp,"#CurrTemp(Targ):\t%f\n",returnFloat);
-    getSVCN7500(CN_TARGET,&returnFloat);
-    fprintf(fp,"#SetTemp(Targ):\t%f\n",returnFloat);
+    //getPVCN7500(CN_TARGET,&returnFloat);
+    fprintf(fp,"#T_trg:\t%f\n",returnFloat);
+    //getSVCN7500(CN_TARGET,&returnFloat);
+    fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
     char line[1024];
 	fgets(line,1024,configFile);
@@ -143,8 +143,8 @@ int main (int argc, char **argv)
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 	fprintf(fp,"#NumVoltages:\t%d\n",1);
-    fprintf(fp,"#PumpWavelength:\t%f\n",getWaveMeter(&returnFloat));
-    //fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFreq());
+    fprintf(fp,"#PumpWavelength:\t%f\n",getPumpFrequency(&returnFloat));
+    //fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFrequency(&returnFloat));
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
     int numPhotoDetectors = 2;

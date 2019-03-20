@@ -158,13 +158,14 @@ int main (int argc, char **argv)
 	fprintf(rawData,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
 
-	getPVCN7500(CN_RESERVE,&returnFloat);
+	returnFloat=-1.0;
+	//getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(rawData,"#CURTEMP_R(degC):\t%f\n",returnFloat);
-	getSVCN7500(CN_RESERVE,&returnFloat);
+	//getSVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(rawData,"#SETTEMP_R(degC):\t%f\n",returnFloat);
-	getPVCN7500(CN_TARGET,&returnFloat);
+	//getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(rawData,"#CURTEMP_T(degC):\t%f\n",returnFloat);
-	getSVCN7500(CN_TARGET,&returnFloat);
+	//getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(rawData,"#SETTEMP_T(degC):\t%f\n",returnFloat);
 
 	fprintf(rawData,"#V_He:\t%f\n",VHe);
