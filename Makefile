@@ -131,15 +131,19 @@ getcounts: getcounts.o $(INTOBJECTS)
 #RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
 #	$(LINK.c) $(OUTPUT_OPTION) $^ 
 #TESTING
-RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
+COMMONOBJECTS=$(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/grandvillePhillips.o $(INTDIR)/omegaCN7500.o $(INTDIR)/RS485Devices.o
+PROBELASEROBJECTS=$(INTDIR)/vortexLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o probeLaserControl.o
+PUMPLASEROBJECTS=$(INTDIR)/topticaLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o
+
+RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o probeLaserControl.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/vortexLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/grandvillePhillips.o $(INTDIR)/omegaCN7500.o $(INTDIR)/RS485Devices.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o
+RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-getWavemeter: getWavemeter.o $(INTOBJECTS)
+getWavemeter: getWavemeter.o $(INTDIR)/waveMeter.o $(COMMONOBJECTS) $(PROBELASEROBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
+RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-pumpLaserProfileScan: pumpLaserProfileScan.o mathTools.o fileTools.o $(INTOBJECTS)
+pumpLaserProfileScan: pumpLaserProfileScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 excitationfn: excitationfn.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -173,9 +177,9 @@ polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationA
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 quickPolarization: quickPolarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setOmega: setOmega.o $(INTOBJECTS)
+setOmega: setOmega.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-getOmega: getOmega.o $(INTOBJECTS)
+getOmega: getOmega.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setProbeLaser: setProbeLaser.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/vortexLaser.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
