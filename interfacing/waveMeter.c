@@ -90,10 +90,11 @@ float getDetuning(float* returnFloat){
 	status=setRS485BridgeReads(2,WAV);
     if(status != 0){printf("An error occured while reading bridge: %d\n",status);}
     do{
-	writeRS485to232Bridge(outData,retData,WAV);
-	temp=atof((char*) retData);
-    temp=SPEEDOFLIGHT/temp - LINECENTER;
-    }while( temp > 50 || temp < 50 );
+        writeRS485to232Bridge(outData,retData,WAV);
+        temp=atof((char*) retData);
+        temp=(float)SPEEDOFLIGHT/temp - LINECENTER;
+        //printf("Returned Detuning: %f\n",temp);
+    }while( temp < -800000 || temp > 800000 );
 
     *returnFloat=temp;
 	return temp;
@@ -113,7 +114,8 @@ float getFrequency(float *returnFrequency){
         writeRS485to232Bridge(outData,retData,WAV);
         *returnFrequency=atof((char*) retData);
         *returnFrequency=SPEEDOFLIGHT/ *returnFrequency;
-    }while(*returnFrequency > 377157 || *returnFrequency < 377057 );
+        //printf("Returned Frequency: %f\n",*returnFrequency);
+    }while( *returnFrequency < 377057 || *returnFrequency > 377157 );
 
 	return *returnFrequency;
 }
@@ -131,6 +133,7 @@ float getWavelength(void){
     do{
         writeRS485to232Bridge(outData,retData,WAV);
         temp=atof((char*) retData);
+        //printf("Returned Wavelength: %f\n",temp);
     }while(temp < 744 || temp > 755);
 
 	return temp;

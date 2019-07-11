@@ -11,7 +11,7 @@
 #include "topticaLaser.h"
 #define PORT 1998
 #define BUFLEN 4096
-#define LASERIP "129.93.68.209"
+#define LASERIP "129.93.33.192"
 
 int initializeLaser(){
 	int sock=0;

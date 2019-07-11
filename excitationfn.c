@@ -46,7 +46,7 @@ int main (int argc, char **argv)
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 	float bias, HeOffset, N2Offset, N2Sweep,primaryEnergy, secondaryEnergy, scanrange;
-	float returnFloat;
+	float returnFloat, totalHeOffset;
 	float current, pressure;
 	long returnCounts;
 	FILE *fp,*dataCollectionFlagFile;
@@ -66,10 +66,10 @@ int main (int argc, char **argv)
 		magnitude= atoi(argv[8]);
 		strcpy(comments,argv[9]);
 	} else{
-		printf("Hey, DUMBASS. you made an error in\n");
+		printf("Hey, you made an error in\n");
         printf("your input, please examine\n");
 		printf("the following usage to fix your error.\n");
-		printf("...dumbass.\n");
+		printf("\n");
         printf("You supplied %d arguments, %d were expected\n", argc-1,expectedArguments-1);
 		printf("\n");
 		printf("Usage:\n");
@@ -166,29 +166,31 @@ int main (int argc, char **argv)
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
-	//getPVCN7500(CN_RESERVE,&returnFloat);
+	getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res:\t%f\n",returnFloat);
-	//getSVCN7500(CN_RESERVE,&returnFloat);
+	getSVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
-	//getPVCN7500(CN_TARGET,&returnFloat);
+	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
-	//getSVCN7500(CN_TARGET,&returnFloat);
+	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Aout\tbias\tN2Offset\tN2Sweep\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCountRate\tCountRateStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");
+	fprintf(fp,"Aout\tV_fil\tV_N2\tV_sw\tV_he\te_fil_Eng\te_trg_Eng\tCountRate\tCountRateStDev\tI_f\tI_fStDev\tIonGauge\tIGStdDev\n");
 
 	// Allocate some memory to store measurements for calculating
 	// error bars.
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
+    printf("aout  e_fil_Eng    e_trg_Eng   V_He    Counts   Current\n");
 	for (value=0;value<steprange;value+=stepsize){
+	//for (value=steprange;value>24;value-=stepsize){
 		setUSB1208AnalogOut(HETARGET,value);
-		printf("Aout %d \t",value);
+		printf("%04d  ",value);
 		fprintf(fp,"%d\t",value);
 
 		fprintf(fp,"%4.2f\t",bias);
@@ -197,18 +199,21 @@ int main (int argc, char **argv)
 		fprintf(fp,"%4.2f\t",HeOffset - HPCAL*(float)value);
 
 		primaryEnergy = (HeOffset - HPCAL*(float)value) - bias;
-		printf("eV %4.2f\t",primaryEnergy);
+		printf("% 6.1f eV  ",primaryEnergy);
 		fprintf(fp,"%4.4f\t",primaryEnergy);
 
 		secondaryEnergy = (HeOffset - HPCAL*(float)value) - (bias + N2Offset) ;
-		printf("eV %4.2f\t",secondaryEnergy);
+		printf("% 6.1f eV  ",secondaryEnergy);
 		fprintf(fp,"%4.4f\t",secondaryEnergy);
+
+        totalHeOffset=HeOffset - HPCAL*(float)value;
+		printf("% 6.1f eV  ",totalHeOffset);
 
 		// delay to allow transients to settle
 		delay(500);
 
 		getUSB1208Counter(dwell*10,&returnCounts);
-		printf("Counts %ld\t",returnCounts);
+		printf("%06ld  ",returnCounts);
 
 		current = 0.0;
 		// grab several readings and average
@@ -219,7 +224,7 @@ int main (int argc, char **argv)
 
 		current=current/(float)nSamples;
 
-		printf("Current %e\t",current);
+		printf("%+01.2e\n",current);
 
 		fprintf(fp,"%ld\t%Lf\t",returnCounts/dwell,sqrtl(returnCounts)/dwell);
 		fprintf(fp,"%e\t%f\t",-current,/*0*/stdDeviation(measurement,nSamples));
@@ -227,7 +232,7 @@ int main (int argc, char **argv)
 		// Grab several readings and average
 		pressure=0;
         getIonGauge(&pressure);
-		printf("IG= %2.2E \n",pressure);
+		//printf("IG= %2.2E \n",pressure);
 		fprintf(fp,"%2.4E\t%2.4E\n",pressure,0.);
 	}
 
@@ -257,7 +262,7 @@ void graphData(char* fileName){
 		// First print to the terminal screen.
 
 		// Set up the output for printing to terminal
-		fprintf(gnuplot, "set terminal dumb size 100,28\n");
+		fprintf(gnuplot, "set terminal dumb size 60,24\n");
 		fprintf(gnuplot, "set output\n");			
 		fprintf(gnuplot, "set key autotitle columnheader\n");			
 

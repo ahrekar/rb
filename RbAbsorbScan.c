@@ -11,7 +11,8 @@
 #include "mathTools.h" // For calculating standard deviations
 #include "interfacing/kenBoard.h" // For controlling stepper motors. 
 #include "interfacing/USB1208.h" // For accessing the photodiode signals
-#include "interfacing/vortexLaser.h" // For changing the detuning of the laser.
+//#include "interfacing/vortexLaser.h" // For changing the detuning of the laser.
+#include "interfacing/sacherLaser.h" // For changing the detuning of the laser.
 #include "interfacing/RS485Devices.h" // For talking to wavemeter, Omega, etc. 
 #include "interfacing/grandvillePhillips.h" // For getting pressures. 
 #include "interfacing/flipMirror.h" // For manipulating the flip mirror.
@@ -101,7 +102,7 @@ int main (int argc, char **argv)
 
 	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
 
-	setVortexPiezo(45.0); // Return Piezo to 45.0 V
+	setSacherCurrent(65); // Return Piezo to 45.0 V
 
 	closeUSB1208();
 
@@ -132,14 +133,15 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	value=startvalue;
-	setVortexPiezo(value);
+	value=endvalue;
+	setSacherCurrent(value);
 	delay(10000);
 
 
-	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){
-        if(count%15==0) printf("          \t       \t\t\tVERTICAL      |        HORIZONTAL      |        REFERENCE\n");
-		setVortexPiezo(value);
+	//for (value=endvalue;value <= endvalue && value >= startvalue;value-=stepsize){// high to low
+	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){// low to high
+        if(count%15==0) printf("                Detuning  VERTICAL    |   HORIZONTAL  |   REFERENCE\n");
+		setSacherCurrent(value);
 		printf("VOLT %3.1f \t",value);
 		fprintf(fp,"%f\t",value);
 
@@ -149,7 +151,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
                                         // So we no longer need the previous delay statement. 
 		//kensWaveLength = -1;
 		fprintf(fp,"%03.4f\t",kensWaveLength);
-		printf("%03.4f\t",kensWaveLength);
+		printf("%03.1f\t",kensWaveLength);
 		for(k=0;k<NUMCHANNELS;k++){
 			involts[k]=0.0;	
 		}
@@ -157,19 +159,21 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 
 		// grab several readings and average
 		for(k=1;k<NUMCHANNELS;k++){
-			for (i=0;i<nSamples;i++){
-				getMCPAnalogIn(k,&measurement[i]);
-				involts[k-1]=involts[k-1]+measurement[i];
-				delay(10);
-			}
+            // When measuring using the lock-in, use this piece of code.
 //			for (i=0;i<nSamples;i++){
-//				getUSB1208AnalogIn(k,&measurement[i]);
+//				getMCPAnalogIn(k,&measurement[i]);
 //				involts[k-1]=involts[k-1]+measurement[i];
 //				delay(10);
 //			}
+			// When measuring using the ammeter, use this piece of code.
+			for (i=0;i<nSamples;i++){
+				getUSB1208AnalogIn(k,&measurement[i]);
+				involts[k-1]=involts[k-1]+measurement[i];
+				delay(10);
+			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
 			fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
-			printf("  %0.4f %0.4f  ",involts[k-1],stdDeviation(measurement,nSamples));
+			printf("  %0.2f %0.2f  ",involts[k-1],stdDeviation(measurement,nSamples));
             if(k<NUMCHANNELS) printf(" | ");
 		}
 		for (i=0;i<nSamples;i++){
@@ -179,7 +183,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 		}
         involts[k-1]=fabs(involts[k-1])/(float)nSamples;
         fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
-        printf("  %0.4f %0.4f  ",involts[k-1],stdDeviation(measurement,nSamples));
+        printf("  %0.2f %0.2f  ",involts[k-1],stdDeviation(measurement,nSamples));
 
 		fprintf(fp,"\n");
 		printf("\n");
@@ -218,14 +222,14 @@ void writeFileHeader(char* fileName, char* comments){
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
-	getPVCN7500(CN_RESERVE,&returnFloat);
+	//getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res:\t%f\n",returnFloat);
-	getSVCN7500(CN_RESERVE,&returnFloat);
+	//getSVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
-	getPVCN7500(CN_TARGET,&returnFloat);
+	//getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
-	getSVCN7500(CN_TARGET,&returnFloat);
+	//getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
     /** End System Stats Recording **/
@@ -249,7 +253,7 @@ void graphData(char* fileName){
 	strcpy(extension,"");
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 80,32\n");
+		fprintf(gnuplot, "set terminal dumb size 60,24\n");
 		fprintf(gnuplot, "set output\n");			
 		
 		sprintf(buffer, "set title '%s'\n", fileName);

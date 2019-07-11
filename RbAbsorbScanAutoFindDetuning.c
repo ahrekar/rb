@@ -110,7 +110,7 @@ int main (int argc, char **argv)
 
 	collectAndRecordData(fileName, stepSize);
 
-	setVortexPiezo(45.0); // Return Piezo to 45.0 V
+	setSacherCurrent(65); // Return Piezo to 45.0 V
 
 	closeUSB1208();
 
@@ -148,7 +148,7 @@ void collectAndRecordData(char* fileName, float stepSize){
 
 	setProbeDetuning(lowDetuning);
 
-	getVortexPiezo(&returnValue);
+	setSacherCurrent(returnValue);
 	if(stepSize>0){
 		startValue=returnValue;
 		endValue=returnValue+voltRange;
@@ -161,7 +161,7 @@ void collectAndRecordData(char* fileName, float stepSize){
 
 	for (value=startValue;value < endValue;value+=stepSize){
         if(count%15==0) printf("          \t       \t\t\tPUMP      |        PROBE      |        REFERENCE\n");
-		setVortexPiezo(value);
+		setSacherCurrent(value);
 
 		printf("VOLT %3.1f \t",value);
 		fprintf(fp,"%f\t",value);

@@ -19,7 +19,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <asm/types.h>
-#include "interfacing/interfacing.h"
+#include "interfacing/sacherLaser.h"
 
 
 
@@ -32,7 +32,7 @@ int main (int argc, char *argv[])
 	}else{
 		printf("Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024\n");
 
-		getVortexPiezo(&value);	
+		value=getSacherCurrent();	
 		printf("Laser is currently at %3.1f V\n",value);
 		
 		return 0;
@@ -40,12 +40,13 @@ int main (int argc, char *argv[])
 
 	if (value<0) value=0;
 
-	if (value>1023) value=1023;
+	if (value>170) value=170;
 
 	initializeBoard();
 	initializeUSB1208();
+	initializeSacher();
 
-	setVortexPiezo(value);
+	value=setSacherCurrent();
 
 	closeUSB1208();
 

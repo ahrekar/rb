@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include "kenBoard.h"
 
-#define HEAD 0xC0
+#define HEAD 0xC2
 #define TA 0xC6
 
 int initializeSacherLaser(void);

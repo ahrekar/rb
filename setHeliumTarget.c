@@ -45,14 +45,16 @@ int main (int argc, char *argv[])
 	initializeBoard();
 	initializeUSB1208();
 
-	i=resetGPIBBridge(GPIBBRIDGE1);
-	delay(200);
-	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+	setUSB1208AnalogOut(HETARGET,value);
 
-	i = setSorensen120Volts(value,SORENSEN120,GPIBBRIDGE1);
-	if(i!=0){
-		printf("Error setting Sorensen Code: %d\n",i);
-	}
+// i=resetGPIBBridge(GPIBBRIDGE1);
+//	delay(200);
+//	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+//
+//	i = setSorensen120Volts(value,SORENSEN120,GPIBBRIDGE1);
+//	if(i!=0){
+//		printf("Error setting Sorensen Code: %d\n",i);
+//	}
 
 	closeUSB1208();
 

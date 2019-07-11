@@ -122,10 +122,9 @@ $(ODIR)/%.o: %.c $(DEPDIR)/%.d | $(ODIR)
 #
 #$(ODIR)/polarizationAnalysisTools.o: polarizationAnalysisTools.c
 #	$(LINK.c) -c $(OUTPUT_OPTION) $^ 
-getcounts: getcounts.o $(INTOBJECTS)
+
+getcounts: getcounts.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-
-
 
 #ORIGINAL
 #RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
@@ -145,7 +144,7 @@ RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 pumpLaserProfileScan: pumpLaserProfileScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-excitationfn: excitationfn.o mathTools.o $(INTOBJECTS) 
+excitationfn: excitationfn.o mathTools.o $(COMMONOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 monitorCountsAndCurrent: monitorCountsAndCurrent.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -173,9 +172,9 @@ faradayRotation: faradayRotation.o mathTools.o faradayScanAnalysisTools.o fileTo
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 stepTemperatureWaitForRotationAngle: stepTemperatureWaitForRotationAngle.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-polarization: polarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
+polarization: polarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-quickPolarization: quickPolarization.o mathTools.o fileTools.o $(INTOBJECTS) polarizationAnalysisTools.o
+quickPolarization: quickPolarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setOmega: setOmega.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -197,18 +196,18 @@ toggleLaserFlag: toggleLaserFlag.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 toggleFlipMirror: toggleFlipMirror.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setLaserFlag: setLaserFlag.o $(INTOBJECTS) interfacing/laserFlag.h
+setLaserFlag: setLaserFlag.o $(COMMONOBJECTS) $(INTDIR)/laserFlag.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setHeliumTarget: setHeliumTarget.o $(INTOBJECTS)
+setHeliumTarget: setHeliumTarget.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
-stepmotor: stepmotor.o 				$(INTOBJECTS)
+stepmotor: stepmotor.o 				$(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-homemotor: homemotor.o 				$(INTOBJECTS)
+homemotor: homemotor.o 				$(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-homeWavePlate: homeWavePlate.c 		$(INTOBJECTS)
+homeWavePlate: homeWavePlate.c 		$(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setWavePlate: setWavePlate.c fileTools.o $(INTOBJECTS)
+setWavePlate: setWavePlate.c fileTools.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
 polarizationAnalysis: polarizationAnalysis.o polarizationAnalysisTools.o mathTools.o fileTools.o
