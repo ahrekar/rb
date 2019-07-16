@@ -7,7 +7,8 @@
 
 #define REVOLUTIONS 1
 #define STEPSPERREV 1200
-#define DATAPOINTSPERREV 60
+#define DATAPOINTSPERREV 16
+#define DATAPOINTSPERREV 16
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
 #define NORMCURR 0 	// Set this to 1 to normalize the intensity with the current

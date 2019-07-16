@@ -168,7 +168,7 @@ int main (int argc, char **argv)
 
 	plotData(rawDataFileName);
 
-	processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,DATAPOINTSPERREV,REVOLUTIONS,1);
+	//processFileWithBackground(analysisFileName,backgroundFileName,rawDataFileName,DATAPOINTSPERREV,REVOLUTIONS,1);
 
 	closeUSB1208();
 
@@ -180,17 +180,16 @@ int main (int argc, char **argv)
 }
 
 int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent){
-	char command[64];
-	char echoData[128];
+	//char echoData[128];
 	// Variables for stepper motor control.
 	int nsteps,steps,ninc,i;
 
 	// Variables for data collections.
 	long returnCounts;
 	long sumCounts;
-	float current1, current2,angle;
+	float current,angle;
 	float currentErr;
-	float* measurement = calloc(dwell*2,sizeof(float));
+	float* measurement = calloc(dwell+1,sizeof(float));
 
 	// Write Aout for He traget here
     setUSB1208AnalogOut(HETARGET,(__u16)VHe);
@@ -220,40 +219,42 @@ int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent
 	for (steps=0;steps<nsteps;steps+=ninc){
 		stepMotor(POL_MOTOR,CCLK,ninc); 
 
-		current1=0.0;
-		current2=0.0;
+		current=0.0;
 		sumCounts=0;
 		for(i=0;i<dwell;i++){
             //writeRS485to232Bridge("READ?",echoData,0xCA);
 			//current += atof(echoData);
             do{
-			getUSB1208AnalogIn(0,&current1);
-            }while(current1 == 0);
+			getUSB1208AnalogIn(0,&measurement[i]);
+            }while(measurement[i] == 0);
+            current=(measurement[i]/(float)(dwell+1))+current;
 
 			getUSB1208Counter(10,&returnCounts);
 			sumCounts += returnCounts;
 
-            do{
-			getUSB1208AnalogIn(0,&current2);
-            }while(current2 == 0);
 		}
+        do{
+        getUSB1208AnalogIn(0,&measurement[i]);
+        }while(measurement[i] == 0);
+        current=(measurement[i]/(float)(dwell+1))+current;
 
 
-        currentErr=(current1-current2)/(current1+current2);
+        currentErr=stdDeviation(measurement,dwell+1)/pow(dwell+1,.5);
+        //printf("Err: %f\n",currentErr);
 
 		angle = (float)steps/STEPSPERREV*2.0*PI;
 
-		printf("%d\t%ld\t%1.2e\n",steps,sumCounts,current1+leakageCurrent);
-		fprintf(rawData,"%d\t%ld\t%e\t%f\t%f\n",steps,sumCounts,current1+leakageCurrent,currentErr,angle);
+		printf("%03d\t%06ld\t%1.2e\n",steps,sumCounts,current+leakageCurrent);
+		fprintf(rawData,"%d\t%ld\t%e\t%f\t%f\n",steps,sumCounts,current+leakageCurrent,currentErr,angle);
 	}
 	fclose(rawData);
 
 	// Reset Helium Target Offset back to zero
-    i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
-    if(i!=0){
-        printf("Error setting Sorensen. Code: %d\n",i);
-    }
-	//setUSB1208AnalogOut(HETARGET,0);
+    //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
+    //if(i!=0){
+    //    printf("Error setting Sorensen. Code: %d\n",i);
+    //}
+	setUSB1208AnalogOut(HETARGET,0);
 
 	return 0;
 }
