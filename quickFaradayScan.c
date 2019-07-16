@@ -164,7 +164,7 @@ int main (int argc, char **argv)
 	homeMotor(PROBE_MOTOR);
 
     int numPd=3;
-    int pd[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+    int pd[] = {BOTTOM_KEITHLEY,BROWN_KEITHLEY,TOP_KEITHLEY};
 
 	fp=fopen(fileName,"a");
 

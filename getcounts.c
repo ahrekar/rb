@@ -25,7 +25,8 @@
 #include <sys/types.h>
 #include <asm/types.h>
 #include <wiringPi.h>
-#include "interfacing/interfacing.h"
+#include "interfacing/kenBoard.h"
+#include "interfacing/USB1208.h"
 
 
 int main (int argc, char *argv[])

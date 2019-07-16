@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <asm/types.h>
 #include "interfacing/sacherLaser.h"
+#include "interfacing/USB1208.h"
 
 
 
@@ -46,11 +47,13 @@ int main (int argc, char *argv[])
 	initializeUSB1208();
 	initializeSacher();
 
-	value=setSacherCurrent();
+	printf("Going to set laser current to: %f\n",value);
+
+	setSacherCurrent(value);
+
+	value=getSacherCurrent();	
+	printf("Laser is currently at %3.1f V\n",value);
 
 	closeUSB1208();
-
-	printf("Voltage %3.1f \n",value);
-
 	return 0;
 }

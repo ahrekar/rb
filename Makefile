@@ -24,7 +24,7 @@ SOURCES=excitationfn.c getcounts.c polarization.c quickPolarization.c stepmotor.
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
-_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c Sorensen120.c K617meter.c laserFlag.c
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c Sorensen120.c K617meter.c laserFlag.c sacherLaser.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
 # The directory to put object files into.
@@ -123,17 +123,17 @@ $(ODIR)/%.o: %.c $(DEPDIR)/%.d | $(ODIR)
 #$(ODIR)/polarizationAnalysisTools.o: polarizationAnalysisTools.c
 #	$(LINK.c) -c $(OUTPUT_OPTION) $^ 
 
-getcounts: getcounts.o $(COMMONOBJECTS)
-	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
 #ORIGINAL
 #RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
 #	$(LINK.c) $(OUTPUT_OPTION) $^ 
 #TESTING
 COMMONOBJECTS=$(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/grandvillePhillips.o $(INTDIR)/omegaCN7500.o $(INTDIR)/RS485Devices.o
-PROBELASEROBJECTS=$(INTDIR)/vortexLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o probeLaserControl.o
+PROBELASEROBJECTS=$(INTDIR)/sacherLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o probeLaserControl.o
 PUMPLASEROBJECTS=$(INTDIR)/topticaLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o
 
+getcounts: getcounts.o $(COMMONOBJECTS)
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
 RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
@@ -180,7 +180,7 @@ setOmega: setOmega.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 getOmega: getOmega.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setProbeLaser: setProbeLaser.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/vortexLaser.o
+setProbeLaser: setProbeLaser.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setPumpLaser: setPumpLaser.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/topticaLaser.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 

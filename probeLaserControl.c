@@ -13,9 +13,9 @@ int setProbeDetuning(float desiredDetuning){
 	float wavemeterReturn;
 	float speedOfLight=299792458; //meters/sec
 	float lineCenter=377107.463; //GHz
-	float minAdjust=50; // Whatever parameter adjusts the laser frequency, indicate what the bounds on this 
+	float minAdjust=27; // Whatever parameter adjusts the laser frequency, indicate what the bounds on this 
 						// parameter are.
-	float maxAdjust=170;
+	float maxAdjust=36;
 	float tolerance;
 	float deltaDetuning,detuningChangeRequired,returnedDetuning,adjustSetting;
 	int correctlyDetuned=1;
@@ -24,9 +24,9 @@ int setProbeDetuning(float desiredDetuning){
 
 
 	initializeSacher();
-	adjustSetting=getSacherCurrent();
-	printf("Sacher Current: %d\n",adjustSetting);
-	/*
+	adjustSetting=getSacherTemperature();
+	printf("Sacher Temperature: %d\n",adjustSetting);
+	
 	getProbeFrequency(&wavemeterReturn);
 	returnedDetuning=wavemeterReturn-LINECENTER;
 
@@ -38,39 +38,38 @@ int setProbeDetuning(float desiredDetuning){
 		getProbeFrequency(&wavemeterReturn);
 		returnedDetuning=wavemeterReturn-LINECENTER;
 		detuningChangeRequired=fabs(returnedDetuning-desiredDetuning);
+
 		if(detuningChangeRequired>12){
-			deltaDetuning=10;
+			deltaDetuning=.8;
 		}else if(detuningChangeRequired>1.2){
-			deltaDetuning=1;
+			deltaDetuning=.08;
 		}else if(detuningChangeRequired>.12){
-			deltaDetuning=.1;
+			deltaDetuning=.008;
 		}else{
-			deltaDetuning=.1;
+			deltaDetuning=.001;
 		}
 		
-		// Handle problem if the change in detuning results in a value
-		// outside the range capable of adjusting.
-		adjustSetting=getSacherCurrent();
+		adjustSetting=getSacherTemperature();
 
 		tolerance=.1;
-		if(desiredDetuning < returnedDetuning + .1 && desiredDetuning > returnedDetuning - .1){//STOP
+		if(desiredDetuning < returnedDetuning + tolerance && desiredDetuning > returnedDetuning - tolerance){//STOP
 			//printf("The piezo is correctly tuned at %f3.1V\n",adjustSetting);
 			correctlyDetuned=0;
-		}else if(desiredDetuning>returnedDetuning){//Increase the detuning.
+		}else if(desiredDetuning<returnedDetuning){//Increase the detuning.
 			printf("**%2.1f GHz**",returnedDetuning);
-			printf(":%3.1fV -> %3.1fV  ",adjustSetting,adjustSetting+deltaDetuning);
-			setVortexPiezo(adjustSetting+deltaDetuning>maxAdjust?maxAdjust:adjustSetting+deltaDetuning);
+			printf(":%2.3fV -> %2.3fV  ",adjustSetting,adjustSetting+deltaDetuning);
+			setSacherTemperature(adjustSetting+deltaDetuning>maxAdjust?maxAdjust:adjustSetting+deltaDetuning);
 			printf(".");
 		}
 		else{//Decrease the detuning
 			printf("**%2.1f GHz**",returnedDetuning);
-			printf(":%3.1fV -> %3.1fV",adjustSetting,adjustSetting-deltaDetuning);
-			setVortexPiezo(adjustSetting-deltaDetuning<minAdjust?minAdjust:adjustSetting-deltaDetuning);
+			printf(":%2.3fV -> %2.3fV",adjustSetting,adjustSetting-deltaDetuning);
+			setSacherTemperature(adjustSetting-deltaDetuning<minAdjust?minAdjust:adjustSetting-deltaDetuning);
 			printf(".");
 		}
 		fflush(stdout);
 	}
-	*/
+	
 	printf("\n");
 	return 0;
 }

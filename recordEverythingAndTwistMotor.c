@@ -115,8 +115,8 @@ int main (int argc, char **argv)
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
 
 	int numPhotoDetectors = 3;
-    int photoDetector[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
-    char* names[]={"PMP","PRB","REF"};
+    int photoDetector[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
+    char* names[]={"REF","HORIZ","VERT"};
 
 	// Print the header for the information in the datafile
 	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");

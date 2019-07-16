@@ -143,16 +143,17 @@ int main (int argc, char **argv)
     fprintf(fp,"#Revolutions:\t%d\n",revolutions);
     fprintf(fp,"#DataPointsPerRev:\t%d\n",dataPointsPerRevolution);
 	fprintf(fp,"#NumVoltages:\t%d\n",1);
-    fprintf(fp,"#PumpWavelength:\t%f\n",getPumpFrequency(&returnFloat));
-    //fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFrequency(&returnFloat));
+    //fprintf(fp,"#PumpWavelength:\t%f\n",getPumpFrequency(&returnFloat));
+    fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFrequency(&returnFloat));
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
-    int numPhotoDetectors = 2;
-    int photoDetectors[] = {BOTLOCKIN,TOPLOCKIN};
-    char* names[]={"HORIZ","VERT"};
+    //int numPhotoDetectors = 2;
+    //int photoDetectors[] = {BOTLOCKIN,TOPLOCKIN};
+    //char* names[]={"HORIZ","VERT"};
     // UNCOMMENT THE FOLLOWING LINES WHEN USING THE FLOATING PD
-    //int photoDetectors[] = {PROBE_LASER,PUMP_LASER,REF_LASER};
-    //char* names[]={"PRB","PMP","REF"};
+    int numPhotoDetectors = 3;
+    int photoDetectors[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
+    char* names[]={"REF","HORIZ","VERT"};
     int motor = PROBE_MOTOR;
     //int motor = PUMP_MOTOR;
 
@@ -210,10 +211,21 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             // UPDATE: With time scale of 30 ms, takes 300 ms to settle.
 
             //get samples and average
+           // for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
+           //     involts[j]=0.0;	
+           //     for (i=0;i<nSamples;i++){ // nSamples
+           //             getMCPAnalogIn(photoDetector[j],&measurement[i]);
+           //             involts[j]=involts[j]+fabs(measurement[i]);
+           //             delay(WAITTIME);
+           //     } // nSamples
+           //     involts[j]=involts[j]/(float)nSamples; 
+           //     stdDev[j]=stdDeviation(measurement,nSamples);
+           // } // numPhotoDet1
+
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
                 for (i=0;i<nSamples;i++){ // nSamples
-                        getMCPAnalogIn(photoDetector[j],&measurement[i]);
+                        getUSB1208AnalogIn(j,&measurement[i]);
                         involts[j]=involts[j]+fabs(measurement[i]);
                         delay(WAITTIME);
                 } // nSamples

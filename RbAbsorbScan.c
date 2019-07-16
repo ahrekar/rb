@@ -54,7 +54,7 @@ int main (int argc, char **argv)
 	} else {
 		printf("Usage:\n");
 		printf("$ sudo ./RbAbsorbScan <begin> <end> <step>  <comments>\n");
-		printf("                      (0.0 - 117.5)                   \n");
+		printf("                      (33.3 - 34.1)                   \n");
 		return 0;
 	}
 
@@ -102,7 +102,7 @@ int main (int argc, char **argv)
 
 	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
 
-	setSacherCurrent(65); // Return Piezo to 45.0 V
+	setSacherTemperature(33.333); // Return Piezo to 45.0 V
 
 	closeUSB1208();
 
@@ -134,15 +134,15 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	float* measurement = malloc(nSamples*sizeof(float));
 
 	value=endvalue;
-	setSacherCurrent(value);
+	setSacherTemperature(value);
 	delay(10000);
 
 
 	//for (value=endvalue;value <= endvalue && value >= startvalue;value-=stepsize){// high to low
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){// low to high
-        if(count%15==0) printf("                Detuning  VERTICAL    |   HORIZONTAL  |   REFERENCE\n");
-		setSacherCurrent(value);
-		printf("VOLT %3.1f \t",value);
+        if(count%15==0) printf("TEMP         Detuning     VERTICAL    |   HORIZONTAL  |   REFERENCE\n");
+		setSacherTemperature(value);
+		printf("%2.3f \t",value);
 		fprintf(fp,"%f\t",value);
 
 		// delay to allow transients to settle

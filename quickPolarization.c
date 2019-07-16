@@ -101,15 +101,15 @@ int main (int argc, char **argv)
 	initializeUSB1208();
 	
 	// Set up GPIB devices.
-	i=resetGPIBBridge(GPIBBRIDGE1);
-	if(i!=0){
-		printf("Error resetting GPIB Bridge. Code: %d\n",i);
-	}
-	delay(200);
-	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
-	if(i!=0){
-		printf("Error Initializing Sorensen. Code: %d\n",i);
-	}
+	//i=resetGPIBBridge(GPIBBRIDGE1);
+	//if(i!=0){
+	//	printf("Error resetting GPIB Bridge. Code: %d\n",i);
+	//}
+	//delay(200);
+	//i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+	//if(i!=0){
+	//	printf("Error Initializing Sorensen. Code: %d\n",i);
+	//}
 
 
 	// RUDAMENTARIY ERROR CHECKING
@@ -221,10 +221,11 @@ int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, f
 	float current;
 
 	// Write Aout for He traget here
-    i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
-	if(i!=0){
-		printf("Error setting Sorensen. Code: %d\n",i);
-	}
+    setUSB1208AnalogOut(HETARGET,(__u16)VHe);
+    //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
+	//if(i!=0){
+	//	printf("Error setting Sorensen. Code: %d\n",i);
+	//}
 	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
 
@@ -256,7 +257,8 @@ int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, f
 	fclose(rawData);
 
 	// Reset Helium Target Offset back to zero
-    i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
+    //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
+    setUSB1208AnalogOut(HETARGET,0);
 	if(i!=0){
 		printf("Error setting Sorensen. Code: %d\n",i);
 	}

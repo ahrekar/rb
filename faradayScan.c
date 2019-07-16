@@ -127,14 +127,14 @@ int main (int argc, char **argv)
 
     /** Temperature Controllers **/
 	//getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#T_res:\t%f\n",returnFloat);
+	fprintf(fp,"#T_res:\t%.2f\n",returnFloat);
 	//getSVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
+	fprintf(fp,"#T_res_set:\t%.2f\n",returnFloat);
 
 	//getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
+	fprintf(fp,"#T_trg:\t%.2f\n",returnFloat);
 	//getSVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
+	fprintf(fp,"#T_trg_set:\t%.2f\n",returnFloat);
 
     /** End System Stats Recording **/
 
@@ -153,7 +153,7 @@ int main (int argc, char **argv)
     */
 
 	int numDet=10,j;
-	float scanDet[]={-30,-27,-19,-18,-9,11,20,21,30,33};
+	float scanDet[]={-29,-26,-19,-18,-9,11,20,21,30,33};
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%f\n",DATAPTSPERREV);
@@ -161,16 +161,16 @@ int main (int argc, char **argv)
 	fprintf(fp,"#StepSize:\t%d\n",STEPSIZE);
 
 	// Write the header for the data to the file.
-	fprintf(fp,"STEP\tPUMP\tPUMPsd\tPRB\tPRBsd\tREF\tREFsd\n");
+	fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\tREF\tREFsd\n");
     fclose(fp);
 
 	printf("Homing motor...\n");
 	homeMotor(PROBE_MOTOR);
 
-//    int numPd=3;
-//    int pd[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
-    int numPd=2;
-    int pd[] = {BOTLOCKIN,TOPLOCKIN};
+    int numPd=3;
+    int pd[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
+    //int numPd=2;
+    //int pd[] = {BOTLOCKIN,TOPLOCKIN};
 
 	fp=fopen(fileName,"a");
 
@@ -186,8 +186,8 @@ int main (int argc, char **argv)
 	    getProbeFrequency(&wavelength);
 	   // wavelength=-1;
 
-        fprintf(fp,"\n\n#VOLT:%f(%f)\n",value,wavelength);
-        printf("VOLT:%f(%f)\t",value,wavelength);
+        fprintf(fp,"\n\n#VOLT:%3.1f(%.2f)\n",value,wavelength);
+        printf("VOLT:%3.1f(%.2f)\t",value,wavelength);
         fflush(stdout);
 
         quickHomeMotor(PROBE_MOTOR);
@@ -247,6 +247,17 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 involts[j]=involts[j]/(float)nSamples; 
                 stdDev[j]=stdDeviation(measurement,nSamples);
             } // numPhotoDet1
+     
+     //    for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
+     //        involts[j]=0.0;	
+     //        for (i=0;i<nSamples;i++){ // nSamples
+     //                getUSB1208AnalogIn(j,&measurement[i]);
+     //                involts[j]=involts[j]+measurement[i];
+     //                delay(WAITTIME);
+     //        } // nSamples
+     //        involts[j]=involts[j]/(float)nSamples; 
+     //        stdDev[j]=stdDeviation(measurement,nSamples);
+     //    } // numPhotoDet1
 
             fprintf(fp,"%d\t",steps+NUMSTEPS*k);
             for(j=0;j<numPhotoDetectors;j++){

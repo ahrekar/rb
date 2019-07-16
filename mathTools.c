@@ -1,5 +1,6 @@
 #include <math.h>
 float stdDeviation(float* value, int numValues); // Calculate std. deviation of the mean
+float stdDeviationMean(float* value, int numValues); // Calculate std. deviation of the mean
 float pu2(float value, float uncertainty); // Calculate the percent uncertainty squared of a value.
 
 float stdDeviation(float* value, int numValues){
@@ -39,7 +40,7 @@ float stdDeviationMean(float* value, int numValues){
 	for(i=0; i < numValues;i++){
 		sum += pow(avg - value[i],2);
 	}
-	stdDev = sqrt(sum/(numValues*(numValues-1)));
+	stdDev = sqrt(sum/(float)(numValues*(numValues-1)));
 
 	return stdDev;
 }

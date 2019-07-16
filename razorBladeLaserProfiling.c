@@ -150,8 +150,8 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#NumAouts:\t%d\n",1);
 
-    char* names[]={"PMP","PRB","REF"};
-    int photoDetectors[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
+    char* names[]={"REF","HORIZ","VERT"};
+    int photoDetectors[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
     int numPhotoDetectors = 3;
     int motor = POL_MOTOR;
 

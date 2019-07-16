@@ -48,7 +48,7 @@ int main (int argc, char **argv)
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 	float returnFloat;
-	float current, pressure;
+	float current;
 	long returnCounts;
 	FILE *fp,*dataCollectionFlagFile;
 
@@ -111,21 +111,21 @@ int main (int argc, char **argv)
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
-	getPVCN7500(CN_RESERVE,&returnFloat);
+//getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res:\t%f\n",returnFloat);
-	getSVCN7500(CN_RESERVE,&returnFloat);
+//	getSVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
-	getPVCN7500(CN_TARGET,&returnFloat);
+//	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
-	getSVCN7500(CN_TARGET,&returnFloat);
+	//getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
 
 	int numPhotoDetectors = 3;
-    int photoDetector[] = {PUMP_LASER,PROBE_LASER,REF_LASER};
-    char* names[]={"PMP","PRB","REF"};
+    int photoDetector[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
+	char* names[]={"REF","HORIZ","VERT"};
 
 	// Print the header for the information in the datafile
 	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev");
@@ -146,7 +146,7 @@ int main (int argc, char **argv)
 	for (j=0;j<totalMeasurements;j++){
 		fprintf(fp,"%d\t",j);
 		getUSB1208Counter(dwell*10,&returnCounts);
-		printf("Counts %ld\t",returnCounts);
+		printf("Counts %5.ld\t",returnCounts);
 		totalCounts+=returnCounts;
 
 		current = 0.0;
@@ -175,12 +175,12 @@ int main (int argc, char **argv)
 
 		for(k=0;k<numPhotoDetectors;k++){
 			if(k!=numPhotoDetectors-1){
-				printf("%f\t%f\t",involts[k],stdDev[k]);
-				fprintf(fp,"%f\t%f\t",involts[k],stdDev[k]);
+				printf("%.2f\t%.2f\t",involts[k],stdDev[k]);
+				fprintf(fp,"%.2f\t%.2f\t",involts[k],stdDev[k]);
 			}
 			else{
-				printf("%f\t%f\n",involts[k],stdDev[k]);
-				fprintf(fp,"%f\t%f\n",involts[k],stdDev[k]);
+				printf("%.2f\t%.2f\n",involts[k],stdDev[k]);
+				fprintf(fp,"%.2f\t%.2f\n",involts[k],stdDev[k]);
 			}
 		}
 	}
