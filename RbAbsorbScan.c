@@ -260,7 +260,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set key autotitle columnheader\n");
-		fprintf(gnuplot, "set xlabel 'Voltage (Detuning)'\n");			
+		fprintf(gnuplot, "set xlabel 'Temperature (Detuning)'\n");			
 		fprintf(gnuplot, "set ylabel 'Transmitted Current'\n");			
 		fprintf(gnuplot, "set yrange [-.1:*]\n");			
 		fprintf(gnuplot, "set xrange [*:*]\n");			
