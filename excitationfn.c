@@ -48,7 +48,7 @@ int main (int argc, char **argv)
 	int dwell,magnitude;
 	time_t rawtime;
 	struct tm * timeinfo;
-	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
+	char buffer[BUFSIZE],filePath[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 	FILE *fp,*dataCollectionFlagFile;
 
@@ -111,14 +111,16 @@ int main (int argc, char **argv)
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
-	strftime(fileName,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
-	if (stat(fileName, &st) == -1){
-		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	strftime(filePath,80,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	if (stat(filePath, &st) == -1){
+		mkdir(filePath,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
-	strftime(fileName,80,"/home/pi/RbData/%F/EX%F_%H%M%S",timeinfo);
+    strftime(fileName,80,"EX%F_%H%M%S",timeinfo);
 
 	sprintf(buffer,"%s.dat",fileName);
 	printf("\n%s\n",buffer);
+	sprintf(buffer,"%s/%s.dat",filePath,fileName);
+	sprintf(fileName,"%s/%s",filePath,fileName);
 
 	fp=fopen(buffer,"w");
 	if (!fp) {
@@ -281,7 +283,7 @@ void writeFileHeader(char* fileName, char* comments,
     /** Record System Stats to File **/
     /** Pressure Gauges **/
 	getIonGauge(&returnFloat);
-	printf("IonGauge: %2.2E Torr \n",returnFloat);
+	printf("IonGauge: %2.2E Torr\n",returnFloat);
 	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
 
 	getConvectron(GP_N2_CHAN,&returnFloat);
@@ -295,7 +297,7 @@ void writeFileHeader(char* fileName, char* comments,
     /** Temperature Controllers **/
 	getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res:\t%f\n",returnFloat);
-	printf("T_res:\t%.2f\n",returnFloat);
+	printf("T_res:\t%.2f\t",returnFloat);
 	getSVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
