@@ -35,22 +35,22 @@ Usage:
 #define BUFSIZE 1024
 
 void graphData(char* fileName);
+void collectAndRecordData(char* fileName, int steprange, int stepsize, float bias, float N2Offset, float N2Sweep, float HeOffset, int dwell);
+void writeFileHeader(char* fileName, char* comments, 
+                    float bias, float N2Offset, float N2Sweep, 
+                    int dwell, int magnitude);
 
 int main (int argc, char **argv)
 {
-	int i,stepsize,steprange;
-	int minstepsize,maxstepsize, nSamples;
+    float bias, N2Offset, N2Sweep, HeOffset;
+	int stepsize,steprange, scanrange;
+	int minstepsize,maxstepsize;
 	int dwell,magnitude;
 	time_t rawtime;
 	struct tm * timeinfo;
 	char buffer[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
-	float bias, HeOffset, N2Offset, N2Sweep,primaryEnergy, secondaryEnergy, scanrange;
-	float returnFloat, totalHeOffset;
-	float current, pressure;
-	long returnCounts;
 	FILE *fp,*dataCollectionFlagFile;
-	__u16 value;
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
@@ -126,7 +126,8 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	fprintf(fp,"#Filename:\t%s\n",buffer);
+	fprintf(fp,"#File:\t%s\n",buffer);
+	fprintf(fp,"#Comments:\t%s\n",comments);
 
 	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPCAL);
 
@@ -146,102 +147,17 @@ int main (int argc, char **argv)
 		stepsize=maxstepsize;
 	}
 
-	fprintf(fp,"#V_fil:\t%.2f\n",bias);
-	fprintf(fp,"#V_N2:\t%.2f\n",N2Offset);
-	fprintf(fp,"#V_sw:\t%.2f\n",N2Sweep);
-	fprintf(fp,"#NumberOfSecondsPerCountMeasurement:\t%d\n",dwell);
-	fprintf(fp,"#Comments:\t%s\n",comments);
+	fclose(fp);
 
-	
-	getIonGauge(&returnFloat);
-	printf("IonGauge %2.2E Torr \n",returnFloat);
-	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
+	writeFileHeader(buffer, comments, bias, N2Offset, N2Sweep, dwell, magnitude);
 
-	getConvectron(GP_N2_CHAN,&returnFloat);
-	printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
-
-	getConvectron(GP_HE_CHAN,&returnFloat);
-	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
-
-    /** Temperature Controllers **/
-	getPVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#T_res:\t%f\n",returnFloat);
-	getSVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
-
-	getPVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
-	getSVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
-
-	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
-
-	// Print the header for the information in the datafile
-	fprintf(fp,"Aout\tV_fil\tV_N2\tV_sw\tV_he\te_fil_Eng\te_trg_Eng\tCountRate\tCountRateStDev\tI_f\tI_fStDev\tIonGauge\tIGStdDev\n");
-
-	// Allocate some memory to store measurements for calculating
-	// error bars.
-	nSamples = 16;
-	float* measurement = malloc(nSamples*sizeof(float));
-
-    printf("aout  e_fil_Eng    e_trg_Eng   V_He    Counts   Current\n");
-	for (value=0;value<steprange;value+=stepsize){
-	//for (value=steprange;value>24;value-=stepsize){
-		setUSB1208AnalogOut(HETARGET,value);
-		printf("%04d  ",value);
-		fprintf(fp,"%d\t",value);
-
-		fprintf(fp,"%4.2f\t",bias);
-		fprintf(fp,"%4.2f\t",N2Offset);
-		fprintf(fp,"%4.2f\t",N2Sweep);
-		fprintf(fp,"%4.2f\t",HeOffset - HPCAL*(float)value);
-
-		primaryEnergy = (HeOffset - HPCAL*(float)value) - bias;
-		printf("% 6.1f eV  ",primaryEnergy);
-		fprintf(fp,"%4.4f\t",primaryEnergy);
-
-		secondaryEnergy = (HeOffset - HPCAL*(float)value) - (bias + N2Offset) ;
-		printf("% 6.1f eV  ",secondaryEnergy);
-		fprintf(fp,"%4.4f\t",secondaryEnergy);
-
-        totalHeOffset=HeOffset - HPCAL*(float)value;
-		printf("% 6.1f eV  ",totalHeOffset);
-
-		// delay to allow transients to settle
-		delay(500);
-
-		getUSB1208Counter(dwell*10,&returnCounts);
-		printf("%06ld  ",returnCounts);
-
-		current = 0.0;
-		// grab several readings and average
-		for (i=0;i<nSamples;i++){
-			getUSB1208AnalogIn(K617,&measurement[i]);
-			current+=measurement[i];
-		}
-
-		current=current/(float)nSamples;
-
-		printf("%+01.2e\n",current);
-
-		fprintf(fp,"%ld\t%Lf\t",returnCounts/dwell,sqrtl(returnCounts)/dwell);
-		fprintf(fp,"%e\t%f\t",-current,/*0*/stdDeviation(measurement,nSamples));
-
-		// Grab several readings and average
-		pressure=0;
-        getIonGauge(&pressure);
-		//printf("IG= %2.2E \n",pressure);
-		fprintf(fp,"%2.4E\t%2.4E\n",pressure,0.);
-	}
+    collectAndRecordData(buffer, steprange, stepsize, 
+                        bias, N2Offset, N2Sweep, HeOffset, dwell);
 
 	setUSB1208AnalogOut(HETARGET,0);
 
 	closeUSB1208();
 
-	free(measurement);
-	fclose(fp);
 
 	graphData(fileName);
 
@@ -278,7 +194,7 @@ void graphData(char* fileName){
 		// First print to the terminal screen.
 
 		// Set up the output for printing to terminal
-		fprintf(gnuplot, "set terminal dumb size 60,24\n");
+		fprintf(gnuplot, "set terminal dumb size 54,24\n");
 		fprintf(gnuplot, "set output\n");			
 		fprintf(gnuplot, "set key autotitle columnheader\n");			
 
@@ -340,4 +256,132 @@ void graphData(char* fileName){
 	}
 	pclose(gnuplot);
 
+}
+
+void writeFileHeader(char* fileName, char* comments, 
+                    float bias, float N2Offset, float N2Sweep, 
+                    int dwell, int magnitude){
+    float returnFloat;
+	FILE* fp;
+	fp=fopen(fileName,"a");
+	if (!fp) {
+		printf("unable to open file: %s\n",fileName);
+		exit(1);
+	}
+
+	fprintf(fp,"#Filename:\t%s\n",fileName);
+	fprintf(fp,"#Comments:\t%s\n",comments);
+
+	fprintf(fp,"#V_fil:\t%.2f\n",bias);
+	fprintf(fp,"#V_N2:\t%.2f\n",N2Offset);
+	fprintf(fp,"#V_sw:\t%.2f\n",N2Sweep);
+	fprintf(fp,"#NumberOfSecondsPerCountMeasurement:\t%d\n",dwell);
+	fprintf(fp,"#Comments:\t%s\n",comments);
+
+    /** Record System Stats to File **/
+    /** Pressure Gauges **/
+	getIonGauge(&returnFloat);
+	printf("IonGauge: %2.2E Torr \n",returnFloat);
+	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
+
+	getConvectron(GP_N2_CHAN,&returnFloat);
+	printf("CVGauge(N2): %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
+
+	getConvectron(GP_HE_CHAN,&returnFloat);
+	printf("CVGauge(He): %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
+
+    /** Temperature Controllers **/
+	getPVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#T_res:\t%f\n",returnFloat);
+	printf("T_res:\t%.2f\n",returnFloat);
+	getSVCN7500(CN_RESERVE,&returnFloat);
+	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
+
+	getPVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
+	printf("T_trg:\t%.2f\n",returnFloat);
+	getSVCN7500(CN_TARGET,&returnFloat);
+	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
+
+    /** End System Stats Recording **/
+	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
+
+	// Print the header for the information in the datafile
+	fprintf(fp,"Aout\tV_fil\tV_N2\tV_sw\tV_he\te_fil_Eng\te_trg_Eng\tCountRate\tCountRateStDev\tI_f\tI_fStDev\tIonGauge\tIGStdDev\n");
+
+	fclose(fp);
+}
+
+
+void collectAndRecordData(char* fileName, int steprange, int stepsize, float bias, float N2Offset, float N2Sweep, float HeOffset, int dwell) {
+	float primaryEnergy, secondaryEnergy;
+	float current, pressure;
+	float totalHeOffset;
+	__u16 value;
+	long returnCounts;
+    int nSamples,i;
+	FILE* fp;
+	fp=fopen(fileName,"a");
+	if (!fp) {
+		printf("unable to open file: %s\n",fileName);
+		exit(1);
+	}
+	// Allocate some memory to store measurements for calculating
+	// error bars.
+	nSamples = 16;
+	float* measurement = malloc(nSamples*sizeof(float));
+
+    printf("aout  e_fil_Eng    e_trg_Eng   V_He    Counts   Current\n");
+	for (value=0;value<steprange;value+=stepsize){
+	//for (value=steprange;value>24;value-=stepsize){
+		setUSB1208AnalogOut(HETARGET,value);
+		printf("%04d  ",value);
+		fprintf(fp,"%d\t",value);
+
+		fprintf(fp,"%4.2f\t",bias);
+		fprintf(fp,"%4.2f\t",N2Offset);
+		fprintf(fp,"%4.2f\t",N2Sweep);
+		fprintf(fp,"%4.2f\t",HeOffset - HPCAL*(float)value);
+
+		primaryEnergy = (HeOffset - HPCAL*(float)value) - bias;
+		printf("% 6.1f eV  ",primaryEnergy);
+		fprintf(fp,"%4.4f\t",primaryEnergy);
+
+		secondaryEnergy = (HeOffset - HPCAL*(float)value) - (bias + N2Offset) ;
+		printf("% 6.1f eV  ",secondaryEnergy);
+		fprintf(fp,"%4.4f\t",secondaryEnergy);
+
+        totalHeOffset=HeOffset - HPCAL*(float)value;
+		printf("% 6.1f eV  ",totalHeOffset);
+
+		// delay to allow transients to settle
+		delay(500);
+
+		getUSB1208Counter(dwell*10,&returnCounts);
+		printf("%06ld  ",returnCounts);
+
+		current = 0.0;
+		// grab several readings and average
+		for (i=0;i<nSamples;i++){
+			getUSB1208AnalogIn(K617,&measurement[i]);
+			current+=measurement[i];
+		}
+
+		current=current/(float)nSamples;
+
+		printf("%+01.2e\n",current);
+
+		fprintf(fp,"%ld\t%Lf\t",returnCounts/dwell,sqrtl(returnCounts)/dwell);
+		fprintf(fp,"%e\t%f\t",-current,/*0*/stdDeviation(measurement,nSamples));
+
+		// Grab several readings and average
+		pressure=0;
+        getIonGauge(&pressure);
+		//printf("IG= %2.2E \n",pressure);
+		fprintf(fp,"%2.4E\t%2.4E\n",pressure,0.);
+	}
+	free(measurement);
+	fclose(fp);
 }

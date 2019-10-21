@@ -23,8 +23,8 @@ int initializeSacherTA(void){
 
 	j=strcmp(retData,"O.K.");
 
-	if (j!=0){
-		printf(retData);
+	if (j==0){ // There was an error.
+		printf("Sacher init error\n");
 	}
 //	strcpy(outData,":SYST:ACK 0");
 //	j=strlen(outData);
@@ -53,7 +53,7 @@ int initializeSacher(void){
 
 	writeRS485to232Bridge(outData,retData,HEAD);
 
-	j=strcmp(retData,"O.K.");
+	j=strcmp(retData,"O.K.\n");
 
 	if (j!=0){
 		printf(retData);
@@ -68,12 +68,12 @@ int initializeSacher(void){
 	return j;
 }
 
-int setLaserStatus(unsigned short status){
+int setSacherStatus(unsigned short status){
 	return 0;
 }
 
 
-float getLaserTemperature(void){
+float getSacherTemperature(void){
 
 	char retData[32];
 	char outData[32];
@@ -123,7 +123,7 @@ float getSacherCurrent(void){
 	outData[j]=13;
 	outData[j+1]=0;
 
-	writeRS485to232Bridge(outData,retData,TA);
+	writeRS485to232Bridge(outData,retData,HEAD);
 	temp=atof(retData);
 
 	return temp;
@@ -136,7 +136,7 @@ int setTACurrent(int current){
 
 	j=-1;
 
-	if ((current >= 0) & (current<=2500)){
+	if ((current >= 0) && (current<=2500)){
 		sprintf(retData,"%d",current);
 
 		strcpy(outData,":L:CURR ");
@@ -159,14 +159,16 @@ int setTACurrent(int current){
 	return j;
 }
 
-int setLaserTemperature(float temperature){
+int setSacherTemperature(float temperature){
 	char retData[32];
 	char outData[32];
 	int j;
 
 	j=-1;
 
-	if ((temperature > 27.0) & (temperature<35.0)){
+	//printf("Changing temperature to: %f\n",temperature);
+
+	if ((temperature > 27.0) && (temperature<36.5)){
 		sprintf(retData,"%2.3f",temperature);
 
 		strcpy(outData,":TEC:TEMP ");
@@ -179,7 +181,9 @@ int setLaserTemperature(float temperature){
 
 		j=strcmp(retData,"O.K.");
 
-		if (j!=0) printf(retData);
+		//if (j!=0) printf(retData);
+	}else{
+		printf("Error: temperature outside of usable range\n");
 	}
 
 	return j;
@@ -192,17 +196,20 @@ int setSacherCurrent(float current){
 
 	j=-1;
 
-	if ((current >= 0) & (current<=170)){
-		sprintf(retData,"%d",current);
+	printf("current: %f\n",current);
+	if ((current >= 0) && (current<=170)){
+		sprintf(retData,"%f",current);
+		printf("current string: %s\n",retData);
 
 		strcpy(outData,":L:CURR ");
 		strcat(outData,retData);
 		strcat(outData,"mA");
+		printf("String to send: %s\n",outData);
 		j=strlen(outData);
 		outData[j]=13;
 		outData[j+1]=0;
 
-		writeRS485to232Bridge(outData,retData,TA);
+		writeRS485to232Bridge(outData,retData,HEAD);
 
 		j=strcmp(retData,"O.K.");
 

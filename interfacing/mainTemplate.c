@@ -8,7 +8,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
-#include "interfacing.h"
+#include "sacherLaser.h"
+#include "grandvillePhillips.h"
+#include "kenBoard.h"
+#include "omegaCN7500.h"
+#include "USB1208.h"
 
 #define HOURSINDAY 24
 #define MINUTESINHOUR 60
@@ -36,7 +40,7 @@ int main (int argc, char* argv[]){
 		// variables for recording time
 		time_t currentTime;
 		struct tm * timeinfo;
-		int day,hour,min,sec;
+		int year,month,day,hour,min,sec;
 		int totalMinutes;
 
 
@@ -47,6 +51,10 @@ int main (int argc, char* argv[]){
 		time(&currentTime);
 		timeinfo=localtime(&currentTime);
 
+		strftime(buffer,BUFSIZE,"%y",timeinfo);
+		year=atoi(buffer);
+		strftime(buffer,BUFSIZE,"%m",timeinfo);
+		month=atoi(buffer);
 		strftime(buffer,BUFSIZE,"%d",timeinfo);
 		day=atoi(buffer);
 		strftime(buffer,BUFSIZE,"%H",timeinfo);
@@ -59,13 +67,13 @@ int main (int argc, char* argv[]){
 	    fileExists=access(systemStatsFile,F_OK);
 		fp = fopen(systemStatsFile,"a");
         if(fileExists){
-            fprintf(fp,"Day\tHour\tMinute\tSecond\tTotalMinutes\tTrg. T\tRes. T\tHeCV\tN2CV\tMainChamber\tIonG\tKiethly 617\tCounts\tRefCell\tPRbLaser\tPumpLaser\n");
+            fprintf(fp,"Year\tMonth\tDay\tHour\tMinute\tSecond\tTotalMinutes\tTrg. T\tRes. T\tHeCV\tN2CV\tMainChamber\tIonG\tKiethly 617\tCounts\tRefCell\tPRbLaser\tPumpLaser\n");
         }
 
-		strftime(buffer,BUFSIZE,"%d\t%H\t%M\t%S\t",timeinfo);
+		strftime(buffer,BUFSIZE,"%y\t%m\t%d\t%H\t%M\t%S\t",timeinfo);
 		fprintf(fp,"%s",buffer);
 
-		totalMinutes=day*HOURSINDAY*MINUTESINHOUR+hour*MINUTESINHOUR+min;
+		totalMinutes=(year-14)*525600+(month-1)*31*HOURSINDAY*MINUTESINHOUR+(day-1)*HOURSINDAY*MINUTESINHOUR+hour*MINUTESINHOUR+min;
 		fprintf(fp,"%d\t",totalMinutes);
         //int totalSeconds;
 		//totalSeconds=day*HOURSINDAY*MINUTESINHOUR*SECONDSINMINUTE+hour*MINUTESINHOUR*SECONDSINMINUTE+min*SECONDSINMINUTE+sec;
@@ -79,7 +87,7 @@ int main (int argc, char* argv[]){
 
 		i=getPVCN7500(CN_RESERVE,&myTemp);
         if(i==0)
-            printf("Res. T= %.1f\n",myTemp);
+        printf("Res. T= %.1f\n",myTemp);
 		fprintf(fp,"%.2f\t",myTemp);
 
 		printf("\n\n_____PRESSURE_____\n");
@@ -113,15 +121,15 @@ int main (int argc, char* argv[]){
 		fprintf(fp,"%.2ld\t",returnCounts);
 
 		printf("\n\n_____PHOTODIODES_____\n");
-		getUSB1208AnalogIn(REF_LASER,&myTemp);
+		getUSB1208AnalogIn(BROWN_KEITHLEY,&myTemp);
 		printf("RefCell: %.2f\t",myTemp);
 		fprintf(fp,"%.2f\t",myTemp);
 
-		getUSB1208AnalogIn(PROBE_LASER,&myTemp);
+		getUSB1208AnalogIn(TOP_KEITHLEY,&myTemp);
 		printf("PrbLaser: %.2f\n",myTemp);
 		fprintf(fp,"%.2f\t",myTemp);
 
-		getUSB1208AnalogIn(PUMP_LASER,&myTemp);
+		getUSB1208AnalogIn(BOTTOM_KEITHLEY,&myTemp);
 		printf("PumpLaser: %.2f\n",myTemp);
 		fprintf(fp,"%.2f\n",myTemp);
 

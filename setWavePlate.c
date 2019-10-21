@@ -34,25 +34,27 @@ int main (int argc, char *argv[]) {
 	if (argc ==2) {
 		newpos = atoi(argv[1]);
 	} else {
-		printf("Usage: sudo ./setWavePlate <step location>");
+		printf("Usage: sudo ./setWavePlate <step location>\n");
 		return 1;
 	}
 	setMotor(2,newpos);
 
-    line=getLineNumberForComment(wavePlatePositionFileName,"#PumpQWP");
+    line=getLineNumberForComment(wavePlatePositionFileName,"#PumpQWPAngle(step):");
+    if(line==-1){
+        printf("Error! Not able to find wave Plate position in file\n");
+        return -1;
+    }else{
+        wavePlatePositionFile=fopen(wavePlatePositionFileName,"r+");
+        if(!wavePlatePositionFile){
+            printf("Unable to open wavePlatePositionFile\n");
+            exit(1);
+        }
 
-    wavePlatePositionFile=fopen(wavePlatePositionFileName,"r+");
-    if(!wavePlatePositionFile){
-        printf("Unable to open wavePlatePositionFile\n");
-        exit(1);
+        for(i=0;i<line;i++){
+            fgets(buffer,1024,wavePlatePositionFile);
+        }
+        fprintf(wavePlatePositionFile,"#PumpQWPAngle(step):\t%03d\n",newpos);
+        fclose(wavePlatePositionFile);
+        return 0;
     }
-
-    for(i=0;i<line;i++){
-        fgets(buffer,1024,wavePlatePositionFile);
-    }
-    fprintf(wavePlatePositionFile,"#PumpQWPAngle(step):\t%03d\n",newpos);
-
-    fclose(wavePlatePositionFile);
-
-	return 0;
 }

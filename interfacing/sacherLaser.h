@@ -12,11 +12,13 @@
 #define HEAD 0xC2
 #define TA 0xC6
 
-int initializeSacherLaser(void);
+int initializeSacher(void);
 int initializeSacherTA(void);
-int setLaserStatus(unsigned short status);
-float getLaserTemperature(void);
-int setLaserTemperature(float temperature);
+int setSacherStatus(unsigned short status);
+float getSacherTemperature(void);
+int setSacherTemperature(float temperature);
 int setTACurrent(int current);
 float getTACurrent(void);
+int setSacherCurrent(float current);
+float getSacherCurrent(void);
 // chan is the rs485 channel

@@ -5,7 +5,8 @@ if [ "$#" -ne 1 ]; then
 else
     RBC="/home/pi/RbControl"
 	COMMENTS=$1
-	STARTFREQ=-1.75
+	PROBEFREQ=10
+	STARTFREQ=-3
 	ENDFREQ=3
 	STEPFREQ=.25
 
@@ -19,7 +20,7 @@ else
 		sudo $RBC/setPumpDetuning $detune
 		sleep 1
 
-		sudo $RBC/scripts/RbQuickPolarizationScript.sh -10 "detune=$detune,  $COMMENTS"
+		sudo $RBC/scripts/RbQuickPolarizationScript.sh $PROBEFREQ "probedetune->$PROBEFREQ,pumpdetune->$detune,  $COMMENTS"
 	# detune LOOP DONE
 	done 
 fi

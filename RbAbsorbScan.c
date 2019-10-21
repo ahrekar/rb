@@ -53,10 +53,16 @@ int main (int argc, char **argv)
 		strcpy(comments,argv[4]);
 	} else {
 		printf("Usage:\n");
-		printf("$ sudo ./RbAbsorbScan <begin> <end> <step>  <comments>\n");
-		printf("                      (33.3 - 34.1)                   \n");
+		printf("$ sudo ./RbAbsorbScan <begin> <end>   <step>   <comments>\n");
+		printf("    Suggested values: (33.3)  (34.4)  (.01)           \n");
 		return 0;
 	}
+    
+    // Echo the filename and comments, if the program is being 
+    // run by a script, this information isn't available on the 
+    // screen and it's nice to know.
+	printf("\n%s\n",fileName);
+	printf("\n%s\n",comments);
 
 	// Indicate that data is being collected.
 	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
@@ -87,7 +93,6 @@ int main (int argc, char **argv)
 	}
 	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/RbAbs%F_%H%M%S.dat",timeinfo);
 
-	printf("\n%s\n",fileName);
 
 	writeFileHeader(fileName, comments);
 	fp=fopen(fileName,"a");
@@ -140,9 +145,9 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 
 	//for (value=endvalue;value <= endvalue && value >= startvalue;value-=stepsize){// high to low
 	for (value=startvalue;value < endvalue && value >= startvalue;value+=stepsize){// low to high
-        if(count%15==0) printf("TEMP         Detuning     VERTICAL    |   HORIZONTAL  |   REFERENCE\n");
+        if(count%15==0) printf("TEMP   Det       VERTICAL    |   HORIZONTAL  |   REFERENCE\n");
 		setSacherTemperature(value);
-		printf("%2.3f \t",value);
+		printf("%2.3f\t",value);
 		fprintf(fp,"%f\t",value);
 
 		// delay to allow transients to settle
@@ -151,7 +156,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
                                         // So we no longer need the previous delay statement. 
 		//kensWaveLength = -1;
 		fprintf(fp,"%03.4f\t",kensWaveLength);
-		printf("%03.1f\t",kensWaveLength);
+		printf("%+03.1f\t",kensWaveLength);
 		for(k=0;k<NUMCHANNELS;k++){
 			involts[k]=0.0;	
 		}
@@ -165,6 +170,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 //				involts[k-1]=involts[k-1]+measurement[i];
 //				delay(10);
 //			}
+
 			// When measuring using the ammeter, use this piece of code.
 			for (i=0;i<nSamples;i++){
 				getUSB1208AnalogIn(k,&measurement[i]);
@@ -172,17 +178,20 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 				delay(10);
 			}
 			involts[k-1]=fabs(involts[k-1])/(float)nSamples;
-			fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
+			fprintf(fp,"%0.4f\t%0.4f",involts[k-1],stdDeviation(measurement,nSamples));
 			printf("  %0.2f %0.2f  ",involts[k-1],stdDeviation(measurement,nSamples));
-            if(k<NUMCHANNELS) printf(" | ");
-		}
+            if(k<NUMCHANNELS){
+                printf("|");
+			    fprintf(fp,"\t");
+            };
+	      }
 		for (i=0;i<nSamples;i++){
 			getUSB1208AnalogIn(k,&measurement[i]);
 			involts[k-1]=involts[k-1]+measurement[i];
 			delay(10);
 		}
         involts[k-1]=fabs(involts[k-1])/(float)nSamples;
-        fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
+        fprintf(fp,"%0.4f\t%0.4f",involts[k-1],stdDeviation(measurement,nSamples));
         printf("  %0.2f %0.2f  ",involts[k-1],stdDeviation(measurement,nSamples));
 
 		fprintf(fp,"\n");
@@ -210,26 +219,28 @@ void writeFileHeader(char* fileName, char* comments){
     /** Record System Stats to File **/
     /** Pressure Gauges **/
 	getIonGauge(&returnFloat);
-	printf("IonGauge %2.2E Torr \n",returnFloat);
+	printf("IonGauge: %2.2E Torr \n",returnFloat);
 	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
 
 	getConvectron(GP_N2_CHAN,&returnFloat);
-	printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
+	printf("CVGauge(N2): %2.2E Torr\n", returnFloat);
 	fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
 
 	getConvectron(GP_HE_CHAN,&returnFloat);
-	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
+	printf("CVGauge(He): %2.2E Torr\n", returnFloat);
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
-	//getPVCN7500(CN_RESERVE,&returnFloat);
+	getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res:\t%f\n",returnFloat);
-	//getSVCN7500(CN_RESERVE,&returnFloat);
+	printf("T_res:\t%.2f\n",returnFloat);
+	getSVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
-	//getPVCN7500(CN_TARGET,&returnFloat);
+	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
-	//getSVCN7500(CN_TARGET,&returnFloat);
+	printf("T_trg:\t%.2f\n",returnFloat);
+	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
     /** End System Stats Recording **/
@@ -253,7 +264,7 @@ void graphData(char* fileName){
 	strcpy(extension,"");
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 60,24\n");
+		fprintf(gnuplot, "set terminal dumb size 54,14\n");
 		fprintf(gnuplot, "set output\n");			
 		
 		sprintf(buffer, "set title '%s'\n", fileName);

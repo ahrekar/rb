@@ -31,5 +31,7 @@ else
 	DATE=$(date +%Y-%m-%d)
 	IPADDRESS=$(sudo hostname -I)
 
-	echo "Auto Pic Send to Email" | mutt -s "RbPi ($IPADDRESS) Autopic" -a $(ls /home/pi/RbPictures/${DATE}* | tail -n 1) -- karl@huskers.unl.edu
+
+	#echo "Auto Pic Send to Email" | mutt -s "RbPi ($IPADDRESS) Autopic" -a $(ls /home/pi/RbPictures/${DATE}* | tail -n 1) -- karl@huskers.unl.edu
+	rclone copy $(ls /home/pi/RbPictures/${DATE}* | tail -n 1) box:RbPics/$DATE/
 fi

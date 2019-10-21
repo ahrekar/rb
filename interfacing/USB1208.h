@@ -12,9 +12,9 @@
 #include "usb-1208LS.h"
 
 #define K617 0
-#define PUMP_LASER 1
-#define PROBE_LASER 2
-#define REF_LASER 3
+#define BOTTOM_KEITHLEY 1
+#define BROWN_KEITHLEY 2
+#define TOP_KEITHLEY 3
  
 #define HETARGET 0
 #define HPCAL 0.06214

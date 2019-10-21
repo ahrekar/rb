@@ -25,13 +25,12 @@ int setProbeDetuning(float desiredDetuning){
 
 	initializeSacher();
 	adjustSetting=getSacherTemperature();
-	printf("Sacher Temperature: %d\n",adjustSetting);
 	
 	getProbeFrequency(&wavemeterReturn);
 	returnedDetuning=wavemeterReturn-LINECENTER;
 
-	printf("The probe laser is at: %6.2f (delta=%2.2f GHz)\n",wavemeterReturn,wavemeterReturn-LINECENTER);
-	printf("Please wait while laser tunes to: %6.2f (delta=%2.2f)\n",desiredDetuning+LINECENTER,desiredDetuning);
+	printf("PrL @ d=%+2.1f",wavemeterReturn-LINECENTER);
+	printf(" -> d=%+2.1f ",desiredDetuning);
 	attempts=0;
 	while(correctlyDetuned==1 && attempts<maxAttempts ){
 		attempts++; 
@@ -56,20 +55,19 @@ int setProbeDetuning(float desiredDetuning){
 			//printf("The piezo is correctly tuned at %f3.1V\n",adjustSetting);
 			correctlyDetuned=0;
 		}else if(desiredDetuning<returnedDetuning){//Increase the detuning.
-			printf("**%2.1f GHz**",returnedDetuning);
-			printf(":%2.3fV -> %2.3fV  ",adjustSetting,adjustSetting+deltaDetuning);
+			//printf("**%2.1f GHz**",returnedDetuning);
+			//printf(":%2.3fV -> %2.3fV  ",adjustSetting,adjustSetting+deltaDetuning);
 			setSacherTemperature(adjustSetting+deltaDetuning>maxAdjust?maxAdjust:adjustSetting+deltaDetuning);
 			printf(".");
 		}
 		else{//Decrease the detuning
-			printf("**%2.1f GHz**",returnedDetuning);
-			printf(":%2.3fV -> %2.3fV",adjustSetting,adjustSetting-deltaDetuning);
+			//printf("**%2.1f GHz**",returnedDetuning);
+			//printf(":%2.3fV -> %2.3fV",adjustSetting,adjustSetting-deltaDetuning);
 			setSacherTemperature(adjustSetting-deltaDetuning<minAdjust?minAdjust:adjustSetting-deltaDetuning);
 			printf(".");
 		}
 		fflush(stdout);
 	}
 	
-	printf("\n");
 	return 0;
 }

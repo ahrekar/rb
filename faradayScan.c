@@ -28,6 +28,7 @@
 #include <wiringPi.h>
 #include "mathTools.h" //includes stdDeviation
 #include "interfacing/interfacing.h"
+#include "interfacing/sacherLaser.h"
 #include "faradayScanAnalysisTools.h"
 #include "interfacing/waveMeter.h"
 #include "probeLaserControl.h"
@@ -126,14 +127,14 @@ int main (int argc, char **argv)
 	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
-	//getPVCN7500(CN_RESERVE,&returnFloat);
+	getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res:\t%.2f\n",returnFloat);
-	//getSVCN7500(CN_RESERVE,&returnFloat);
+	getSVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(fp,"#T_res_set:\t%.2f\n",returnFloat);
 
-	//getPVCN7500(CN_TARGET,&returnFloat);
+	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg:\t%.2f\n",returnFloat);
-	//getSVCN7500(CN_TARGET,&returnFloat);
+	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg_set:\t%.2f\n",returnFloat);
 
     /** End System Stats Recording **/
@@ -152,25 +153,41 @@ int main (int argc, char **argv)
 	float scanDet[]={-33,-30,-19,-18,-9,-5,-4.5,-4,-3.5,6,6.5,7,7.5,11,20,21,30,33};
     */
 
+/*    
+	int numDet=12,j;
+	float scanDet[]={-45,-30,-15,-10,-5,-4,4,5,10,15,30,45};
+    */
+   
+    /*
 	int numDet=10,j;
 	float scanDet[]={-29,-26,-19,-18,-9,11,20,21,30,33};
+    */
+
+    
+	int numDet=4,j;
+	float scanDet[]={-29,-16,16,33};
+    
+   
 
 	fprintf(fp,"#Revolutions:\t%d\n",revolutions);
 	fprintf(fp,"#DataPointsPerRev:\t%f\n",DATAPTSPERREV);
 	fprintf(fp,"#NumVolts:\t%d\n",numDet);
 	fprintf(fp,"#StepSize:\t%d\n",STEPSIZE);
 
-	// Write the header for the data to the file.
-	fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\tREF\tREFsd\n");
-    fclose(fp);
 
 	printf("Homing motor...\n");
 	homeMotor(PROBE_MOTOR);
 
-    int numPd=3;
-    int pd[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
-    //int numPd=2;
-    //int pd[] = {BOTLOCKIN,TOPLOCKIN};
+    //int numPd=3;
+    //int pd[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
+	// Write the header for the data to the file.
+	//fprintf(fp,"STEP\tPRB\tPRBsd\tPUMP\tPUMPsd\tREF\tREFsd\n");
+    int numPd=1;
+    int pd[] = {BOTLOCKIN};
+	// Write the header for the data to the file.
+	fprintf(fp,"STEP\tPUMP\tPUMPsd\n");
+
+    fclose(fp);
 
 	fp=fopen(fileName,"a");
 
@@ -180,14 +197,14 @@ int main (int argc, char **argv)
 
 	for(j=0;j<numDet;j++){
 		setProbeDetuning(scanDet[j]);
-		getVortexPiezo(&value);
+		value=getSacherTemperature();
 		delay(1000); 
 
 	    getProbeFrequency(&wavelength);
 	   // wavelength=-1;
 
         fprintf(fp,"\n\n#VOLT:%3.1f(%.2f)\n",value,wavelength);
-        printf("VOLT:%3.1f(%.2f)\t",value,wavelength);
+        printf("TEMP:%3.1f(%.2f) ",value,wavelength-LINECENTER);
         fflush(stdout);
 
         quickHomeMotor(PROBE_MOTOR);
@@ -235,8 +252,16 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     for (k=0;k<revolutions;k++){ //revolutions
         for (steps=0;steps < NUMSTEPS;steps+=STEPSIZE){ // steps
             // (NUMSTEPS) in increments of STEPSIZE
-            delay(150); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP
+            /* watching the o-scope, we find
+             * that:
+             *   L-IN RELAX     Sig. Settle time.
+             *      30 ms    -> 300 ms
+             *     100 ms    -> 500 ms
+             */
+            delay(500); 
+
             //get samples and average
+            // When measuring using the lock-in, use this piece of code.
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
                 for (i=0;i<nSamples;i++){ // nSamples
@@ -248,6 +273,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 stdDev[j]=stdDeviation(measurement,nSamples);
             } // numPhotoDet1
      
+			// When measuring using the ammeter, use this piece of code.
      //    for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
      //        involts[j]=0.0;	
      //        for (i=0;i<nSamples;i++){ // nSamples

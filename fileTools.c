@@ -112,7 +112,8 @@ int getLineNumberForComment(char* inputFile, char* commentDescText){
 	do{
         i++;
 		fgets(buffer,1024,data);
-	} while(strncmp(buffer,commentDescText,strlen(commentDescText)));
+	} while(strncmp(buffer,commentDescText,strlen(commentDescText)) && i <25);
+    if(i==25)i=-1;
 
     fclose(data);
 

@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-O3 -g -Wall -I. -lm
 PIFLAGS= -l wiringPi -l mccusb -L. -L/usr/local/lib -lhidapi-libusb -lusb-1.0
 
-SOURCES=mainTemplate.c getWavelength.c getAnalogIn.c setMirror.c setBKvolts.c setBKamps.c testLasers.c TestLaser.c controlledCooldown.c testKenBoard.c monitorTemperature.c
+SOURCES=mainTemplate.c getWavelength.c getAnalogIn.c setMirror.c setBKvolts.c setBKamps.c testLasers.c TestLaser.c controlledCooldown.c testKenBoard.c monitorTemperature.c recordSystemData.c
 
 OBJECTS=$(SOURCES:.c=.o)
 BINARIES=${subst .c,,${SOURCES}}
@@ -14,6 +14,9 @@ all: ${BINARIES}
 
 mainTemplate: mainTemplate.o grandvillePhillips.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o RS485Devices.o
 	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o RS485Devices.o mainTemplate.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o mainTemplate
+
+recordSystemData: recordSystemData.o grandvillePhillips.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o RS485Devices.o
+	$(CC) $(CFLAGS) $(PIFLAGS) grandvillePhillips.o RS485Devices.o mainTemplate.o BK1696.o omegaCN7500.o kenBoard.o USB1208.o -o recordSystemData
 	
 monitorTemperature: monitorTemperature.o omegaCN7500.o kenBoard.o USB1208.o RS485Devices.o
 	$(CC) $(CFLAGS) $(PIFLAGS) RS485Devices.o monitorTemperature.o omegaCN7500.o kenBoard.o USB1208.o -o monitorTemperature

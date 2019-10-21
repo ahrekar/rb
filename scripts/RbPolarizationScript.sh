@@ -37,5 +37,10 @@ else
 	echo "Faraday Scan: S- pump..."
     $RBC/faradayScan "$COMMENTS, S- pump"
 
+	echo "Blocking both beams..."
+	$RBC/setLaserFlag $PUMP $BLOCKED
+	$RBC/setLaserFlag $PROBE $BLOCKED
+
+	$RBC/scripts/takePictureAndSendToEmail.sh "AutoPic"
 	echo "Finished RbScan: $COMMENTS" | mutt -s "RbControl Status Update" -- karl.ahrendsen@gmail.com
 fi

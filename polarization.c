@@ -124,6 +124,7 @@ int main (int argc, char **argv)
 
 	fprintf(rawData,"#File\t%s\n",rawDataFileName);
 	fprintf(rawData,"#Comments\t%s\n",comments);
+	printf("File:\t%s\n",rawDataFileName);
 	printf("Comments:\t%s\n",comments);
 
 	getIonGauge(&returnFloat);
@@ -140,13 +141,13 @@ int main (int argc, char **argv)
 
 
     returnFloat=-1.0;
-	//getPVCN7500(CN_RESERVE,&returnFloat);
+	getPVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(rawData,"#T_res:\t%f\n",returnFloat);
-	//getSVCN7500(CN_RESERVE,&returnFloat);
+	getSVCN7500(CN_RESERVE,&returnFloat);
 	fprintf(rawData,"#T_res_set:\t%f\n",returnFloat);
-	//getPVCN7500(CN_TARGET,&returnFloat);
+	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(rawData,"#T_trg:\t%f\n",returnFloat);
-	//getSVCN7500(CN_TARGET,&returnFloat);
+	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(rawData,"#T_trg_set:\t%f\n",returnFloat);
 
 	fprintf(rawData,"#V_he:\t%d\n",VHe);
@@ -272,7 +273,7 @@ void plotData(char* fileName){
 	strcpy(extension,"");
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 100,32\n");
+		fprintf(gnuplot, "set terminal dumb size 54,24\n");
 		fprintf(gnuplot, "set output\n");			
 		sprintf(buffer, "set title '%s'\n", fileNameBase);
 		fprintf(gnuplot, buffer);

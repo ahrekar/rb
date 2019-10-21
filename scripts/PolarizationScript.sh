@@ -3,6 +3,7 @@
 #
 
 if [ "$#" -ne 8 ]; then 
+	echo "You provided $# arguments"
 	echo "usage: 
 	sudo ./PolarizationScript.sh <1. filament bias> <2. n2 offset> <3. n2 Sweep> <4. he offset> <5. currentScale> <6. dwell time> <7. # Polarization Runs> <8. comments>
 
@@ -19,53 +20,44 @@ else
 	DWELL=$6
 	NUMRUN=$7
 	COMMENTS=$8
-	AOUTS="528 672"
-
-	RBSCANLOW=35
-	RBSCANHIGH=70
-	RBSCANSTEP=.4
+	AOUTS="408 0"
 
     PUMP=1
     PROBE=0
 
     BLOCKED=1
     UNBLOCKED=0
-
-	echo "Unblocking pump laser..."
-	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, prelude" 
-
-	echo "Blocking probe laser..."
-	sudo $RBC/setLaserFlag $PROBE $BLOCKED
-
-	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, prelude"
-
-	echo "Unblocking pump beam..."
-	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	sudo $RBC/scripts/takePictureAndSendToEmail.sh "Prelude"
-	echo "About to start next set of polarization runs. Pausing for 5 seconds to give the opportunity to cancel the run."
-	sleep 5
+	source $RBC/scripts/LoadWaveplatePositions.sh
 
 	for i in $(seq 1 $NUMRUN); do 
-		sudo $RBC/setPumpDetuning 2.75
 		echo "About to start next energy polarization run ($i/$NUMRUN). Pausing for 5 seconds to give the opportunity to cancel the run."
 		sleep 5
-		sudo $RBC/scripts/ElectronPolarizationScript.sh "$AOUT" $DWELL $CURRENTSCALE "Run $i/$NUMRUN, AOUT=$AOUT, $COMMENTS"
-	# EXACT REPEAT DONE
+		sudo $RBC/scripts/ElectronPolarizationScript.sh "$AOUTS" $DWELL $CURRENTSCALE "Run $i/$NUMRUN, $COMMENTS"
+
+		echo "Unblocking pump laser..."
+		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+		sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, postscript" 
+		echo "RAN RB POLARIZATION SCRIPT"
+
+		echo "Blocking probe laser..."
+		sudo $RBC/setLaserFlag $PROBE $BLOCKED
+		echo "blocking pump laser..."
+		sudo $RBC/setLaserFlag $PUMP $BLOCKED
+		sleep 10
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript, laser Off"
+
+		sudo $RBC/setWavePlate "$SPLUSPOS"
+		echo "Unblocking pump laser..."
+		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+		sleep 10
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript, laser On"
+
+		echo "Blocking lasers..."
+		sudo $RBC/setLaserFlag $PUMP $BLOCKED
+		sudo $RBC/setLaserFlag $PROBE $BLOCKED
+		# EXACT REPEAT DONE
 	done
 
-	echo "Unblocking pump laser..."
-	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, postscript" 
-
-	echo "Blocking probe laser..."
-	sudo $RBC/setLaserFlag $PROBE $BLOCKED
-
-	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript"
-
-	echo "Unblocking lasers..."
-	sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-	sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 
 	echo "Completed set of repeat polarization runs, $COMMENTS" | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

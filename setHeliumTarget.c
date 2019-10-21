@@ -40,7 +40,7 @@ int main (int argc, char *argv[])
 
 	if (value<0) value=0;
 
-	if (value>120) value=120;
+	if (value>1023) value=1023;
 
 	initializeBoard();
 	initializeUSB1208();

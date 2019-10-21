@@ -72,8 +72,8 @@ int setPumpDetuning(int laserSock, float desiredDetuning){
 	getPumpFrequency(&wavemeterReturn);
 	returnedDetuning=wavemeterReturn-LINECENTER;
 
-	printf("The pump laser is at: %6.2f (delta=%2.2f GHz)\n",wavemeterReturn,wavemeterReturn-LINECENTER);
-	printf("Please wait while laser tunes to: %6.2f (delta=%2.2f)\n",desiredDetuning+LINECENTER,desiredDetuning);
+	printf("PuL @ d=%2.2f",wavemeterReturn-LINECENTER);
+	printf("-> d=%2.2f",desiredDetuning);
 	while(correctlyDetuned==1){
 		getPumpFrequency(&wavemeterReturn);
 		returnedDetuning=wavemeterReturn-LINECENTER;
@@ -118,6 +118,5 @@ int setPumpDetuning(int laserSock, float desiredDetuning){
 		//printf("Made it to the end of the loop\n");
 		fflush(stdout);
 	}
-	printf("\n");
 	return 0;
 }

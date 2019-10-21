@@ -147,13 +147,14 @@ int main (int argc, char **argv)
     fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFrequency(&returnFloat));
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
-    //int numPhotoDetectors = 2;
-    //int photoDetectors[] = {BOTLOCKIN,TOPLOCKIN};
-    //char* names[]={"HORIZ","VERT"};
+    int numPhotoDetectors = 2;
+    int photoDetectors[] = {BOTLOCKIN,TOPLOCKIN};
+    char* names[]={"HORIZ","VERT"};
     // UNCOMMENT THE FOLLOWING LINES WHEN USING THE FLOATING PD
-    int numPhotoDetectors = 3;
-    int photoDetectors[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
-    char* names[]={"REF","HORIZ","VERT"};
+    //int numPhotoDetectors = 3;
+    //int photoDetectors[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
+    //char* names[]={"REF","HORIZ","VERT"};
+
     int motor = PROBE_MOTOR;
     //int motor = PUMP_MOTOR;
 
@@ -174,7 +175,7 @@ int main (int argc, char **argv)
 
     //printf("Processing Data...\n");
 
-    //plotRawData(fileName);
+    plotRawData(fileName);
 
     //analyzeData(fileName, 1, revolutions, dataPointsPerRevolution, FOI);
 
@@ -206,32 +207,32 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     for (k=0;k<revolutions;k++){ //revolutions
         for (steps=0;steps < STEPSPERREV;steps+=(int)STEPSIZE){ // steps
             // (STEPSPERREV) in increments of STEPSIZE
-            delay(300); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP. 
+            delay(600); // watching the o-scope, it looks like it takes ~100ms for the ammeter to settle after a change in LP. 
             // UPDATE: With the Lock-in at a time scale of 100 ms, it takes 500 ms to settle. 
             // UPDATE: With time scale of 30 ms, takes 300 ms to settle.
 
             //get samples and average
-           // for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
-           //     involts[j]=0.0;	
-           //     for (i=0;i<nSamples;i++){ // nSamples
-           //             getMCPAnalogIn(photoDetector[j],&measurement[i]);
-           //             involts[j]=involts[j]+fabs(measurement[i]);
-           //             delay(WAITTIME);
-           //     } // nSamples
-           //     involts[j]=involts[j]/(float)nSamples; 
-           //     stdDev[j]=stdDeviation(measurement,nSamples);
-           // } // numPhotoDet1
-
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
                 for (i=0;i<nSamples;i++){ // nSamples
-                        getUSB1208AnalogIn(j,&measurement[i]);
+                        getMCPAnalogIn(photoDetector[j],&measurement[i]);
                         involts[j]=involts[j]+fabs(measurement[i]);
                         delay(WAITTIME);
                 } // nSamples
                 involts[j]=involts[j]/(float)nSamples; 
                 stdDev[j]=stdDeviation(measurement,nSamples);
             } // numPhotoDet1
+
+            //for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
+            //    involts[j]=0.0;	
+            //    for (i=0;i<nSamples;i++){ // nSamples
+            //            getUSB1208AnalogIn(j,&measurement[i]);
+            //            involts[j]=involts[j]+fabs(measurement[i]);
+            //            delay(WAITTIME);
+            //    } // nSamples
+            //    involts[j]=involts[j]/(float)nSamples; 
+            //    stdDev[j]=stdDeviation(measurement,nSamples);
+            //} // numPhotoDet1
 
             fprintf(fp,"%d\t",steps+(int)STEPSPERREV*k);
             for(j=0;j<numPhotoDetectors;j++){

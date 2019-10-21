@@ -4,15 +4,15 @@ if [ "$#" -ne 1 ]; then
 	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
-	FILBIAS="-129.4"
-	N2OFFSET="60.0"
-	N2SWEEP="20.9"
-	HEOFFSET=-20
+	FILBIAS="-160.2"
+	N2OFFSET="100"
+	N2SWEEP="1.4"
+	HEOFFSET=0
 	CURRENTSCALE=6
 	SCANRANGE=63
-	STEPSIZE=16
+	STEPSIZE=24
 	DWELL=1
-	NUMRUN=7
+	NUMRUN=1
 	COMMENTS=$1
 
     PUMP=1
@@ -21,11 +21,11 @@ else
     BLOCKED=1
     UNBLOCKED=0
 
-	for power in 3500 2500 1500 1250; do 
+	for power in 1800 2300 2800 3300 3800; do 
 		echo "About to change current to $power, giving 1 minutes opportunity to cancel" 
-		echo "About to change current to $power, giving 1 minute to cancel." | mutt -s "RbPi Report" karl@huskers.unl.edu
-		sleep 60
-		#sleep 3
+		#echo "About to change current to $power, giving 1 minute to cancel." | mutt -s "RbPi Report" karl@huskers.unl.edu
+		#sleep 60
+		sleep 3
 
 		sudo $RBC/setTACurrent $power
 		echo "Giving 30 s for the laser to settle"
@@ -36,4 +36,5 @@ else
 	# power LOOP DONE
 	done 
 	echo "Finished with pump power scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu
+	sudo $RBC/setTACurrent 1800
 fi

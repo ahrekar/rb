@@ -16,15 +16,13 @@ else
     DWELL=$2
 	AMMETERSCALE=$3
     COMMENTS=$4
-	DETUNING=2.75
 	LEAKCURRENT=0
 
 	source LoadWaveplatePositions.sh
 
-	NUMRUN=10
+	NUMRUN=5
 
 	for i in $( seq 1 $NUMRUN ); do 
-		sudo $RBC/setPumpDetuning 2.75
 		echo "About to start next sequence of runs..."
 		sleep 5
 		for a in $AOUT; do 
@@ -35,21 +33,25 @@ else
 			sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
 			echo "No pump..."
+			sleep 30
 			sudo $RBC/polarization "$a" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->none, Run $i/$NUMRUN"
 
 			echo "Unblocking pump beam..."
 			sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 
-		##	echo "Setting pump to Pi..."
-		##	sudo $RBC/setWavePlate $PIPOS
-		##	sudo $RBC/polarization "$AOUT" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT=$AOUT, pump=pi"
+			#echo "Setting pump to Pi..."
+			#sudo $RBC/setWavePlate $PIPOS
+			#sleep 10
+			#sudo $RBC/polarization "$a" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->pi"
 
 			echo "Setting pump to S+..."
 			sudo $RBC/setWavePlate $SPLUSPOS
+			sleep 10
 			sudo $RBC/polarization "$a" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->s+, Run $i/$NUMRUN"
 
 			echo "Setting pump to S-..."
 			sudo $RBC/setWavePlate $SMINUSPOS
+			sleep 10
 			sudo $RBC/polarization "$a" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->s-, Run $i/$NUMRUN"
 
 			echo "Unblocking probe beam..."
