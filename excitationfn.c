@@ -31,19 +31,20 @@ Usage:
 #include <asm/types.h>
 #include <wiringPi.h>
 #include "interfacing/interfacing.h"
+#include "interfacing/Sorensen120.h"
 #include "mathTools.h"
 #define BUFSIZE 1024
 
 void graphData(char* fileName);
-void collectAndRecordData(char* fileName, int steprange, int stepsize, float bias, float N2Offset, float N2Sweep, float HeOffset, int dwell);
+void collectAndRecordData(char* fileName, int steprange, int stepsize, float bias, float N2Offset, float oneD, float twoA, float startValue, int dwell);
 void writeFileHeader(char* fileName, char* comments, 
-                    float bias, float N2Offset, float N2Sweep, 
+                    float bias, float oneD, float twoA, float N2Sweep, 
                     int dwell, int magnitude);
 
 int main (int argc, char **argv)
 {
-    float bias, N2Offset, N2Sweep, HeOffset;
-	int stepsize,steprange, scanrange;
+    float bias, N2Offset, oneD, twoA, startValue;
+	int stepsize, scanrange;
 	int minstepsize,maxstepsize;
 	int dwell,magnitude;
 	time_t rawtime;
@@ -54,17 +55,18 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
-    int expectedArguments=10;
+    int expectedArguments=11;
 	if (argc == expectedArguments){
 		bias = atof(argv[1]);
 		N2Offset = atof(argv[2]);
-        N2Sweep = atof(argv[3]);
-		HeOffset = atof(argv[4]);
-		scanrange =atof(argv[5]);
-		stepsize = atoi(argv[6]);
-		dwell= atoi(argv[7]);
-		magnitude= atoi(argv[8]);
-		strcpy(comments,argv[9]);
+        oneD = atof(argv[3]);
+        twoA = atof(argv[4]);
+		startValue = atof(argv[5]);
+		scanrange =atoi(argv[6]);
+		stepsize = atoi(argv[7]);
+		dwell= atoi(argv[8]);
+		magnitude= atoi(argv[9]);
+		strcpy(comments,argv[10]);
 	} else{
 		printf("Hey, you made an error in\n");
         printf("your input, please examine\n");
@@ -75,7 +77,8 @@ int main (int argc, char **argv)
 		printf("Usage:\n");
 		printf("  sudo ./excitationfn <filament bias> (remember neg.)\n");
         printf("                      <N2 Offset>\n");
-        printf("                      <N2 Sweep>\n");
+        printf("                      <V 1D>\n");
+        printf("                      <V 2A>\n");
         printf("                      <He Offset> (remember neg.!)\n");
         printf("                      <scan range> ( 0-63 )\n");
         printf("                      <step size> ( 1-24 )\n");
@@ -120,7 +123,6 @@ int main (int argc, char **argv)
 	sprintf(buffer,"%s.dat",fileName);
 	printf("\n%s\n",buffer);
 	sprintf(buffer,"%s/%s.dat",filePath,fileName);
-	sprintf(fileName,"%s/%s",filePath,fileName);
 
 	fp=fopen(buffer,"w");
 	if (!fp) {
@@ -133,10 +135,6 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPCAL);
 
-	steprange = 1+(int)(scanrange/(HPCAL));
-    printf("Step range:%d\n",steprange);
-	if (steprange>1023) steprange = 1023;
-	if (steprange < 8 ) steprange = 8;
 
 	minstepsize=1;
 	maxstepsize=24;
@@ -151,17 +149,18 @@ int main (int argc, char **argv)
 
 	fclose(fp);
 
-	writeFileHeader(buffer, comments, bias, N2Offset, N2Sweep, dwell, magnitude);
+	writeFileHeader(buffer, comments, bias, N2Offset, oneD, twoA, dwell, magnitude);
 
-    collectAndRecordData(buffer, steprange, stepsize, 
-                        bias, N2Offset, N2Sweep, HeOffset, dwell);
+    collectAndRecordData(buffer, scanrange, stepsize, 
+                        bias, N2Offset, oneD, twoA, startValue, dwell);
 
 	setUSB1208AnalogOut(HETARGET,0);
 
 	closeUSB1208();
 
 
-	graphData(fileName);
+	sprintf(buffer,"%s/%s",filePath,fileName);
+	graphData(buffer);
 
 	fclose(dataCollectionFlagFile);
 	remove(dataCollectionFileName);
@@ -174,6 +173,7 @@ void graphData(char* fileName){
 	// how this process works.
 	FILE *gnuplot;
 	char buffer[BUFSIZE];
+    int heColumn=6;
 	gnuplot = popen("gnuplot","w"); 
     /* 
      * Here's the Column order:
@@ -208,7 +208,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 5:abs(8):9 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using %d:abs(9):10 with yerrorbars\n", fileName,heColumn);
 		fprintf(gnuplot, "%s", buffer);
 
 		// Set up the axis for the second plot x axis stays the same
@@ -218,7 +218,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 
 		// Print the plot to the screen
-		sprintf(buffer, "plot '%s.dat' using 5:abs(10):11 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using %d:abs(11):12 with yerrorbars\n", fileName,heColumn);
 		fprintf(gnuplot, "%s",buffer);
 		// End printing to screen
 
@@ -240,7 +240,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set yrange [0:*]\n");			
 		fprintf(gnuplot, "set ylabel 'Counts'\n");			
 		// Print the plot
-		sprintf(buffer, "plot '%s.dat' using 5:abs(8):9 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using %d:abs(9):10 with yerrorbars\n", fileName, heColumn);
 		fprintf(gnuplot, "%s",buffer);
 		fprintf(gnuplot, "unset output\n"); 
 
@@ -253,7 +253,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set ylabel 'Current'\n");			
 		// Print the plot
 		//fprintf(fp,"Aout\tbias\tN2Offset\tTotalHeOffset\tPrimaryElectronEnergy\tSecondaryElectronEnergy\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\n");
-		sprintf(buffer, "plot '%s.dat' using 5:abs(10):11 with yerrorbars\n", fileName);
+		sprintf(buffer, "plot '%s.dat' using %d:abs(11):12 with yerrorbars\n", fileName, heColumn);
 		fprintf(gnuplot, "%s",buffer);
 	}
 	pclose(gnuplot);
@@ -261,7 +261,7 @@ void graphData(char* fileName){
 }
 
 void writeFileHeader(char* fileName, char* comments, 
-                    float bias, float N2Offset, float N2Sweep, 
+                    float bias, float oneD, float twoA, float N2Sweep, 
                     int dwell, int magnitude){
     float returnFloat;
 	FILE* fp;
@@ -271,12 +271,12 @@ void writeFileHeader(char* fileName, char* comments,
 		exit(1);
 	}
 
-	fprintf(fp,"#Filename:\t%s\n",fileName);
+	fprintf(fp,"#File:\t%s\n",fileName);
 	fprintf(fp,"#Comments:\t%s\n",comments);
 
 	fprintf(fp,"#V_fil:\t%.2f\n",bias);
-	fprintf(fp,"#V_N2:\t%.2f\n",N2Offset);
-	fprintf(fp,"#V_sw:\t%.2f\n",N2Sweep);
+	fprintf(fp,"#V_1D:\t%.2f\n",oneD);
+	fprintf(fp,"#V_2A:\t%.2f\n",twoA);
 	fprintf(fp,"#NumberOfSecondsPerCountMeasurement:\t%d\n",dwell);
 	fprintf(fp,"#Comments:\t%s\n",comments);
 
@@ -311,20 +311,44 @@ void writeFileHeader(char* fileName, char* comments,
 	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Aout\tV_fil\tV_N2\tV_sw\tV_he\te_fil_Eng\te_trg_Eng\tCountRate\tCountRateStDev\tI_f\tI_fStDev\tIonGauge\tIGStdDev\n");
+	fprintf(fp,"Aout\tV_fil\tV_N2\tV_1D\tV_2A\tV_he\te_fil_Eng\te_trg_Eng\tCountRate\tCountRateStDev\tI_f\tI_fStDev\tIonGauge\tIGStdDev\n");
 
 	fclose(fp);
 }
 
 
-void collectAndRecordData(char* fileName, int steprange, int stepsize, float bias, float N2Offset, float N2Sweep, float HeOffset, int dwell) {
+void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bias, float N2Offset, float oneD, float twoA, float startValue, int dwell) {
 	float primaryEnergy, secondaryEnergy;
 	float current, pressure;
 	float totalHeOffset;
 	__u16 value;
 	long returnCounts;
-    int nSamples,i;
+    int nSamples,i,k,hpCycles,hpEndRange,endStepRange,stepRange;
+    int err,sorensenSet=startValue;
 	FILE* fp;
+
+    err=resetGPIBBridge(GPIBBRIDGE1);
+    delay(200);
+    err=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+
+    hpEndRange=scanrange%60;
+    hpCycles=scanrange/60 + 1;
+    
+	stepRange = 1023;
+	endStepRange = 1+(int)(hpEndRange/(HPCAL));
+    printf("Step range:%d\n",stepRange);
+
+    err = setSorensen120Volts(-sorensenSet,SORENSEN120,GPIBBRIDGE1);
+    if(err!=0)
+    {
+        printf("Error setting Sorensen Code: %d, Trying again\n",err);
+        err = setSorensen120Volts(-sorensenSet,SORENSEN120,GPIBBRIDGE1);
+        if(err!=0)
+        {
+            printf("Error setting Sorensen Code: %d, You need to fix something\n",err);
+        }
+    }
+
 	fp=fopen(fileName,"a");
 	if (!fp) {
 		printf("unable to open file: %s\n",fileName);
@@ -336,54 +360,92 @@ void collectAndRecordData(char* fileName, int steprange, int stepsize, float bia
 	float* measurement = malloc(nSamples*sizeof(float));
 
     printf("aout  e_fil_Eng    e_trg_Eng   V_He    Counts   Current\n");
-	for (value=0;value<steprange;value+=stepsize){
-	//for (value=steprange;value>24;value-=stepsize){
-		setUSB1208AnalogOut(HETARGET,value);
-		printf("%04d  ",value);
-		fprintf(fp,"%d\t",value);
+    // Now that I'm going to use the Sorensen supply in combination
+    // with the HP supply, we'll need two for loops. One for setting
+    // the Sorensen to each of the needed values, the second for
+    // rastering the HP supply over the range. 
+    for (k=0;k<hpCycles;k++){
+        // START SET SORENSEN 
+        setUSB1208AnalogOut(HETARGET,0);
+        sorensenSet=sorensenSet-k*60;
 
-		fprintf(fp,"%4.2f\t",bias);
-		fprintf(fp,"%4.2f\t",N2Offset);
-		fprintf(fp,"%4.2f\t",N2Sweep);
-		fprintf(fp,"%4.2f\t",HeOffset - HPCAL*(float)value);
+        // The supply expects a positive value for the voltage,
+        // and we are providing a negative value as input.
+        err = setSorensen120Volts(-sorensenSet,SORENSEN120,GPIBBRIDGE1);
+        if(err!=0)
+        {
+            printf("Error setting Sorensen Code: %d, Trying again\n",err);
+            err = setSorensen120Volts(-sorensenSet,SORENSEN120,GPIBBRIDGE1);
+            if(err!=0)
+            {
+                printf("Error setting Sorensen Code: %d, You need to fix something\n",err);
+            }
+        }
+        // END SET SORENSEN
+        if (k==hpCycles-1 && hpEndRange > 0) // If it's the last cycle.
+            stepRange=endStepRange;
+        for (value=0;value<stepRange;value+=stepsize){
+        //for (value=steprange;value>24;value-=stepsize){
+            setUSB1208AnalogOut(HETARGET,value);
+            printf("%04d  ",value);
+            fprintf(fp,"%d\t",value);
 
-		primaryEnergy = (HeOffset - HPCAL*(float)value) - bias;
-		printf("% 6.1f eV  ",primaryEnergy);
-		fprintf(fp,"%4.4f\t",primaryEnergy);
+            fprintf(fp,"%4.2f\t",bias);
+            fprintf(fp,"%4.2f\t",N2Offset);
+            fprintf(fp,"%4.2f\t",oneD);
+            fprintf(fp,"%4.2f\t",twoA);
+            fprintf(fp,"%4.2f\t",sorensenSet - HPCAL*(float)value);
 
-		secondaryEnergy = (HeOffset - HPCAL*(float)value) - (bias + N2Offset) ;
-		printf("% 6.1f eV  ",secondaryEnergy);
-		fprintf(fp,"%4.4f\t",secondaryEnergy);
+            primaryEnergy = (sorensenSet - HPCAL*(float)value) - bias;
+            printf("% 6.1f eV  ",primaryEnergy);
+            fprintf(fp,"%4.4f\t",primaryEnergy);
 
-        totalHeOffset=HeOffset - HPCAL*(float)value;
-		printf("% 6.1f eV  ",totalHeOffset);
+            secondaryEnergy = (sorensenSet - HPCAL*(float)value) - (bias + N2Offset) ;
+            printf("% 6.1f eV  ",secondaryEnergy);
+            fprintf(fp,"%4.4f\t",secondaryEnergy);
 
-		// delay to allow transients to settle
-		delay(500);
+            totalHeOffset=sorensenSet - HPCAL*(float)value;
+            printf("% 6.1f eV  ",totalHeOffset);
 
-		getUSB1208Counter(dwell*10,&returnCounts);
-		printf("%06ld  ",returnCounts);
+            // delay to allow transients to settle
+            delay(500);
 
-		current = 0.0;
-		// grab several readings and average
-		for (i=0;i<nSamples;i++){
-			getUSB1208AnalogIn(K617,&measurement[i]);
-			current+=measurement[i];
-		}
+            getUSB1208Counter(dwell*10,&returnCounts);
+            printf("%06ld  ",returnCounts);
 
-		current=current/(float)nSamples;
+            current = 0.0;
+            // grab several readings and average
+            for (i=0;i<nSamples;i++){
+                getUSB1208AnalogIn(K617,&measurement[i]);
+                current+=measurement[i];
+            }
 
-		printf("%+01.2e\n",current);
+            current=current/(float)nSamples;
 
-		fprintf(fp,"%ld\t%Lf\t",returnCounts/dwell,sqrtl(returnCounts)/dwell);
-		fprintf(fp,"%e\t%f\t",-current,/*0*/stdDeviation(measurement,nSamples));
+            printf("%+01.2e\n",current);
 
-		// Grab several readings and average
-		pressure=0;
-        getIonGauge(&pressure);
-		//printf("IG= %2.2E \n",pressure);
-		fprintf(fp,"%2.4E\t%2.4E\n",pressure,0.);
-	}
+            fprintf(fp,"%ld\t%Lf\t",returnCounts/dwell,sqrtl(returnCounts)/dwell);
+            fprintf(fp,"%e\t%f\t",-current,/*0*/stdDeviation(measurement,nSamples));
+
+            // Grab several readings and average
+            pressure=0;
+            getIonGauge(&pressure);
+            //printf("IG= %2.2E \n",pressure);
+            fprintf(fp,"%2.4E\t%2.4E\n",pressure,0.);
+        }
+    }
+    setUSB1208AnalogOut(HETARGET,0);
+
+    err = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
+    if(err!=0)
+    {
+        printf("Error setting Sorensen Code: %d, Trying again\n",err);
+        err = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
+        if(err!=0)
+        {
+            printf("Error setting Sorensen Code: %d, You need to fix something\n",err);
+        }
+    }
 	free(measurement);
 	fclose(fp);
 }

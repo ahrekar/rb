@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <asm/types.h>
 #include "interfacing/interfacing.h"
+#include "interfacing/USB1208.h"
 #include "interfacing/RS485Devices.h"
 #include "interfacing/Sorensen120.h"
 
@@ -28,33 +29,41 @@
 
 int main (int argc, char *argv[])
 {
-	float value = 0;
+	float value = 0,hpValue=0, sorensenValue=0;
 	int i;
 
 	if (argc==2) {
 		value=atof(argv[1]);
 	}else{
-		printf("Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024\n");
+		printf("Usage '$ sudo ./setHeliumTarget xxx' where xxx is a voltage between 0 and 180 \n");
 		value=0;
 	}
 
-	if (value<0) value=0;
-
-	if (value>1023) value=1023;
+	if (value<0)value=0;
+	else if (value < 60)
+	{
+		hpValue=value;
+	}
+	else if (value < 180)
+	{
+		sorensenValue=value-60;
+		hpValue=value-sorensenValue;
+	}
+	else value=180;
 
 	initializeBoard();
 	initializeUSB1208();
 
-	setUSB1208AnalogOut(HETARGET,value);
+	setUSB1208AnalogOut(HETARGET,(int)hpValue/HPCAL);
 
-// i=resetGPIBBridge(GPIBBRIDGE1);
-//	delay(200);
-//	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
-//
-//	i = setSorensen120Volts(value,SORENSEN120,GPIBBRIDGE1);
-//	if(i!=0){
-//		printf("Error setting Sorensen Code: %d\n",i);
-//	}
+	i=resetGPIBBridge(GPIBBRIDGE1);
+	delay(200);
+	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+
+	i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
+	if(i!=0){
+		printf("Error setting Sorensen Code: %d\n",i);
+	}
 
 	closeUSB1208();
 

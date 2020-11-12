@@ -32,14 +32,16 @@ int main (int argc, char* argv[]){
 
 
 	for (k=0; k<10; k++){
-	myTemp = (float)k * 12.2;
-		i = setSorensen120Volts(myTemp,SORENSEN120,GPIBBRIDGE1);
+		myTemp = (float)k * 12.2;
 		printf("Setting Sorensen %.1f\t",myTemp);
+		i = setSorensen120Volts(myTemp,SORENSEN120,GPIBBRIDGE1);
+		fflush(stdout);
 		delay(200);
 		i = getSorensen120Volts(&myVolts,SORENSEN120,GPIBBRIDGE1);
 		i = getSorensen120Amps(&myTemp,SORENSEN120,GPIBBRIDGE1);
 		printf("Measured: %.2fV\t %.3fA\t %.1fW\n",myVolts,myTemp,myVolts*myTemp);
-		delay(200);
+		delay(1000);
+		
 	}
 
 	i = setSorensen120Volts(0.0,SORENSEN120,GPIBBRIDGE1);

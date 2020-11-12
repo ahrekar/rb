@@ -20,7 +20,8 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getcounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c RbAbsorbScanAutoFindDetuning.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c recordEverythingAndTwistMotor.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c stepTemperatureWaitForRotationAngle.c getWavemeter.c monitorPhotodiodes.c getPhotoDiodes.c turnOffPumpLaser.c findDetuningForMaxPolarization.c
+SOURCES=excitationfn.c getCounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c getWavemeter.c monitorPhotodiodes.c getPhotoDiodes.c turnOffPumpLaser.c 
+# unused: RbAbsorbScanAutoFindDetuning.c stepTemperatureWaitForRotationAngle.c recordEverythingAndTwistMotor.c findDetuningForMaxPolarization.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
@@ -132,19 +133,19 @@ COMMONOBJECTS=$(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/grandvillePhill
 PROBELASEROBJECTS=$(INTDIR)/sacherLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o probeLaserControl.o
 PUMPLASEROBJECTS=$(INTDIR)/topticaLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o
 
-getcounts: getcounts.o $(COMMONOBJECTS)
+getCounts: getCounts.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
-	$(LINK.c) $(OUTPUT_OPTION) $^ 
+#RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
+#	$(LINK.c) $(OUTPUT_OPTION) $^ 
 getWavemeter: getWavemeter.o $(INTDIR)/waveMeter.o $(COMMONOBJECTS) $(PROBELASEROBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 pumpLaserProfileScan: pumpLaserProfileScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-excitationfn: excitationfn.o mathTools.o $(COMMONOBJECTS) 
+excitationfn: excitationfn.o mathTools.o $(INTDIR)/Sorensen120.o $(COMMONOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 monitorCountsAndCurrent: monitorCountsAndCurrent.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -162,16 +163,16 @@ monitorAngleBPD: monitorAngleBPD.o mathTools.o faradayScanAnalysisTools.o fileTo
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 findBPDBalance: findBPDBalance.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-findDetuningForMaxPolarization: findDetuningForMaxPolarization.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
-	$(LINK.c) $(OUTPUT_OPTION) $^ 
+#findDetuningForMaxPolarization: findDetuningForMaxPolarization.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
+#	$(LINK.c) $(OUTPUT_OPTION) $^ 
 quickFaradayScan: quickFaradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 razorBladeLaserProfiling: razorBladeLaserProfiling.o mathTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 faradayRotation: faradayRotation.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-stepTemperatureWaitForRotationAngle: stepTemperatureWaitForRotationAngle.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
-	$(LINK.c) $(OUTPUT_OPTION) $^ 
+#stepTemperatureWaitForRotationAngle: stepTemperatureWaitForRotationAngle.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
+#	$(LINK.c) $(OUTPUT_OPTION) $^ 
 polarization: polarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 quickPolarization: quickPolarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o
@@ -198,7 +199,7 @@ toggleFlipMirror: toggleFlipMirror.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setLaserFlag: setLaserFlag.o $(COMMONOBJECTS) $(INTDIR)/laserFlag.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-setHeliumTarget: setHeliumTarget.o $(COMMONOBJECTS)
+setHeliumTarget: setHeliumTarget.o $(COMMONOBJECTS) $(INTDIR)/Sorensen120.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 
 stepmotor: stepmotor.o 				$(COMMONOBJECTS)
