@@ -1,0 +1,18 @@
+#BufferGasLeakValve(-):	42
+#BufferGasType(-):	Nitrogen
+#PumpLaserDLCurrent(mA):	163.71114
+#PumpLaserAMPCurrent(mA):	1800.00
+#PumpLaserTemp(degC):	20.05
+#PumpLaserScanOffset(V):	59.5
+#PumpFrequency(THz):	377.1102
+#PumpPolarizerAngleOuter(deg):	156
+#PumpPolarizerAngleInner(deg):	0
+#PumpQWPAngle(step):	082
+#ProbeCurrent(mA):	64.9
+#ProbeLP(deg):	232
+#ProbeFrequency(THz):	scanning
+#nominalDensity(cm^-3):	2e12
+#magnet1Voltage(V):	65.2
+#magnet2Voltage(V):	64.8
+#WavemeterOffset(GHz):	1.3
+

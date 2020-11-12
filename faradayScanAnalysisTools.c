@@ -183,16 +183,16 @@ int plotData(char* fileName){
 		fprintf(gnuplot, "set ylabel 'Theta'\n");			
 		sprintf(buffer, "plot '%s' using %d:%d:($%d+$%d):($%d-$%d) with errorbars\n",fileName,aoutColumnNumber,angleColumnNumber,angleColumnNumber,angleColumnNumber+1,angleColumnNumber,angleColumnNumber+2);
 		fprintf(gnuplot, buffer);
-		fprintf(gnuplot, "unset output\n"); 
-		fprintf(gnuplot, "set terminal png\n");
+		//fprintf(gnuplot, "unset output\n"); 
+		//fprintf(gnuplot, "set terminal png\n");
 
-		fprintf(gnuplot, "set pointsize 3\n");			
-		fprintf(gnuplot, "set bars 3\n");			
+		//fprintf(gnuplot, "set pointsize 3\n");			
+		//fprintf(gnuplot, "set bars 3\n");			
 
-		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
-		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using %d:%d:($%d+$%d):($%d-$%d) with errorbars\n",fileName,aoutColumnNumber,angleColumnNumber,angleColumnNumber,angleColumnNumber+1,angleColumnNumber,angleColumnNumber+2);
-		fprintf(gnuplot, buffer);
+		//sprintf(buffer, "set output '%s.png'\n", fileNameBase);
+		//fprintf(gnuplot, buffer);
+		//sprintf(buffer, "plot '%s' using %d:%d:($%d+$%d):($%d-$%d) with errorbars\n",fileName,aoutColumnNumber,angleColumnNumber,angleColumnNumber,angleColumnNumber+1,angleColumnNumber,angleColumnNumber+2);
+		//fprintf(gnuplot, buffer);
 	}
 	return pclose(gnuplot);
 }

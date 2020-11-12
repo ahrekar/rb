@@ -1,0 +1,9 @@
+#BufferGasLeakValve(-):	42
+#ProbeCurrent(mA):	64.9
+#ProbeLP(deg):	232
+#ProbeFrequency(THz):	scanning
+#nominalDensity(cm^-3):	20e12
+#magnet1Voltage(V):	65.3
+#magnet2Voltage(V):	64.8
+#WavemeterOffset(GHz):	1.3
+

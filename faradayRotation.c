@@ -107,7 +107,7 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-    fprintf(fp,"#Filename:\t%s\n#Comments:\t%s\n",fileName,comments);
+    fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
     getIonGauge(&returnFloat);
     //printf("IonGauge %2.2E Torr \n",returnFloat);

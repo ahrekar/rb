@@ -54,7 +54,7 @@ int main (int argc, char **argv)
 	} else {
 		printf("Usage:\n");
 		printf("$ sudo ./RbAbsorbScan <begin> <end>   <step>   <comments>\n");
-		printf("    Suggested values: (33.3)  (34.4)  (.01)           \n");
+		printf("    Suggested values: (33.8)  (34.4)  (.01)           \n");
 		return 0;
 	}
     
@@ -107,7 +107,9 @@ int main (int argc, char **argv)
 
 	collectAndRecordData(fileName, startvalue, endvalue, stepsize);
 
-	setSacherTemperature(33.333); // Return Piezo to 45.0 V
+	setSacherTemperature(startvalue); // Return to the start value.
+                                      // If running repeat runs with crontab,
+                                      // this ensures that the run will start quickly.
 
 	closeUSB1208();
 
@@ -138,9 +140,9 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 	nSamples = 16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	value=endvalue;
+	value=startvalue;
 	setSacherTemperature(value);
-	delay(10000);
+	delay(3000);
 
 
 	//for (value=endvalue;value <= endvalue && value >= startvalue;value-=stepsize){// high to low
@@ -213,7 +215,7 @@ void writeFileHeader(char* fileName, char* comments){
 		exit(1);
 	}
 
-	fprintf(fp,"#Filename:\t%s\n",fileName);
+	fprintf(fp,"#File:\t%s\n",fileName);
 	fprintf(fp,"#Comments:\t%s\n",comments);
 
     /** Record System Stats to File **/
@@ -235,13 +237,13 @@ void writeFileHeader(char* fileName, char* comments){
 	fprintf(fp,"#T_res:\t%f\n",returnFloat);
 	printf("T_res:\t%.2f\n",returnFloat);
 	getSVCN7500(CN_RESERVE,&returnFloat);
-	fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
+	fprintf(fp,"#T_res_set:\t%.1f\n",returnFloat);
 
 	getPVCN7500(CN_TARGET,&returnFloat);
 	fprintf(fp,"#T_trg:\t%f\n",returnFloat);
 	printf("T_trg:\t%.2f\n",returnFloat);
 	getSVCN7500(CN_TARGET,&returnFloat);
-	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
+	fprintf(fp,"#T_trg_set:\t%.1f\n",returnFloat);
 
     /** End System Stats Recording **/
 
@@ -264,9 +266,6 @@ void graphData(char* fileName){
 	strcpy(extension,"");
 
 	if (gnuplot != NULL){
-		fprintf(gnuplot, "set terminal dumb size 54,14\n");
-		fprintf(gnuplot, "set output\n");			
-		
 		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, buffer);
 
@@ -278,19 +277,27 @@ void graphData(char* fileName){
 		//fprintf(gnuplot, "set x2range [*:*]\n");			
 		fprintf(gnuplot, "set x2tics nomirror\n");
 		//sprintf(buffer, "plot '%s' using 1:6:7 with errorbars, '%s' using ($1*%f+%f):6:7 axes x2y1\n",fileName,fileName,aoutConv,aoutInt);
+        
+		fprintf(gnuplot, "set terminal png\n");
+		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
+
+		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars,\
+						 	  '%s' using 1:5:6 with errorbars,\
+						 	  '%s' using 1:3:4 with errorbars\n", fileName,fileName,fileName);
+		fprintf(gnuplot, buffer);
+
+		fprintf(gnuplot, "unset output\n"); 
+		fprintf(gnuplot, buffer);
+
+		fprintf(gnuplot, "set terminal dumb size 54,14\n");
+		fprintf(gnuplot, "set output\n");			
+		
 		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		sprintf(buffer, "plot '%s' using 1:5:6 with errorbars\n",fileName);
 		fprintf(gnuplot, buffer);
 		sprintf(buffer, "plot '%s' using 1:3:4 with errorbars\n",fileName);
-		fprintf(gnuplot, buffer);
-		fprintf(gnuplot, "unset output\n"); 
-		fprintf(gnuplot, "set terminal png\n");
-		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
-		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using 1:7:8 with errorbars,\
-						 	  '%s' using 1:5:6 with errorbars,\
-						 	  '%s' using 1:3:4 with errorbars\n", fileName,fileName,fileName);
 		fprintf(gnuplot, buffer);
 	}
 	pclose(gnuplot);

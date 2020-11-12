@@ -55,7 +55,7 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 
-	char fileName[BUFSIZE], comments[BUFSIZE];
+	char filePath[BUFSIZE],fileName[BUFSIZE], comments[BUFSIZE],buffer[BUFSIZE];
 	char dailyFileName[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
@@ -86,15 +86,22 @@ int main (int argc, char **argv)
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
-	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F",timeinfo); //INCLUDE
+	strftime(filePath,BUFSIZE,"/home/pi/RbData/%F",timeinfo);
 	if (stat(fileName, &st) == -1){
 		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
-	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F_%H%M%S.dat",timeinfo); //INCLUDE
+
+	strftime(fileName,BUFSIZE,"FDayScan%F_%H%M%S",timeinfo);
+
+	sprintf(buffer,"%s.dat",fileName);
+	printf("\n%s\n",buffer);
+	sprintf(fileName,"%s/%s",filePath,buffer);
+
 	strftime(dailyFileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F.dat",timeinfo); //INCLUDE
 
-	printf("%s\n",fileName);
 	printf("%s\n",comments);
+
+
 
 	fp=fopen(fileName,"w");
 	if (!fp) {
@@ -110,7 +117,7 @@ int main (int argc, char **argv)
         exit(1);
     }
 
-	fprintf(fp,"#Filename:\t%s\n#Comments:\t%s\n",fileName,comments);
+	fprintf(fp,"#File:\t%s\n#Comments:\t%s\n",fileName,comments);
 
     /** Record System Stats to File **/
     /** Pressure Gauges **/
@@ -148,10 +155,11 @@ int main (int argc, char **argv)
 
 	fclose(configFile);
 
-    /*
+    /* For a rigorous look at the structure 
 	int numDet=18,j;
 	float scanDet[]={-33,-30,-19,-18,-9,-5,-4.5,-4,-3.5,6,6.5,7,7.5,11,20,21,30,33};
     */
+    
 
 /*    
 	int numDet=12,j;
@@ -163,9 +171,14 @@ int main (int argc, char **argv)
 	float scanDet[]={-29,-26,-19,-18,-9,11,20,21,30,33};
     */
 
-    
+    /*For the lower densities */
+	int numDet=6,j;
+	float scanDet[]={-29,-16,-10,11,16,30};
+   
+    /* For the higher densities 
 	int numDet=4,j;
 	float scanDet[]={-29,-16,16,33};
+    */
     
    
 
@@ -192,7 +205,7 @@ int main (int argc, char **argv)
 	fp=fopen(fileName,"a");
 
 	setProbeDetuning(scanDet[0]);
-	delay(10000);
+	delay(3000);
 
 
 	for(j=0;j<numDet;j++){
@@ -213,6 +226,8 @@ int main (int argc, char **argv)
 
 	fclose(fp);
 
+	setProbeDetuning(scanDet[0]);
+	delay(3000);
 
 	//printf("Processing Data...\n");
 	//analyzeData(fileName, numDet, revolutions, dataPointsPerRevolution, FOI);
