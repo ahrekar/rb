@@ -332,7 +332,7 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
     err=initSorensen120(SORENSEN120,GPIBBRIDGE1);
 
     hpEndRange=scanrange%60;
-    hpCycles=scanrange/60 + 1;
+    hpCycles=scanrange/60+1;
     
 	stepRange = 1023;
 	endStepRange = 1+(int)(hpEndRange/(HPCAL));
@@ -367,10 +367,11 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
     for (k=0;k<hpCycles;k++){
         // START SET SORENSEN 
         setUSB1208AnalogOut(HETARGET,0);
-        sorensenSet=sorensenSet-k*60;
+        sorensenSet=sorensenSet-60;
 
         // The supply expects a positive value for the voltage,
         // and we are providing a negative value as input.
+        printf("Setting Sorensen to %d\nt", sorensenSet);
         err = setSorensen120Volts(-sorensenSet,SORENSEN120,GPIBBRIDGE1);
         if(err!=0)
         {
