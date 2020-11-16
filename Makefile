@@ -173,7 +173,7 @@ faradayRotation: faradayRotation.o mathTools.o faradayScanAnalysisTools.o fileTo
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 #stepTemperatureWaitForRotationAngle: stepTemperatureWaitForRotationAngle.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 #	$(LINK.c) $(OUTPUT_OPTION) $^ 
-polarization: polarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o
+polarization: polarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o $(INTDIR)/Sorensen120.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 quickPolarization: quickPolarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 

@@ -37,14 +37,14 @@
 // this is the GPIB addresses of each respective instrument attached to this bridge
 #define SORENSEN120 0x0C
 
-int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent);
+int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurrent);
 void plotCommand(FILE* gnuplot, char* fileName, char* buffer);
 void plotData(char* fileName);
 
 int main (int argc, char **argv)
 {
 	int dwell;
-    int VHe; /* (V)oltage of (He)lium Target */
+    float VHe; /* (V)oltage of (He)lium Target */
 	float leakageCurrent;
     int ammeterScale;
 	
@@ -68,7 +68,7 @@ int main (int argc, char **argv)
 
 	// Get parameters.
 	if (argc==6){
-		VHe=atoi(argv[1]);
+		VHe=atof(argv[1]);
 		dwell=atoi(argv[2]);
 		ammeterScale=atof(argv[3]);
 		leakageCurrent=atof(argv[4]);
@@ -76,9 +76,11 @@ int main (int argc, char **argv)
 		strcpy(backgroundFileName,"NONE");
 	} else {
 		printf("There is one option for using this program: \n\n");
-		printf("usage '~$ sudo ./polarization <voltage for He target> <dwell> <ammeterScale> <leakageCurrent> <comments_in_double_quotes>'\n");
-		printf("                                (0-120)           (1-5)s (assumed neg.) (just mantissa,                              \n");
-		printf("                                                                           assumed neg.)                            \n");
+		printf("usage '~$ sudo ./polarization <voltage for He target> \\  (0-63)\n");
+        printf("                              <dwell> \\                  (1-5)s\n");
+        printf("                              <ammeterScale> \\           (assumed neg.)\n");
+        printf("                              <leakageCurrent> \\               \n");
+        printf("                              <comments_in_double_quotes>'\n");
 		return 1;
 	}
 
@@ -93,10 +95,6 @@ int main (int argc, char **argv)
 	initializeBoard();
 	initializeUSB1208();
 
-	// RUDAMENTARIY ERROR CHECKING
-	if (VHe<0) VHe=0;
-	if (VHe>1023) VHe=1023;
-
 	// Create Directory for the day
 	strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); 
 	if (stat(analysisFileName, &st) == -1){
@@ -107,6 +105,7 @@ int main (int argc, char **argv)
 		strcpy(extension,"/anl");
 		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
+
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
 	strftime(rawDataFileName,80,"/home/pi/RbData/%F/POL%F_%H%M%S.dat",timeinfo); 
 	strcpy(analysisFileName,rawDataFileName);
@@ -122,6 +121,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
+    // BEGIN record file header information
 	fprintf(rawData,"#File\t%s\n",rawDataFileName);
 	fprintf(rawData,"#Comments\t%s\n",comments);
 	printf("File:\t%s\n",rawDataFileName);
@@ -150,7 +150,7 @@ int main (int argc, char **argv)
 	getSVCN7500(CN_TARGET,&returnFloat);
 	fprintf(rawData,"#T_trg_set:\t%f\n",returnFloat);
 
-	fprintf(rawData,"#V_he:\t%d\n",VHe);
+	fprintf(rawData,"#V_he:\t%f\n",VHe);
 	fprintf(rawData,"#LEAKCURR:\t%f\n",leakageCurrent);
 	fprintf(rawData,"#SCALE:\t%d\n",ammeterScale);
 	fprintf(rawData,"#AOUTCONV:\t%2.6f\n",HPCAL);
@@ -163,6 +163,7 @@ int main (int argc, char **argv)
 	fprintf(rawData,"#QWP(STEP):\t%s\n",buffer);
 
 	fclose(rawData);
+    // END record file header information
 
 	// Collect raw data
 	getPolarizationData(rawDataFileName, VHe, dwell, leakageCurrent); 
@@ -180,10 +181,11 @@ int main (int argc, char **argv)
 	return 0;
 }
 
-int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent){
+int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurrent){
 	//char echoData[128];
 	// Variables for stepper motor control.
 	int nsteps,steps,ninc,i;
+    float sorensenValue, hpValue;
 
 	// Variables for data collections.
 	long returnCounts;
@@ -192,14 +194,42 @@ int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent
 	float currentErr;
 	float* measurement = calloc(dwell+1,sizeof(float));
 
-	// Write Aout for He traget here
-    setUSB1208AnalogOut(HETARGET,(__u16)VHe);
-    //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
-    //if(i!=0){
-    //    printf("Error setting Sorensen. Code: %d\n",i);
-    //}
+
+	if (VHe<0)
+    {
+        VHe=0;
+        sorensenValue=0;
+    }
+	else if (VHe < 60)
+	{
+        sorensenValue=0;
+	}
+	else if (VHe < 180)
+	{
+		sorensenValue=VHe-60;
+	}
+	else 
+    {
+        VHe=180;
+        sorensenValue=120;
+    };
+    hpValue=VHe-sorensenValue;
+
+	setUSB1208AnalogOut(HETARGET,(int)hpValue/HPCAL);
+
+	i=resetGPIBBridge(GPIBBRIDGE1);
+	delay(200);
+	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+
+	i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
+	if(i!=0){
+		printf("Error setting Sorensen Code: %d\n",i);
+	}
 	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
+    
+    // The supply can take some time to get to he desired voltage, pause for 2 seconds to allow for this process.
+    delay(2000);
 
 	// Begin File setup
 	FILE* rawData=fopen(fileName,"a");
@@ -256,6 +286,16 @@ int getPolarizationData(char* fileName, int VHe, int dwell, float leakageCurrent
     //    printf("Error setting Sorensen. Code: %d\n",i);
     //}
 	setUSB1208AnalogOut(HETARGET,0);
+
+	i = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
+	if(i!=0){
+		printf("Error setting Sorensen Code: %d\n",i);
+	}
+
+    // The supplies can take some time to get to the desired voltage, 
+    // especially when decreasing their output 
+    // pause for 4 seconds to allow for this process.
+    delay(4000);
 
 	return 0;
 }
