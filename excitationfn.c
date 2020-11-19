@@ -135,7 +135,7 @@ int main (int argc, char **argv)
 
 	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPCAL);
 
-
+    // Start Input Error Checking
 	minstepsize=1;
 	maxstepsize=24;
 	if (stepsize<minstepsize){
@@ -146,6 +146,20 @@ int main (int argc, char **argv)
 		printf("Step size too large, using %d (%0.3fV) instead.\n",maxstepsize,maxstepsize*HPCAL);
 		stepsize=maxstepsize;
 	}
+
+    if (abs(startValue) > 120){
+        printf("Error! Start value enetered was too large. Starting at -120 V instead\n");
+        startValue=-120;
+    }
+
+
+    if (abs(startValue) + abs(scanrange) > 180)
+    {
+        printf("Error! Trying to reach too high of voltages.\n");
+        startValue=-120;
+        scanrange=60;
+    }
+    // End Input Error Checking
 
 	fclose(fp);
 
@@ -238,7 +252,7 @@ void graphData(char* fileName){
 		sprintf(buffer, "set title '%s'\n", fileName);
 		fprintf(gnuplot, "%s",buffer);
 		fprintf(gnuplot, "set yrange [0:*]\n");			
-		fprintf(gnuplot, "set ylabel 'Counts'\n");			
+		fprintf(gnuplot, "set ylabel 'Count Rate (Hz)'\n");			
 		// Print the plot
 		sprintf(buffer, "plot '%s.dat' using %d:abs(9):10 with yerrorbars\n", fileName, heColumn);
 		fprintf(gnuplot, "%s",buffer);
@@ -323,8 +337,8 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
 	float totalHeOffset;
 	__u16 value;
 	long returnCounts;
-    int nSamples,i,k,hpCycles,hpEndRange,endStepRange,stepRange;
-    int err,sorensenSet=startValue;
+    int nSamples,i,k,hpCycles,hpEndRange,endStepRange,stepRange,stepRangeStart=0;
+    int err,sorensenSet=startValue,endStepRangeStart;
 	FILE* fp;
 
     err=resetGPIBBridge(GPIBBRIDGE1);
@@ -367,7 +381,14 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
     for (k=0;k<hpCycles;k++){
         // START SET SORENSEN 
         setUSB1208AnalogOut(HETARGET,0);
-        sorensenSet=sorensenSet-60;
+        sorensenSet=startValue-k*60;
+        if(abs(sorensenSet) > 120){
+            endStepRangeStart=abs(sorensenSet)-120;
+            sorensenSet=-120;
+            endStepRange = 1+(int)((hpEndRange+endStepRangeStart)/(HPCAL));
+            endStepRangeStart=1+(int)((endStepRangeStart)/(HPCAL));
+            stepRangeStart=endStepRangeStart;
+        }
 
         // The supply expects a positive value for the voltage,
         // and we are providing a negative value as input.
@@ -384,8 +405,10 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
         }
         // END SET SORENSEN
         if (k==hpCycles-1 && hpEndRange > 0) // If it's the last cycle.
+        {
             stepRange=endStepRange;
-        for (value=0;value<stepRange;value+=stepsize){
+        }
+        for (value=stepRangeStart;value<stepRange;value+=stepsize){
         //for (value=steprange;value>24;value-=stepsize){
             setUSB1208AnalogOut(HETARGET,value);
             printf("%04d  ",value);
