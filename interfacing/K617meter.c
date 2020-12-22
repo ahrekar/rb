@@ -53,22 +53,30 @@ int getStatusK617(unsigned char* returndata, char gpibaddress, unsigned short RS
 }
 
 
+/* Initializes the device with consistent settings 
+ * for the functions that we will send to the device later
+ */
 int initializeK617(char gpibaddress, unsigned short RS485Address){
 	unsigned char cmdData[16];
 	unsigned int i;
-	strcpy(cmdData,"G1F1C0R0X");
-
+	strcpy(cmdData,"G1F1C0R0X"); // Sets default settings we use. See below
+								 // for description of settings. 
+	/* For full information, see keithley_617.pdf
+	 * located in Apparatus/operationManuals/
+	 * reference the table on pg. 3-19. 
+	 *
+	 * G1: reading reported without prefix. 
+	 * F1: Set device to read AMPS.
+	 * C0: Zero check off. 
+	 * R0: set range to AUTO scale. 
+	 * The rest of the power-on defaults are fine.
+	 */
 	i=strlen(cmdData);
 	cmdData[i]=0x0D;
 	cmdData[i+1]=0;
-// G1 reading without prefix
-// set range to AUTO scale. the rest of the power-on defaults are fine.
-// see page 3-10
-// R0 is autorange.  I dont know if the machine will 'talk' or return valid data when it is in the process of autoranging.
 
 	int status = sendGPIBData(cmdData,gpibaddress, RS485Address);
-return status;
-
+	return status;
 }
 
 int setRangeK617(char gpibaddress, unsigned short RS485Address, unsigned char range){
