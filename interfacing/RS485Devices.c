@@ -390,7 +390,7 @@ int resetGPIBBridge(unsigned short Address){
 int sendGPIBCommand(unsigned char* cmd, unsigned short Address){
 // see www.ni.com/white-paper/3389/en/  table 1 for full list of commands.
 
-	 int length,j, status;
+	int length,j, status;
 	unsigned char outData[64];
 	unsigned char rtnData[64];
 	unsigned int k;
@@ -398,8 +398,8 @@ int sendGPIBCommand(unsigned char* cmd, unsigned short Address){
 
 	outData[0] = (unsigned char) (Address & 0x00FF);
 	outData[1] = 0x06;
-	outData[2] = (unsigned char)(((BASEREG485BRIDGE232+16) & 0xFF00)>>8);
-	outData[3] = (unsigned char)((BASEREG485BRIDGE232+16)&0x00FF);
+	outData[2] = (unsigned char)( ((BASEREG485BRIDGE232+16) & 0xFF00) >> 8);
+	outData[3] = (unsigned char)( (BASEREG485BRIDGE232+16) & 0x00FF);
 	length = strlen((char*)cmd);
 	for (j=0;j<length;j++){
 			outData[j+4]=cmd[j];

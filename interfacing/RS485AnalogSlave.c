@@ -40,7 +40,7 @@ if (!(returndata[1] & 0x80)){
 		temp=0;
 	} else {
 		temp=returndata[2]<<8|returndata[3];
-		printf("process retunred erro code %04x \n",temp);
+		printf("process returned error code %04x \n",temp);
 
 	}
 return temp;
@@ -72,7 +72,7 @@ if (!(returndata[1] & 0x80)){
 	temp=0;
 } else {
 		temp=returndata[2]<<8|returndata[3];
-		printf("process retunred erro code %04x \n",temp);
+		printf("process returned error code %04x \n",temp);
 }
 return temp;
 }
@@ -102,7 +102,7 @@ unsigned int setRS485AnalogSlavePeriod(unsigned short RS485Chan, unsigned short 
 
 if ((returndata[1] & 0x80)){ 
 		temp=returndata[2]<<8|returndata[3];
-		printf("process retunred erro code %04x \n",temp);
+		printf("process returned error code %04x \n",temp);
 
 } else {
 temp=0;
