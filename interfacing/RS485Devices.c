@@ -380,6 +380,7 @@ int getRS485GPIBStatus(unsigned short* GPIBStatus, unsigned short Address){
 	return status;
 }
 
+// What is the purpose of this function? When should the GPIBBridge be reset?
 int resetGPIBBridge(unsigned short Address){
 	int status;
 	status = write_Modbus_RTU(Address,BASEREG485BRIDGE232+3,0x00);
@@ -524,7 +525,7 @@ int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress,
 		} else {
 			status= rtnData[2]<<8 | rtnData[3];
 			returnData[0]=0;
-			printf("ListenGPIBBridge process returned error code %04x \n",temp);
+			//printf("ListenGPIBBridge process returned error code %04x \n",temp);
 			printHexData(rtnData,k);
 
 		}

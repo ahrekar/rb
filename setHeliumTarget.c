@@ -6,7 +6,7 @@
    Sets analog voltage for probe laser. Uses Analog out port 0. Final output to probe laser is through 
    op-amp circuit. see page 98.  Page 99 shows calibration data.
 
-   Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024
+   Usage '$ sudo ./setHeliumTarget xxx' where xxx is an integer value between 0 and 1024
  */
 
 #include <stdlib.h>

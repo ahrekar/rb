@@ -7,7 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define K6485METER 0x02
+#define K6485METERVERT 0x02
+#define K6485METERHORIZ 0x01
 
 
 int getReadingK6485(float* amps,char gpibaddress, unsigned short RS485Address);

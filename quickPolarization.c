@@ -41,13 +41,13 @@
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
 
-int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, float leakageCurrent);
+int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, float leakageCurrent, int scale);
 void plotCommand(FILE* gnuplot, char* fileName, char* buffer);
 void plotData(char* fileName);
 
 int main (int argc, char **argv)
 {
-	int i,dwell;
+	int dwell;
 	float VHe;
 	float leakageCurrent;
     int ammeterScale,nMeasurements;
@@ -180,7 +180,7 @@ int main (int argc, char **argv)
 	fclose(rawData);
 
 	// Collect raw data
-	getPolarizationData(rawDataFileName, VHe, dwell, nMeasurements, leakageCurrent); 
+	getPolarizationData(rawDataFileName, VHe, dwell, nMeasurements, leakageCurrent, ammeterScale); 
 
 	closeUSB1208();
 
@@ -212,13 +212,17 @@ int getCountsAndCurrent(int dwell,long *sumCounts,float *avgCurrent){
 	return 0;
 }
 
-int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, float leakageCurrent){
+int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, float leakageCurrent, int scale){
 	// Variables for stepper motor control.
-	int j,i;
+	int j;
 
 	// Variables for data collections.
 	long sumCounts;
-	float current;
+	long allCountsPlus=0;
+	long allCountsMinus=0;
+	float current=0;
+	float countRatePlus=0;
+	float countRateMinus=0;
 
 	// Write Aout for He traget here
     setUSB1208AnalogOut(HETARGET,(__u16)VHe);
@@ -238,30 +242,36 @@ int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, f
 	// End File setup
 
 	fprintf(rawData,"MEASUREMENT\tCOUNT+45\tCURRENT+45\tCOUNT-45\tCURRENT-45\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
-	printf("Steps\tCounts\tCurrent\n");
+	printf("MEASUREMENT\tCOUNT+45\tCURRENT+45\tCOUNT-45\tCURRENT-45\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
 
 	for (j=0;j<nMeasurements;j++){
 		homeMotor(POL_MOTOR); 
 		stepMotor(POL_MOTOR,CCLK,VALLEY1); 
 		getCountsAndCurrent(dwell,&sumCounts,&current);
-		printf("%d\t%ld\t%e\t",j,sumCounts,current+leakageCurrent);
-		fprintf(rawData,"%d\t%ld\t%e\t",j,sumCounts,current+leakageCurrent);
+		allCountsPlus=allCountsPlus+sumCounts;
+		countRatePlus=countRatePlus+(float)sumCounts /(current*pow(10,9-scale));
+		printf("%d\t%ld\t%1.2e\t",j,sumCounts,current+leakageCurrent);
+		fprintf(rawData,"%d\t%ld\t%1.3e\t",j,sumCounts,current+leakageCurrent);
 
 		homeMotor(POL_MOTOR); 
 		stepMotor(POL_MOTOR,CLK,STEPSPERREV-VALLEY4); 
 		getCountsAndCurrent(dwell,&sumCounts,&current);
-		printf("%ld\t%e\n",sumCounts,current+leakageCurrent);
-		fprintf(rawData,"%ld\t%e\n",sumCounts,current+leakageCurrent);
+		allCountsMinus=allCountsMinus+sumCounts;
+		countRateMinus=countRateMinus+(float)sumCounts /(current*pow(10,9-scale));
+		printf("%ld\t%1.2e\n",sumCounts,current+leakageCurrent);
+		fprintf(rawData,"%ld\t%1.3e\n",sumCounts,current+leakageCurrent);
 		stepMotor(POL_MOTOR,CCLK,STEPSPERREV-VALLEY4+UNDENIABLESHIFT); 
 	}
+	printf("Total Cts.:\t%ld\t%ld\n",allCountsPlus,allCountsMinus);
+	printf("Rate:\t%2.2e\t%2.2e\n",(float)countRatePlus /nMeasurements,countRateMinus/nMeasurements);
 	fclose(rawData);
 
 	// Reset Helium Target Offset back to zero
     //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
     setUSB1208AnalogOut(HETARGET,0);
-	if(i!=0){
-		printf("Error setting Sorensen. Code: %d\n",i);
-	}
+	//if(i!=0){
+	//		printf("Error setting Sorensen. Code: %d\n",i);
+	//}
 
 	return 0;
 }

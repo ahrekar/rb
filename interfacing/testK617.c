@@ -10,9 +10,6 @@
 
 
 #define GPIBBRIDGE1 0XC9 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
-// this is the GPIB addresses of each respective instrument attached to this bridge
-#define K617METER 0x08
-#define SORENSEN120 0x0C
 
 
 int main (int argc, char* argv[]){

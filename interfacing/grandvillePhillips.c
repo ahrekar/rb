@@ -42,10 +42,18 @@ int status;
 	}
 	
     status = readRS485AnalogRecorder(0xD0,kchan,1024.0,&CVGauge,&Stdev);
+    printf("CVGauge: %f\n",CVGauge);
 	if (status==0){
+            if(chan==GP_CHAMB_CHAN){
+                //CVGauge = pow(10,(0.00963*CVGauge - 4.05));
+                CVGauge = pow(10,(0.00963*CVGauge - 5.05));
+                *returnvalue=CVGauge;
+            }else
+            {
 		    //printf("Chan: %d\tReading:%f\t",kchan,CVGauge);
-		    CVGauge = pow(10,(0.00499*CVGauge - 4.05));
+		    CVGauge = pow(10,(0.00499*CVGauge - 4.05)); // THE REAL ONE
 		    *returnvalue=CVGauge;
+            }
 	} else {
 		printf("error reading box \n");
 		*returnvalue=0;

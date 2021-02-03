@@ -4,20 +4,21 @@ if [ "$#" -ne 1 ]; then
 	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
-	FILBIAS="-160.2" # Should be negative
-	N2OFFSET="100"
-	N2SWEEP="0.0"
+	FILBIAS="-135.1" # Should be negative
+	N2OFFSET="34"
+	ONED="1"
+	TWOA="3.0"
 	HEOFFSET=0	# Should be negative
-	CURRENTSCALE=5
+	CURRENTSCALE=7
 	SCANRANGE=63
 	STEPSIZE=24
 	DWELL=1
 	NUMRUN=1
 	COMMENTS=$1
 
-	STARTDETUNE=2
-	ENDDETUNE=6
-	STEPDETUNE=1
+	STARTDETUNE=11
+	ENDDETUNE=5
+	STEPDETUNE=-2
 
     PUMP=1
     PROBE=0
@@ -38,7 +39,7 @@ else
 		echo "Giving 3 s for the laser to settle"
 		sleep 3
 
-		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN "detune->$detune, $COMMENTS"
+		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $ONED $TWOA $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN "detune->$detune, $COMMENTS"
 	# detune LOOP DONE
 	done 
 	echo "Finished with pump scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu

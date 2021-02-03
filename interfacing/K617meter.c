@@ -9,6 +9,7 @@
 int getReadingK617(float* amps,char gpibaddress, unsigned short RS485Address){
 	unsigned char chardata[64];
 	float tempA=0.0;
+	int counter = 5;
 //	unsigned int i;
 //	unsigned int len;
 
@@ -23,10 +24,16 @@ int getReadingK617(float* amps,char gpibaddress, unsigned short RS485Address){
 		tempA = atof(chardata);
 //		printf("k485returnstring %s\t",chardata);
 //		printf("atof conversion: %f\n",tempA);
-		}else{
-
-		status = chardata[0];
+	}
+	else{
+		while(status !=0 && counter > 0){
+			status = listenGPIBData(chardata, 0x0A, gpibaddress, RS485Address);
+			tempA = atof(chardata);
+			counter = counter - 1;
 		}
+		status = chardata[0];
+	}
+
 
 	*amps = tempA;
 

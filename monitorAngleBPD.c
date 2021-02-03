@@ -22,6 +22,7 @@
 #include "mathTools.h"
 #include "fileTools.h"
 #include "interfacing/interfacing.h"
+#include "interfacing/USB1208.h"
 #include "probeLaserControl.h"
 
 #define BUFSIZE 1024
@@ -111,7 +112,7 @@ int main (int argc, char **argv)
 	for(j=0;j<nAngleReadings;j++){
 		if(j%(readingsPerSecond*secondsInMinute)==0){
 			getProbeFrequency(&frequency);
-			getUSB1208AnalogIn(REF_LASER,&normInt);
+			getUSB1208AnalogIn(BROWN_KEITHLEY,&normInt);
 			normInt=fabs(normInt);
 		}
 		for(k=0;k<numChannels;k++){involts[k]=0.0;}

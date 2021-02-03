@@ -4,10 +4,13 @@
 # ALL OF THE INFORMATION GATHERED BY THIS SCRIPT IS USED TO CALCUATE NUMBER DENSITY AND Rb POLARIZATION
 # Usage:
 #
-#		./RbQuickPolarizationScript <aout start> <aout end> <step size> <RbScan start> <RbScan end> <additional comments>
+#		./RbQuickPolarizationScript.sh < 
 
 if [ "$#" -lt 1 ]; then
-	echo "usage: ./RbQuickPolarizationScript.sh <comments>"
+	echo "usage: 1. ./RbQuickPolarizationScript.sh <comments>"
+	echo "  "
+	echo "       2. ./RbQuickPolarizationScript.sh <probe detuning>"
+	echo "                                         <comments>"
 #if [ "$#" -ne 2 ]; then
 	#echo "usage: ./RbQuickPolarizationScript.sh <number of files>    <comments>"
 	#echo "                                    ( 2 = no pump(NP), S+            "
@@ -19,7 +22,7 @@ else
 		COMMENTS=$2
 	else
 		COMMENTS=$1
-		PROBEDETUNE=10
+		PROBEDETUNE=-15
 	fi
 
 	source LoadWaveplatePositions.sh
@@ -49,8 +52,8 @@ else
     $RBC/faradayRotation "$COMMENTS, s+ pump"
 
 # set QWP for s- light
-	echo "Setting QWP for S- light..."
-	$RBC/setWavePlate $SMINUSPOS
-	echo "Faraday Scan: S- pump..."
-    $RBC/faradayRotation "$COMMENTS, s- pump"
+#	echo "Setting QWP for S- light..."
+#	$RBC/setWavePlate $SMINUSPOS
+#	echo "Faraday Scan: S- pump..."
+#    $RBC/faradayRotation "$COMMENTS, s- pump"
 fi

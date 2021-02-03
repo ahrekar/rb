@@ -13,6 +13,8 @@
 #include "kenBoard.h"
 #include "omegaCN7500.h"
 #include "USB1208.h"
+#include "RS485Devices.h"
+#include "K485meter.h"
 
 #define HOURSINDAY 24
 #define MINUTESINHOUR 60
@@ -92,11 +94,11 @@ int main (int argc, char* argv[]){
 
 		printf("\n\n_____PRESSURE_____\n");
 		getConvectron(GP_HE_CHAN,&myTemp);
-		printf("HeCV: %2.2E\n",myTemp);
+		printf("WelchForeline: %2.2E\n",myTemp);
 		fprintf(fp,"%2.2E\t",myTemp);
 
 		getConvectron(GP_N2_CHAN,&myTemp);
-		printf("N2CV: %2.2E\n",myTemp);
+		printf("AlcatelForeline: %2.2E\n",myTemp);
 		fprintf(fp,"%2.2E\t",myTemp);
 
 		getConvectron(GP_CHAMB_CHAN,&myTemp);
@@ -149,6 +151,20 @@ int main (int argc, char* argv[]){
 		printf("BK volts (other): %.2f\tamps %.2f\n",volts,amps);
 		fprintf(fp,"%.2f\t%.2f\n",volts,amps);
         **/
+
+        printf("Sending IFC to GPIB instruments on bridge %02x\n",GPIBBRIDGE1);
+        i=resetGPIBBridge(GPIBBRIDGE1);
+        printf("Status %d\n",i);
+        delay(200);
+        i=initializeK485(K485METER,GPIBBRIDGE1);
+        printf("Init K485\nStatus %d\n",i);
+        delay(500);
+
+        printf("getting reading....\n");
+        fflush(stdout);
+        i = getReadingK485(&myTemp, K485METER, GPIBBRIDGE1);
+        if (!i) printf("K485 reading = %E\n",myTemp);else printf("Status %d\n",i);
+        delay(400);
 
 
 		fclose(fp);

@@ -8,6 +8,7 @@
 int getReadingK6485(float* amps, char gpibaddress, unsigned short RS485Address){
 	unsigned char chardata[64];
 	float tempA=0.0;
+	int counter = 5;
 
 	int status = listenGPIBData(chardata, 0x0A, gpibaddress, RS485Address);
 
@@ -16,12 +17,18 @@ int getReadingK6485(float* amps, char gpibaddress, unsigned short RS485Address){
 		//  NDCA±1.2345E-9<CR><LF>
 		// initialize function turns off prefix, so just atof the returned value
 		tempA = atof(chardata);
-//		printf("k485returnstring %s\t",chardata);
-//		printf("atof conversion: %f\n",tempA);
-		}else{
-
-			status = chardata[0];
+		//printf("k6485returnstring %s\t",chardata);
+		//printf("atof conversion: %f\n",tempA);
 		}
+	else{
+		while(status !=0 && counter > 0){
+			delay(100);
+			status = listenGPIBData(chardata, 0x0A, gpibaddress, RS485Address);
+			tempA = atof(chardata);
+			counter = counter - 1;
+		}
+		status = chardata[0];
+	}
 
 	*amps = tempA;
 

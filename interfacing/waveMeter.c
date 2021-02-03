@@ -68,12 +68,7 @@ float getWaveMeter(float* wavemeterReturn){
 	int status;
 	float temp;
 
-	strcpy((char*) outData," ");
-
-	status=setRS485BridgeReads(2,WAV);
-    if(status != 0){printf("An error occured while reading bridge: %d\n",status);}
-	writeRS485to232Bridge(outData,retData,WAV);
-	temp=atof((char*) retData);
+	temp=getWavelength();
     *wavemeterReturn=temp;
 
 	return temp;
@@ -94,7 +89,7 @@ float getDetuning(float* returnFloat){
         temp=atof((char*) retData);
         temp=(float)SPEEDOFLIGHT/temp - LINECENTER;
         //printf("Returned Detuning: %f\n",temp);
-    }while( temp < -800000 || temp > 800000 );
+    }while( temp < -800 || temp > 800 );
 
     *returnFloat=temp;
 	return temp;
@@ -103,6 +98,7 @@ float getDetuning(float* returnFloat){
 float getFrequency(float *returnFrequency){
 	unsigned char retData[32];
 	unsigned char outData[32];
+    float wavelength;
 	int status;
 
 	strcpy((char*) outData," ");
@@ -114,8 +110,10 @@ float getFrequency(float *returnFrequency){
         writeRS485to232Bridge(outData,retData,WAV);
         *returnFrequency=atof((char*) retData);
         *returnFrequency=SPEEDOFLIGHT/ *returnFrequency;
+        //wavelength=getWavelength();
         //printf("Returned Frequency: %f\n",*returnFrequency);
-    }while( *returnFrequency < 377057 || *returnFrequency > 377157 );
+    }while( *returnFrequency < 377057 || *returnFrequency > 378000 );
+
 
 	return *returnFrequency;
 }
@@ -123,18 +121,23 @@ float getFrequency(float *returnFrequency){
 float getWavelength(void){
 	unsigned char retData[32];
 	unsigned char outData[32];
-	int status;
+	int status, tries=0;
 	float temp;
 
 	strcpy((char*) outData," ");
 
-	status=setRS485BridgeReads(2,WAV);
-    if(status != 0){printf("An error occured while reading bridge: %d\n",status);}
-    do{
+    for(tries=0;tries<5;tries++)
+    {
+        status=setRS485BridgeReads(2,WAV);
         writeRS485to232Bridge(outData,retData,WAV);
         temp=atof((char*) retData);
         //printf("Returned Wavelength: %f\n",temp);
-    }while(temp < 744 || temp > 755);
+        if(status != 0){
+            printf("An error occured while reading bridge: %d\n",status);
+            temp=-1;
+        }
+        else {tries=5;}
+    }
 
 	return temp;
 }

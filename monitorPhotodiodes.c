@@ -10,7 +10,7 @@
 #include "interfacing/interfacing.h"
 #include "mathTools.h"
 
-#define NUMCHANNELS 3
+#define NUMCHANNELS 4
 
 void collectAndRecordData(char* fileName);
 void writeFileHeader(char* fileName, char* comments);
@@ -110,17 +110,19 @@ void writeFileHeader(char* fileName, char* comments){
 
     /** End System Stats Recording **/
 
-	fprintf(fp,"TEMP\tFREQ\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
+	//fprintf(fp,"TEMP\tFREQ\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
+	fprintf(fp,"K617\tStdDev\tPUMP\tStdDev\tPROBE\tStdDev\tREF\tStdDev\n");
 	fclose(fp);
 }
 
 void collectAndRecordData(char* fileName){
 	FILE* fp;
 	int k=0,i;
-    int timeCounter;
+    int timeCounter, evaluationTime=165;
 	int nSamples = 16; // The number of data points to collect
     float temperature=0.0;
     float wavelength=0.0;
+    int delayTime=1000; // Time in ms
 	float involts[NUMCHANNELS];
 
 
@@ -134,26 +136,28 @@ void collectAndRecordData(char* fileName){
 	// error bars.
 	float* measurement = malloc(nSamples*sizeof(float));
 
-    //for (timeCounter=0;timeCounter < evaluationTime; timeCounter+=1){
-    while(temperature!=-1.0){
-        scanf("%f,%f",&temperature,&wavelength);
-        fprintf(fp,"%f\t%f\t",temperature,wavelength);
+    //while(temperature!=-1.0){
+    for (timeCounter=0;timeCounter < evaluationTime; timeCounter+=1){
+        //scanf("%f,%f",&temperature,&wavelength);
+        //fprintf(fp,"%f\t%f\t",temperature,wavelength);
 
         for(k=0;k<NUMCHANNELS;k++){
             involts[k]=0.0;	
         }
-        if(timeCounter%15==0) printf("       PUMP       |        PROBE      |        REFERENCE\n");
+        //if(timeCounter%15==0) printf("       PUMP       |        PROBE      |        REFERENCE\n"); // Channels 1-3
+        if(timeCounter%15==0) printf("       Keithly    |       PUMP        |        PROBE      |        REFERENCE\n"); // Channels 0-3
 
         // grab several readings and average
-        for(k=1;k<NUMCHANNELS+1;k++){
+        //for(k=1;k<NUMCHANNELS+1;k++){
+        for(k=0;k<NUMCHANNELS;k++){
             for (i=0;i<nSamples;i++){
                 getUSB1208AnalogIn(k,&measurement[i]);
-                involts[k-1]=involts[k-1]+measurement[i];
-                delay(1000/NUMCHANNELS/nSamples);
+                involts[k]=involts[k]+measurement[i];
+                delay(delayTime/NUMCHANNELS/nSamples);
             }
-            involts[k-1]=fabs(involts[k-1])/(float)nSamples;
-            fprintf(fp,"%0.4f\t%0.4f\t",involts[k-1],stdDeviation(measurement,nSamples));
-            printf("  %0.4f %0.4f  ",involts[k-1],stdDeviation(measurement,nSamples));
+            involts[k]=fabs(involts[k])/(float)nSamples;
+            fprintf(fp,"%0.4f\t%0.4f\t",involts[k],stdDeviation(measurement,nSamples));
+            printf("  %0.4f %0.4f  ",involts[k],stdDeviation(measurement,nSamples));
             if(k<NUMCHANNELS) printf(" | ");
         }
         fprintf(fp,"\n");

@@ -76,7 +76,7 @@ int main (int argc, char **argv)
 		strcpy(backgroundFileName,"NONE");
 	} else {
 		printf("There is one option for using this program: \n\n");
-		printf("usage '~$ sudo ./polarization <voltage for He target> \\  (0-63)\n");
+		printf("usage '~$ sudo ./polarization <voltage for He target> \\  (0-63, -1 to leave unchanged)\n");
         printf("                              <dwell> \\                  (1-5)s\n");
         printf("                              <ammeterScale> \\           (assumed neg.)\n");
         printf("                              <leakageCurrent> \\               \n");
@@ -197,7 +197,7 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
 
 	if (VHe<0)
     {
-        VHe=0;
+        VHe=-1;
         sorensenValue=0;
     }
 	else if (VHe < 60)
@@ -215,21 +215,25 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
     };
     hpValue=VHe-sorensenValue;
 
-	setUSB1208AnalogOut(HETARGET,(int)hpValue/HPCAL);
+    // If VHe is negative, we don't change the voltage on the polarimeter.
+    if (VHe >= 0){
+        setUSB1208AnalogOut(HETARGET,(int)hpValue/HPCAL);
 
-	i=resetGPIBBridge(GPIBBRIDGE1);
-	delay(200);
-	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+        i=resetGPIBBridge(GPIBBRIDGE1);
+        delay(200);
+        i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
 
-	i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
-	if(i!=0){
-		printf("Error setting Sorensen Code: %d\n",i);
-	}
+        i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
+        if(i!=0){
+            printf("Error setting Sorensen Code: %d\n",i);
+        }
+
+        // The supply can take some time to get to he desired voltage, pause for 2 seconds to allow for this process.
+        delay(2000);
+    }
 	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
     
-    // The supply can take some time to get to he desired voltage, pause for 2 seconds to allow for this process.
-    delay(2000);
 
 	// Begin File setup
 	FILE* rawData=fopen(fileName,"a");
@@ -285,17 +289,20 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
     //if(i!=0){
     //    printf("Error setting Sorensen. Code: %d\n",i);
     //}
-	setUSB1208AnalogOut(HETARGET,0);
+    // If VHe is negative, we don't change the voltage on the polarimeter.
+    if (VHe >= 0){
+        setUSB1208AnalogOut(HETARGET,0);
 
-	i = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
-	if(i!=0){
-		printf("Error setting Sorensen Code: %d\n",i);
-	}
+        i = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
+        if(i!=0){
+            printf("Error setting Sorensen Code: %d\n",i);
+        }
 
-    // The supplies can take some time to get to the desired voltage, 
-    // especially when decreasing their output 
-    // pause for 4 seconds to allow for this process.
-    delay(4000);
+        // The supplies can take some time to get to the desired voltage, 
+        // especially when decreasing their output 
+        // pause for 4 seconds to allow for this process.
+        delay(4000);
+    }
 
 	return 0;
 }
