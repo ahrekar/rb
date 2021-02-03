@@ -41,6 +41,6 @@ else
 	$RBC/setLaserFlag $PUMP $BLOCKED
 	$RBC/setLaserFlag $PROBE $BLOCKED
 
-	$RBC/scripts/takePictureAndSendToEmail.sh "AutoPic"
+#	$RBC/scripts/takePictureAndSendToEmail.sh "AutoPic"
 	echo "Finished RbScan: $COMMENTS" | mutt -s "RbControl Status Update" -- karl.ahrendsen@gmail.com
 fi
