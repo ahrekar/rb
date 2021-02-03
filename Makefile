@@ -20,12 +20,12 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getCounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c getWavemeter.c monitorPhotodiodes.c getPhotoDiodes.c turnOffPumpLaser.c 
+SOURCES=excitationfn.c getCounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c getWavemeter.c monitorPhotodiodes.c monitorPhotodiodesOnKeyPress.c getPhotoDiodes.c turnOffPumpLaser.c deflectorTransmission.c
 # unused: RbAbsorbScanAutoFindDetuning.c stepTemperatureWaitForRotationAngle.c recordEverythingAndTwistMotor.c findDetuningForMaxPolarization.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
 INTDIR=interfacing
-_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c Sorensen120.c K617meter.c laserFlag.c sacherLaser.c
+_INTERFACING=grandvillePhillips.c BK1696.c omegaCN7500.c kenBoard.c USB1208.c waveMeter.c vortexLaser.c flipMirror.c RS485Devices.c topticaLaser.c keithley.c Sorensen120.c K617meter.c laserFlag.c sacherLaser.c K485meter.c K6485meter.c
 INTERFACING=$(patsubst %,$(INTDIR)/%,$(_INTERFACING))
 
 # The directory to put object files into.
@@ -61,9 +61,9 @@ PIFLAGS= -l wiringPi -l mccusb -L. -L/usr/local/lib -lhidapi-libusb -lusb-1.0
 
 #NEWDEP
 # This is the compile line. It includes the flags, the compiler and all that good stuff.
-COMPILE.c= $(CC) $(DEPFLAGS) $(CFLAGS) $(PIFLAGS) -c
+COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(PIFLAGS) -c
 # This is the link line. It also includes the flags, the compiler and all that good stuff. It binds the compiled files together.
-LINK.c=$(CC) $(DEPFLAGS) $(CFLAGS) $(PIFLAGS)
+LINK.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(PIFLAGS)
 # These commands are run after the compiling process.
 POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 
@@ -78,6 +78,7 @@ POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 #
 # Additionally, the "$@" character refers to the target.
 # 				the "$^" refers to the dependencies
+# 				the "$<" refers to the FIRST dependency
 
 # Everything depends on the binaries. If any of the 
 # binaries are edited, we should do stuff. If this
@@ -115,20 +116,8 @@ $(ODIR)/%.o: %.c $(DEPDIR)/%.d | $(ODIR)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 	$(POSTCOMPILE)
 
-#$(ODIR)/fileTools.o: fileTools.c
-#	$(COMPILE.c) -c $(OUTPUT_OPTION) $< 
-#
-#$(ODIR)/faradayScanAnalysisTools.o: faradayScanAnalysisTools.c
-#	$(COMPILE.c) -c $(OUTPUT_OPTION) $^ 
-#
-#$(ODIR)/polarizationAnalysisTools.o: polarizationAnalysisTools.c
-#	$(LINK.c) -c $(OUTPUT_OPTION) $^ 
-
 
 #ORIGINAL
-#RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(INTOBJECTS)
-#	$(LINK.c) $(OUTPUT_OPTION) $^ 
-#TESTING
 COMMONOBJECTS=$(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o $(INTDIR)/grandvillePhillips.o $(INTDIR)/omegaCN7500.o $(INTDIR)/RS485Devices.o
 PROBELASEROBJECTS=$(INTDIR)/sacherLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o probeLaserControl.o
 PUMPLASEROBJECTS=$(INTDIR)/topticaLaser.o $(INTDIR)/waveMeter.o $(INTDIR)/flipMirror.o $(INTDIR)/laserFlag.o
@@ -137,8 +126,6 @@ getCounts: getCounts.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 RbAbsorbScan: RbAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-#RbAbsorbScanAutoFindDetuning: RbAbsorbScanAutoFindDetuning.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PROBELASEROBJECTS)
-#	$(LINK.c) $(OUTPUT_OPTION) $^ 
 getWavemeter: getWavemeter.o $(INTDIR)/waveMeter.o $(COMMONOBJECTS) $(PROBELASEROBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PUMPLASEROBJECTS)
@@ -150,6 +137,10 @@ excitationfn: excitationfn.o mathTools.o $(INTDIR)/Sorensen120.o $(COMMONOBJECTS
 monitorCountsAndCurrent: monitorCountsAndCurrent.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 monitorPhotodiodes: monitorPhotodiodes.o mathTools.o $(INTOBJECTS) 
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+monitorPhotodiodesOnKeyPress: monitorPhotodiodesOnKeyPress.o mathTools.o $(INTOBJECTS) 
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+deflectorTransmission: deflectorTransmission.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 recordEverythingAndTwistMotor: recordEverythingAndTwistMotor.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
