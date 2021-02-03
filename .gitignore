@@ -55,6 +55,9 @@ interfacing/bakeoutOmega
 interfacing/controlledCooldown
 interfacing/systemStatus
 interfacing/testAnalogSlave
+interfacing/recordSystemData
+interfacing/testK485
+interfacing/testK6485
 .d/
 io/
 polarizationScriptAnalysis
