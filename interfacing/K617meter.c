@@ -7,7 +7,8 @@
 
 
 int getReadingK617(float* amps,char gpibaddress, unsigned short RS485Address){
-	unsigned char chardata[64];
+	//unsigned char chardata[64];
+	char chardata[64];
 	float tempA=0.0;
 	int counter = 5;
 //	unsigned int i;
@@ -41,8 +42,10 @@ int getReadingK617(float* amps,char gpibaddress, unsigned short RS485Address){
 }
 
 int getStatusK617(unsigned char* returndata, char gpibaddress, unsigned short RS485Address){
-	unsigned char cmdData[16];
-	unsigned int i;
+	//unsigned char cmdData[16];
+	char cmdData[16];
+	//unsigned int i;
+	int i;
 
 	strcpy(cmdData,"U0X");
 
@@ -64,8 +67,10 @@ int getStatusK617(unsigned char* returndata, char gpibaddress, unsigned short RS
  * for the functions that we will send to the device later
  */
 int initializeK617(char gpibaddress, unsigned short RS485Address){
-	unsigned char cmdData[16];
-	unsigned int i;
+	//unsigned char cmdData[16];
+	char cmdData[16];
+	//unsigned int i;
+	int i;
 	strcpy(cmdData,"G1F1C0R0X"); // Sets default settings we use. See below
 								 // for description of settings. 
 	/* For full information, see keithley_617.pdf
@@ -87,8 +92,10 @@ int initializeK617(char gpibaddress, unsigned short RS485Address){
 }
 
 int setRangeK617(char gpibaddress, unsigned short RS485Address, unsigned char range){
-	unsigned char cmdData[16];
-	unsigned int i;
+	//unsigned char cmdData[16];
+	char cmdData[16];
+	//unsigned int i;
+	int i;
 
 	if (range>11) range = 11;
 

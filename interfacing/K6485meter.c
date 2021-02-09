@@ -6,7 +6,8 @@
 
 
 int getReadingK6485(float* amps, char gpibaddress, unsigned short RS485Address){
-	unsigned char chardata[64];
+	//unsigned char chardata[64];
+	char chardata[64];
 	//char chardata[64];
 	float tempA=0.0;
 	int counter = 5;
@@ -37,9 +38,11 @@ int getReadingK6485(float* amps, char gpibaddress, unsigned short RS485Address){
 }
 
 int getStatusK6485(unsigned char* returndata, char gpibaddress, unsigned short RS485Address){
-	unsigned char cmdData[16];
+	//unsigned char cmdData[16];
+	char cmdData[16];
 	//char cmdData[16];
-	unsigned int i;
+	//unsigned int i;
+	int i;
 
 	strcpy(cmdData,"U0X");
 
@@ -60,9 +63,11 @@ int getStatusK6485(unsigned char* returndata, char gpibaddress, unsigned short R
  * for the functions that we will send to the device later
  */
 int initializeK6485(char gpibaddress, unsigned short RS485Address){
-	unsigned char cmdData[16];
+	//unsigned char cmdData[16];
+	char cmdData[16];
 	//char cmdData[16];
-	unsigned int i;
+	//unsigned int i;
+	int i;
 
 	// See below for the meaning of each two character code.
 	// See Appendix D of 6485 manual for all codes.
@@ -80,9 +85,11 @@ int initializeK6485(char gpibaddress, unsigned short RS485Address){
 }
 
 int setRangeK6485(char gpibaddress, unsigned short RS485Address, unsigned char range){
-	unsigned char cmdData[16];
+	//unsigned char cmdData[16];
+	char cmdData[16];
 	//char cmdData[16];
-	unsigned int i;
+	//unsigned int i;
+	int i;
 
 	if (range>9) range = 9;
 

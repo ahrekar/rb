@@ -478,7 +478,8 @@ int sendGPIBData(unsigned char *cmd, char gpibaddress, unsigned short Address){
 return status;
 }
 
-int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address){
+//int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address){
+int listenGPIBData(char *returnData, char terminator, char gpibaddress, unsigned short Address){
 
 	 int i,length, status;
 	unsigned char outData[64];

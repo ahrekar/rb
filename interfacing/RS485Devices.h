@@ -131,7 +131,8 @@ to send based on the length of the string.
 */
 
 
-int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address);
+//int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address);
+int listenGPIBData(char *returnData, char terminator, char gpibaddress, unsigned short Address);
 /* listenGPIBData( buffer for return data, RS485 address of bridge device)
 //Address is the RS485 device address
 // gpibaddress is the GPIB address of the instrument connected to RS485bridge
