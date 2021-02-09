@@ -65,8 +65,6 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 	
-	homeMotor(PROBE_MOTOR);
-
 	collectAndRecordData(fileName);
 
 	printf("---\n%s\n---\n",fileName);
