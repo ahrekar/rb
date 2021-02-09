@@ -13,8 +13,8 @@
 
 #define K617 0
 #define BOTTOM_KEITHLEY 1
-#define BROWN_KEITHLEY 2
-#define TOP_KEITHLEY 3
+#define TOP_KEITHLEY 2
+#define BROWN_KEITHLEY 3
  
 #define HETARGET 0
 #define HPCAL 0.06214
