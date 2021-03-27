@@ -50,9 +50,9 @@ int status;
                 *returnvalue=CVGauge;
             }else
             {
-		    //printf("Chan: %d\tReading:%f\t",kchan,CVGauge);
-		    CVGauge = pow(10,(0.00499*CVGauge - 4.05)); // THE REAL ONE
-		    *returnvalue=CVGauge;
+                //printf("Chan: %d\tReading:%f\t",kchan,CVGauge);
+                CVGauge = pow(10,(0.00499*CVGauge - 4.05)); // THE REAL ONE
+                *returnvalue=CVGauge;
             }
 	} else {
 		printf("error reading box \n");
