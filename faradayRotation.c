@@ -131,12 +131,14 @@ int main (int argc, char **argv)
     //getSVCN7500(CN_TARGET,&returnFloat);
     fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
+    printf("Reading in configuration file...\n");
     char line[1024];
 	fgets(line,1024,configFile);
 	while(line[0]=='#'){
 		fprintf(fp,"%s",line);
 		fgets(line,1024,configFile);
 	}
+    printf("Read in configuration file!\n");
 
 	fclose(configFile);
 
@@ -148,12 +150,12 @@ int main (int argc, char **argv)
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
     int numPhotoDetectors = 2;
-    int photoDetectors[] = {BOTLOCKIN,TOPLOCKIN};
-    char* names[]={"HORIZ","VERT"};
+    int photoDetectors[] = {BOTLOCKIN, TOPLOCKIN};
+    char* names[]={"HORIZ", "VERT"};
     // UNCOMMENT THE FOLLOWING LINES WHEN USING THE FLOATING PD
     //int numPhotoDetectors = 3;
-    //int photoDetectors[] = {BROWN_KEITHLEY,BOTTOM_KEITHLEY,TOP_KEITHLEY};
-    //char* names[]={"REF","HORIZ","VERT"};
+    //int photoDetectors[] = {BOTTOM_KEITHLEY,TOP_KEITHLEY,BROWN_KEITHLEY};
+    //char* names[]={"HORIZ","VERT","REF"};
 
     int motor = PROBE_MOTOR;
     //int motor = PUMP_MOTOR;
@@ -211,7 +213,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             // UPDATE: With the Lock-in at a time scale of 100 ms, it takes 500 ms to settle. 
             // UPDATE: With time scale of 30 ms, takes 300 ms to settle.
 
-            //get samples and average
+            // UNCOMMENT if using Lock-ins.
+            // COMMENT OUT if using ammeters.
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
                 for (i=0;i<nSamples;i++){ // nSamples
@@ -223,10 +226,12 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 stdDev[j]=stdDeviation(measurement,nSamples);
             } // numPhotoDet1
 
+            // UNCOMMENT if using ammeters.
+            // COMMENT OUT if using Lock-ins.
             //for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
             //    involts[j]=0.0;	
             //    for (i=0;i<nSamples;i++){ // nSamples
-            //            getUSB1208AnalogIn(j,&measurement[i]);
+            //            getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
             //            involts[j]=involts[j]+fabs(measurement[i]);
             //            delay(WAITTIME);
             //    } // nSamples

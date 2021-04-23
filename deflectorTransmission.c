@@ -174,7 +174,6 @@ void collectAndRecordData(char* fileName){
 		timeCounter++;
     }
 
-	fprintf(fp,"\n");
 	fclose(fp);
 	free(measurement);
 }

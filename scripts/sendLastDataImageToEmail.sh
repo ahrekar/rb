@@ -2,8 +2,12 @@
 
 RBC=/home/pi/RbControl
 
-SYSTEMINFO=$(sudo $RBC/interfacing/mainTemplate)
-IPADDRESS=$(sudo hostname -I)
-DATAFILENAME=$(ls /home/pi/RbData/$(date +%Y-%m-%d)/*.png | tail -n 1)
+#SYSTEMINFO=$(sudo $RBC/interfacing/mainTemplate)
+#IPADDRESS=$(sudo hostname -I)
+DATE=$(date +%Y-%m-%d)
+DATAFILENAME=$(ls /home/pi/RbData/$DATE/* | tail -n 2)
 
-echo "$SYSTEMINFO" | mutt -s "RbPi($IPADDRESS)" -a $DATAFILENAME -- karl@huskers.unl.edu
+for i in $DATAFILENAME; do
+	rclone copy -v $i box:"Gay Group"/"Project - Rb Spin Filter"/"RbDataRaw"/$DATE
+done
+

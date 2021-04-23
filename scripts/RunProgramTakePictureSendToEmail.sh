@@ -9,17 +9,17 @@ UNBLOCKED=0
 BLOCKED=1
 
 
-$RBC/setLaserFlag $PROBE $UNBLOCKED
-$RBC/setLaserFlag $PUMP $UNBLOCKED
-$RBC/scripts/takePictureAndSendToEmail.sh "RbAutoPic"
+#$RBC/setLaserFlag $PROBE $UNBLOCKED
+#$RBC/setLaserFlag $PUMP $UNBLOCKED
+#$RBC/scripts/takePictureAndSendToEmail.sh "RbAutoPic"
 
-$RBC/setLaserFlag $PROBE $UNBLOCKED
-$RBC/setLaserFlag $PUMP $BLOCKED
+#$RBC/setLaserFlag $PROBE $UNBLOCKED
+#$RBC/setLaserFlag $PUMP $BLOCKED
 #$RBC/faradayScan "Laser On, warming cell"
 #$RBC/setLaserFlag $PUMP $BLOCKED
 #$RBC/faradayScan "Laser Off, warming cell"
-sudo $RBC/RbAbsorbScan 33 67 .3 "Cell cooling"
+sudo $RBC/RbAbsorbScan 33.7 34.3 .01 "Monitoring profile."
 
 #$RBC/setLaserFlag $PROBE $UNBLOCKED
 #$RBC/setLaserFlag $PUMP $UNBLOCKED
-#$RBC/scripts/sendLastDataImageToEmail.sh
+$RBC/scripts/sendLastDataImageToEmail.sh

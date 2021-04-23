@@ -6,6 +6,10 @@
 # Note that $(OUTPUT_OPTION) is defined to be "-o $@" in my 
 # case. This is defined by the compiler.
 #
+# So the embarrassing truth is I don't really know how 
+# this all works. It's just a house of cards that I 
+# occassionally add another component on to. If it were
+# to collapse at some point, I'd be hopelessly lost.
 
 #NEWDEP
 DEPDIR := .d
@@ -14,7 +18,6 @@ $(shell mkdir -p $(DEPDIR)/interfacing >/dev/null)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 
 VPATH = obj
-
 
 # CC will be used to specify the compiler we will be using
 CC=gcc
@@ -164,8 +167,10 @@ faradayRotation: faradayRotation.o mathTools.o faradayScanAnalysisTools.o fileTo
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 #stepTemperatureWaitForRotationAngle: stepTemperatureWaitForRotationAngle.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 #	$(LINK.c) $(OUTPUT_OPTION) $^ 
-polarization: polarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o $(INTDIR)/Sorensen120.o
+polarization: polarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o $(INTDIR)/Sorensen120.o $(INTDIR)/K6485meter.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
+#polarization: polarization.o mathTools.o fileTools.o polarizationAnalysisTools.o $(INTOBJECTS)
+	#$(LINK.c) $(OUTPUT_OPTION) $^ 
 quickPolarization: quickPolarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setOmega: setOmega.o $(COMMONOBJECTS)
@@ -210,3 +215,4 @@ faradayScanAnalysis: faradayScanAnalysis.o faradayScanAnalysisTools.o mathTools.
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 getPhotoDiodes: getPhotoDiodes.o mathTools.o $(INTDIR)/kenBoard.o $(INTDIR)/USB1208.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
+

@@ -78,6 +78,7 @@ float getDetuning(float* returnFloat){
 	unsigned char retData[32];
 	unsigned char outData[32];
 	int status;
+    int attempts=0;
 	float temp;
 
 	strcpy((char*) outData," ");
@@ -89,7 +90,9 @@ float getDetuning(float* returnFloat){
         temp=atof((char*) retData);
         temp=(float)SPEEDOFLIGHT/temp - LINECENTER;
         //printf("Returned Detuning: %f\n",temp);
-    }while( temp < -800 || temp > 800 );
+        attempts++;
+    }while( (temp < -800 || temp > 800) && attempts < 5);
+    if (attempts ==5){printf("Could not read wavemeter!");}
 
     *returnFloat=temp;
 	return temp;

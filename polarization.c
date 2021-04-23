@@ -20,7 +20,6 @@
 #include "fileTools.h"
 #include "polarizationAnalysisTools.h"
 #include "interfacing/interfacing.h"
-#include "interfacing/RS485Devices.h"
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 	#include "mathTools.h"
@@ -32,6 +31,7 @@
 #include "interfacing/RS485Devices.h"
 #include "interfacing/Sorensen120.h"
 #include "interfacing/K617meter.h"
+#include "interfacing/K6485meter.h"
 
 #define GPIBBRIDGE1 0XC9 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
 // this is the GPIB addresses of each respective instrument attached to this bridge
@@ -185,6 +185,7 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
 	//char echoData[128];
 	// Variables for stepper motor control.
 	int nsteps,steps,ninc,i;
+    int j; // Don't use this but don't want to throw away the return value
     float sorensenValue, hpValue;
 
 	// Variables for data collections.
@@ -260,7 +261,12 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
             //writeRS485to232Bridge("READ?",echoData,0xCA);
 			//current += atof(echoData);
             do{
+            // This is the usual line for the polarization
 			getUSB1208AnalogIn(0,&measurement[i]);
+            
+            // This is the ad-hoc line for determining the Beta position, using the Ref photodiode channel.
+			//getUSB1208AnalogIn(BROWN_KEITHLEY,&measurement[i]);
+            //j = getReadingK6485(&measurement[i], K6485METERVERT, GPIBBRIDGE1);
             }while(measurement[i] == 0);
             current=(measurement[i]/(float)(dwell+1))+current;
 
@@ -269,7 +275,12 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
 
 		}
         do{
-        getUSB1208AnalogIn(0,&measurement[i]);
+            // This is the usual line for the polarization
+			getUSB1208AnalogIn(0,&measurement[i]);
+            
+            // This is the ad-hoc line for determining the Beta position, using the Ref photodiode channel.
+			// getUSB1208AnalogIn(BROWN_KEITHLEY,&measurement[i]);
+            //j = getReadingK6485(&measurement[i], K6485METERVERT, GPIBBRIDGE1);
         }while(measurement[i] == 0);
         current=(measurement[i]/(float)(dwell+1))+current;
 

@@ -57,6 +57,17 @@ int main (int argc, char **argv)
 		printf("    Suggested values: (33.8)  (34.4)  (.01)           \n");
 		return 0;
 	}
+
+	// Get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
+	time(&rawtime);
+	timeinfo=localtime(&rawtime);
+	struct stat st = {0};
+	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F",timeinfo);
+	if (stat(fileName, &st) == -1){ // Create the directory for the Day's data 
+		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	}
+	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/RbAbs%F_%H%M%S.dat",timeinfo);
+
     
     // Echo the filename and comments, if the program is being 
     // run by a script, this information isn't available on the 
@@ -82,17 +93,6 @@ int main (int argc, char **argv)
 		printf("error: startvalue > endvalue.\nYeah, i could just swap them in code.. or you could just enter them in correctly. :-)\n");
 		return 1;
 	}
-
-	// Get file name.  use format "RbAbs"+$DATE+$TIME+".dat"
-	time(&rawtime);
-	timeinfo=localtime(&rawtime);
-	struct stat st = {0};
-	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F",timeinfo);
-	if (stat(fileName, &st) == -1){ // Create the directory for the Day's data 
-		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
-	}
-	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/RbAbs%F_%H%M%S.dat",timeinfo);
-
 
 	writeFileHeader(fileName, comments);
 	fp=fopen(fileName,"a");
@@ -153,7 +153,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
 		fprintf(fp,"%f\t",value);
 
 		// delay to allow transients to settle
-		delay(200);
+		delay(400);
 		getProbeDetuning(&kensWaveLength);// Getting the wavelength invokes a significant delay
                                         // So we no longer need the previous delay statement. 
 		//kensWaveLength = -1;
