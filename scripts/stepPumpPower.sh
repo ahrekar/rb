@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -ne 1 ]; then 
-	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
+	echo "usage: sudo ./stepPumpPower.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
 

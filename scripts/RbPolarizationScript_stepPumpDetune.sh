@@ -1,14 +1,14 @@
 #!/bin/bash
 
 if [ "$#" -ne 1 ]; then 
-	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
+	echo "usage: sudo ./RbPolarizationScript_stepPumpDetune.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
 	COMMENTS=$1
 	PROBEFREQ=10
 	STARTFREQ=-3
-	ENDFREQ=3
-	STEPFREQ=.25
+	ENDFREQ=6
+	STEPFREQ=.5
 
     PUMP=1
     PROBE=0

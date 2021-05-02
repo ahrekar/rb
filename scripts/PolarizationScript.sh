@@ -4,8 +4,17 @@
 
 if [ "$#" -ne 9 ]; then 
 	echo "You provided $# arguments"
-	echo "usage: 
-	sudo ./PolarizationScript.sh <1. filament bias> <2. n2 offset> <3. Volt 1D> <4. Volt 2A> <5. he offset> <6. currentScale> <7. dwell time> <8. # Polarization Runs> <9. comments>
+	echo "usage:
+    sudo ./PolarizationScript.sh <1. filament bias> 
+                                 <2. n2 offset>
+                                 <3. Volt 1D> 
+                                 <4. Volt 2A> 
+                                 <5. he offset> 
+                                 <6. currentScale>
+                                 <7. dwell time>
+                                 <8. # Polarization Runs>
+								 <9. Pump Detuning (1.5 is max)>
+                                 <10. comments>
 
 	Remember to set the AOUTS in the file!" 
 else
@@ -16,12 +25,13 @@ else
 	TWOA=$4
 	HEOFFSET=$5
 	CURRENTSCALE=$6
-	SCANRANGE=40
+	SCANRANGE=59
 	STEPSIZE=16
 	DWELL=$7
 	NUMRUN=$8
-	COMMENTS=$9
-	AOUTS="0"
+	DET=$8
+	COMMENTS=$10
+	AOUTS="12.4"
 
     PUMP=1
     PROBE=0
@@ -59,6 +69,4 @@ else
 		# EXACT REPEAT DONE
 	done
 
-
-	echo "Completed set of repeat polarization runs, $COMMENTS" | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

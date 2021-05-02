@@ -10,12 +10,14 @@ if [ "$#" -ne 4 ]; then
 	echo "				<aout energy>" 
 	echo "				<dwell>" 
 	echo "				<ammeter scale>" 
+	echo "				<pump detuning (1.5 is max)>"
 	echo "				<additional comments>"
 else
     AOUT=$1
     DWELL=$2
 	AMMETERSCALE=$3
-    COMMENTS=$4
+    DETUNE=$4
+    COMMENTS=$5
 	LEAKCURRENT=0
 
 	source LoadWaveplatePositions.sh
@@ -56,6 +58,9 @@ else
 
 			echo "Unblocking probe beam..."
 			sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
+
+			echo "Checking in on detuning..."
+			sudo $RBC/setPumpDetuning $DETUNE
 		done 
 	done
 fi

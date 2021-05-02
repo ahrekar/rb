@@ -6,10 +6,11 @@
 #
 
 if [ "$#" -ne 4 ]; then
-	echo "usage: ./ElectronPolarizationScript.sh"
-	echo "				<aout energy>" 
+	echo "usage: ./PolarimeterBackgroundBeamOff.sh"
+	echo "				<he potential> assumed negative, input positive value" 
 	echo "				<dwell>" 
 	echo "				<ammeter scale>" 
+	echo "				<detuning (1.5 Ghz is max)>" 
 	echo "				<additional comments>"
 else
 	RBC=/home/pi/RbControl
@@ -22,6 +23,9 @@ else
 	source LoadWaveplatePositions.sh
 
 	NUMRUN=3
+
+	echo "Checking in on detuning..."
+	sudo $RBC/setPumpDetuning $DETUNE
 
 	for i in $( seq 1 $NUMRUN ); do 
 		echo "About to start next sequence of runs..."
@@ -57,6 +61,9 @@ else
 
 			echo "Unblocking probe beam..."
 			sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
+
+			echo "Checking in on detuning..."
+			sudo $RBC/setPumpDetuning $DETUNE
 		done 
 	done
 fi

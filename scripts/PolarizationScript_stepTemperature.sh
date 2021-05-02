@@ -13,6 +13,7 @@ else
 	STEPSIZE=24
 	DWELL=1
 	NUMRUN=3
+	DETUNE=1.5
 	NUMEQUILRUN=5
 	COMMENTS=$1
 	CCELLTEMP=140
@@ -28,12 +29,11 @@ else
 
 	for temp in $(seq $STARTTEMP $STEPTEMP $ENDTEMP); do 
 		echo "About to change temperature to $temp, giving 5 minutes opportunity to cancel" 
-		echo "About to change temperature to $temp" | mutt -s "RbPi Report" karl@huskers.unl.edu
 		sleep 300
 		sudo $RBC/setOmega $CCELLTEMP $temp
 
 		sudo $RBC/scripts/repeatRbQuickPolarization.sh $NUMEQUILRUN "Equil runs for temp=$temp (from $STARTTEMP to $ENDTEMP in steps of $STEPTEMP), $COMMENTS"
-		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN "temp=$temp,  $COMMENTS"
+		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN $DETUNE "temp=$temp,  $COMMENTS"
 	# TEMP LOOP DONE
 	done 
 	echo "Done with temp step run from $STARTTEMP to $ENDTEMP" | mutt -s "RbPi Report" karl@huskers.unl.edu

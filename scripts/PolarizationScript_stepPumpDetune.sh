@@ -4,27 +4,38 @@ if [ "$#" -ne 1 ]; then
 	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
-	FILBIAS="-135.1" # Should be negative
-	N2OFFSET="34"
-	ONED="1"
-	TWOA="3.0"
+	FILBIAS="-150" # Should be negative
+	N2OFFSET="100"
+	ONED="1.0"
+	TWOA="0.8"
 	HEOFFSET=0	# Should be negative
-	CURRENTSCALE=7
-	SCANRANGE=63
+	CURRENTSCALE=5
+	SCANRANGE=59
 	STEPSIZE=24
 	DWELL=1
 	NUMRUN=1
 	COMMENTS=$1
+	####
+	## DON'T FORGET TO SET THE AOUT IN THE PolarizationScript.sh
+	####
 
-	STARTDETUNE=11
-	ENDDETUNE=5
-	STEPDETUNE=-2
+	STARTDETUNE=1.5
+	ENDDETUNE=11.5
+	STEPDETUNE=2.5
+	# OR, you can specify the detunings space separated. This is 
+	# useful if you want to make sure that you are not suceptible
+	# to drifting effects. E.G: 1.5 11.5 4.0 9.0 6.5
 
     PUMP=1
     PROBE=0
 
     BLOCKED=1
     UNBLOCKED=0
+
+	echo "Scheduled detunings are:"
+	for detune in 1.5 11.5 4.0 9.0 6.5; do 
+		echo $detune
+	done
 
 	for detune in $(seq $STARTDETUNE $STEPDETUNE $ENDDETUNE); do 
 		echo "About to change freq to $detune, giving 1 minute opportunity to cancel" 
@@ -39,8 +50,7 @@ else
 		echo "Giving 3 s for the laser to settle"
 		sleep 3
 
-		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $ONED $TWOA $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN "detune->$detune, $COMMENTS"
+		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $ONED $TWOA $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN $detune "detune->$detune, $COMMENTS"
 	# detune LOOP DONE
 	done 
-	echo "Finished with pump scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

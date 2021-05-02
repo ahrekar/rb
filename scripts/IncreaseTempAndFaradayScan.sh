@@ -3,7 +3,7 @@
 #
 
 if [ "$#" -ne 1 ]; then 
-	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
+	echo "usage: sudo ./IncreaseTempAndFaradayScan.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
 	FILBIAS="130.0"
@@ -53,9 +53,9 @@ else
 		for i in $(seq 1 $NUMRUNS); do 
 			echo "About to start polarization run $i of $NUMRUNS. Pausing for 5 seconds to give the opportunity to cancel the run."
 			sleep 5
-			sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT1 2 $CURRENTSCALE "temp=$temp, Run $i, AOUT=$AOUT1, $COMMENTS"
-			sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT2 3 $CURRENTSCALE "temp=$temp, Run $i, AOUT=$AOUT2, $COMMENTS"
-			sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT3 2 $CURRENTSCALE "temp=$temp, Run $i, AOUT=$AOUT3, $COMMENTS"
+			sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT1 2 $CURRENTSCALE 1.5 "temp=$temp, Run $i, AOUT=$AOUT1, $COMMENTS"
+			sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT2 3 $CURRENTSCALE 1.5 "temp=$temp, Run $i, AOUT=$AOUT2, $COMMENTS"
+			sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT3 2 $CURRENTSCALE 1.5 "temp=$temp, Run $i, AOUT=$AOUT3, $COMMENTS"
 			#echo '$RBC/scripts/ElectronPolarizationScript.sh 216 3 $CURRENTSCALE "Run $i, AOUT=216, $COMMENTS"'
 			#echo '$RBC/scripts/ElectronPolarizationScript.sh 504 6 $CURRENTSCALE "Run $i, AOUT=504, $COMMENTS"'
 			#echo '$RBC/scripts/ElectronPolarizationScript.sh 800 3 $CURRENTSCALE "Run $i, AOUT=800, $COMMENTS"'
@@ -102,9 +102,9 @@ else
 	for i in $(seq 1 $NUMRUNS); do 
 		echo "About to start polarization run $i of $NUMRUNS. Pausing for 5 seconds to give the opportunity to cancel the run."
 		sleep 5
-		sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT1 2 $CURRENTSCALE "temp=$temp, Run $i, AOUT=$AOUT1, $COMMENTS"
-		sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT2 3 $CURRENTSCALE "temp=$temp, Run $i, AOUT=$AOUT2, $COMMENTS"
-		sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT3 2 $CURRENTSCALE "temp=$temp, Run $i, AOUT=$AOUT3, $COMMENTS"
+		sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT1 2 $CURRENTSCALE 1.5 "temp=$temp, Run $i, AOUT=$AOUT1, $COMMENTS"
+		sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT2 3 $CURRENTSCALE 1.5 "temp=$temp, Run $i, AOUT=$AOUT2, $COMMENTS"
+		sudo $RBC/scripts/ElectronPolarizationScript.sh $AOUT3 2 $CURRENTSCALE 1.5 "temp=$temp, Run $i, AOUT=$AOUT3, $COMMENTS"
 		#echo '$RBC/scripts/ElectronPolarizationScript.sh 216 3 $CURRENTSCALE "Run $i, AOUT=216, $COMMENTS"'
 		#echo '$RBC/scripts/ElectronPolarizationScript.sh 504 6 $CURRENTSCALE "Run $i, AOUT=504, $COMMENTS"'
 		#echo '$RBC/scripts/ElectronPolarizationScript.sh 800 3 $CURRENTSCALE "Run $i, AOUT=800, $COMMENTS"'

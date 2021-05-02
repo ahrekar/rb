@@ -6,21 +6,25 @@
 #
 
 if [ "$#" -ne 4 ]; then
-	echo "usage: ./ElectronPolarizationScript.sh"
+	echo "usage: ./PolarimeterBackgroundGasOff.sh"
 	echo "				<aout energy>" 
 	echo "				<dwell>" 
 	echo "				<ammeter scale>" 
+	echo "				<detune (1.5 GHz is max)>" 
 	echo "				<additional comments>"
 else
     AOUT=$1
     DWELL=$2
 	AMMETERSCALE=$3
-    COMMENTS=$4
+    DETUNE=$4
+    COMMENTS=$5
 	LEAKCURRENT=0
 
 	source LoadWaveplatePositions.sh
 
 	NUMRUN=5
+
+	sudo $RBC/setPumpDetuning $DETUNE
 
 	for i in $( seq 1 $NUMRUN ); do 
 		echo "About to start next sequence of runs..."
@@ -56,6 +60,9 @@ else
 
 			echo "Unblocking probe beam..."
 			sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
+			
+			echo "Checking in on detuning..."
+			sudo $RBC/setPumpDetuning $DETUNE
 		done 
 	done
 fi

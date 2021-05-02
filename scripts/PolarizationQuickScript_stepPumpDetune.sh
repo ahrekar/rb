@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -ne 1 ]; then 
-	echo "usage: sudo ./QuickPolarizationScript.sh <additional comments>" 
+	echo "usage: sudo ./PolarizationQuickScript_stepPumpDetune.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
 	FILBIAS="-135.1" # Should be negative
