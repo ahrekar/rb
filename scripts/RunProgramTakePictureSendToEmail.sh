@@ -18,7 +18,7 @@ BLOCKED=1
 #$RBC/faradayScan "Laser On, warming cell"
 #$RBC/setLaserFlag $PUMP $BLOCKED
 #$RBC/faradayScan "Laser Off, warming cell"
-sudo $RBC/RbAbsorbScan 33.7 34.3 .01 "Monitoring profile."
+sudo $RBC/RbAbsorbScan 33.6 34.2 .01 "Monitoring profile."
 
 #$RBC/setLaserFlag $PROBE $UNBLOCKED
 #$RBC/setLaserFlag $PUMP $UNBLOCKED
