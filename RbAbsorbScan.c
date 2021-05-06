@@ -150,7 +150,7 @@ void collectAndRecordData(char* fileName, float startvalue, float endvalue, floa
         if(count%15==0) printf("TEMP   Det       VERTICAL    |   HORIZONTAL  |   REFERENCE\n");
 		setSacherTemperature(value);
 		printf("%2.3f\t",value);
-		fprintf(fp,"%f\t",value);
+		fprintf(fp,"%2.3f\t",value);
 
 		// delay to allow transients to settle
 		delay(400);
@@ -288,7 +288,6 @@ void graphData(char* fileName){
 		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "unset output\n"); 
-		fprintf(gnuplot, buffer);
 
 		fprintf(gnuplot, "set terminal dumb size 54,14\n");
 		fprintf(gnuplot, "set output\n");			
