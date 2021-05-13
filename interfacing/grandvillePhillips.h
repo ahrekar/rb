@@ -13,8 +13,8 @@ are connected to ADC channels
 
 #include "RS485Devices.h"
 
-#define GP_HE_CHAN 0
-#define GP_N2_CHAN 1
+#define GP_TOP1 0 // The Alcatel foreline
+#define GP_TOP2 1 // The Welch foreline
 #define GP_CHAMB_CHAN 2
 
 int getConvectron(unsigned int chan, float* returnvalue);

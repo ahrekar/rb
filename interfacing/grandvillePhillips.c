@@ -11,8 +11,8 @@ int getConvectron(unsigned int chan, float* returnvalue){
     unsigned int kchan;
     float Stdev,CVGauge;
     //unsigned int rdata;
-int status;
-/*
+    int status;
+    /*
     switch (chan){
         case GP_HE_CHAN:  // this is the analog out port on the grandville phillips machine
             kchan = 4; //that is connected to this analog channel on the board
@@ -24,13 +24,15 @@ int status;
             return -1;
     }
     getADC(kchan,&rdata);
-*/
+    */
 
 	switch (chan)	{
-		case GP_HE_CHAN:
+		//case GP_HE_CHAN:
+		case GP_TOP1: // Target Foreline (2021-05-07)
 			kchan=3;
 			break;
-		case GP_N2_CHAN:
+		//case GP_N2_CHAN:
+		case GP_TOP2: // Source Foreline (2021-05-07)
 			kchan=2;
 			break;
 		case GP_CHAMB_CHAN:
