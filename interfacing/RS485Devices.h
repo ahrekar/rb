@@ -11,6 +11,7 @@ General header File to encapsulate all slave device functions
 #define BASEREGFN 0x00F0
 
 #define GPIBBRIDGE1 0XC9 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
+#define GPIBBRIDGE2 0XC1 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
 
 /* **************************************************************************************************
 

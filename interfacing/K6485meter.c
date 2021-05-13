@@ -91,6 +91,18 @@ int setRangeK6485(char gpibaddress, unsigned short RS485Address, unsigned char r
 	//unsigned int i;
 	int i;
 
+	/* Ranges as specified in the manual (pg. 238 of pdf)
+	 * R0 = Auto
+	 * R1 = 002 nA
+	 * R2 = 020 nA
+	 * R3 = 200 nA
+	 * R4 = 002 uA
+	 * R5 = 020 uA
+	 * R6 = 200 uA
+	 * R7 = 002 mA
+	 * R8 = 020 mA
+	 * R9 = Auto range off
+	 */
 	if (range>9) range = 9;
 
 	sprintf(cmdData,"R%dX",range);

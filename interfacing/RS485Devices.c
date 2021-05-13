@@ -475,13 +475,13 @@ int sendGPIBData(unsigned char *cmd, char gpibaddress, unsigned short Address){
 //debuging information
 		printHexData(rtnData,k);
 	}
-return status;
+	return status;
 }
 
 //int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address){
 int listenGPIBData(char *returnData, char terminator, char gpibaddress, unsigned short Address){
 
-	 int i,length, status;
+	int i,length, status;
 	unsigned char outData[64];
 	unsigned char rtnData[64];
 	unsigned int k;

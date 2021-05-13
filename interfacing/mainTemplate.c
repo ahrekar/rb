@@ -72,7 +72,7 @@ int main (int argc, char* argv[]){
             fprintf(fp,"Year\tMonth\tDay\tHour\tMinute\tSecond\tTotalMinutes\tTrg. T\tRes. T\tHeCV\tN2CV\tMainChamber\tIonG\tKiethly 617\tCounts\tRefCell\tPRbLaser\tPumpLaser\n");
         }
 
-		strftime(buffer,BUFSIZE,"%y\t%m\t%d\t%H\t%M\t%S\t",timeinfo);
+		strftime(buffer,BUFSIZE,"%Y\t%m\t%d\t%H\t%M\t%S\t",timeinfo);
 		fprintf(fp,"%s",buffer);
 
 		totalMinutes=(year-14)*525600+(month-1)*31*HOURSINDAY*MINUTESINHOUR+(day-1)*HOURSINDAY*MINUTESINHOUR+hour*MINUTESINHOUR+min;
@@ -93,11 +93,11 @@ int main (int argc, char* argv[]){
 		fprintf(fp,"%.2f\t",myTemp);
 
 		printf("\n\n_____PRESSURE_____\n");
-		getConvectron(GP_HE_CHAN,&myTemp);
+		getConvectron(GP_TOP2,&myTemp);
 		printf("WelchForeline: %2.2E\n",myTemp);
 		fprintf(fp,"%2.2E\t",myTemp);
 
-		getConvectron(GP_N2_CHAN,&myTemp);
+		getConvectron(GP_TOP1,&myTemp);
 		printf("AlcatelForeline: %2.2E\n",myTemp);
 		fprintf(fp,"%2.2E\t",myTemp);
 
