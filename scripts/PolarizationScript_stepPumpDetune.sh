@@ -9,7 +9,7 @@ else
 	ONED="1.0"
 	TWOA="0.8"
 	HEOFFSET=0	# Should be negative
-	CURRENTSCALE=5
+	CURRENTSCALE=6
 	SCANRANGE=59
 	STEPSIZE=24
 	DWELL=1
@@ -19,9 +19,9 @@ else
 	## DON'T FORGET TO SET THE AOUT IN THE PolarizationScript.sh
 	####
 
-	STARTDETUNE=1.5
-	ENDDETUNE=11.5
-	STEPDETUNE=2.5
+	#STARTDETUNE=1.5
+	#ENDDETUNE=11.5
+	#STEPDETUNE=2.5
 	# OR, you can specify the detunings space separated. This is 
 	# useful if you want to make sure that you are not suceptible
 	# to drifting effects. E.G: 1.5 11.5 4.0 9.0 6.5
@@ -37,7 +37,7 @@ else
 		echo $detune
 	done
 
-	for detune in $(seq $STARTDETUNE $STEPDETUNE $ENDDETUNE); do 
+	for detune in 1.5 11.5 4.0 9.0 6.5; do 
 		echo "About to change freq to $detune, giving 1 minute opportunity to cancel" 
 		sleep 6
 

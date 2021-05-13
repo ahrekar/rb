@@ -2,7 +2,7 @@
 #
 #
 
-if [ "$#" -ne 9 ]; then 
+if [ "$#" -ne 10 ]; then 
 	echo "You provided $# arguments"
 	echo "usage:
     sudo ./PolarizationScript.sh <1. filament bias> 
@@ -29,9 +29,9 @@ else
 	STEPSIZE=16
 	DWELL=$7
 	NUMRUN=$8
-	DET=$8
-	COMMENTS=$10
-	AOUTS="12.4"
+	DET=$9
+	COMMENTS=${10}
+	AOUTS="18 0 13.5 4.5 9.0"
 
     PUMP=1
     PROBE=0
@@ -43,7 +43,8 @@ else
 	for i in $(seq 1 $NUMRUN); do 
 		echo "About to start next energy polarization run ($i/$NUMRUN). Pausing for 5 seconds to give the opportunity to cancel the run."
 		sleep 5
-		sudo $RBC/scripts/ElectronPolarizationScript.sh "$AOUTS" $DWELL $CURRENTSCALE "Run $i/$NUMRUN, $COMMENTS"
+		echo $RBC/scripts/ElectronPolarizationScript.sh "$AOUTS" $DWELL $CURRENTSCALE $DET "Run $i/$NUMRUN, $COMMENTS"
+		sudo $RBC/scripts/ElectronPolarizationScript.sh "$AOUTS" $DWELL $CURRENTSCALE $DET "Run $i/$NUMRUN, $COMMENTS"
 
 		echo "Unblocking pump laser..."
 		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED

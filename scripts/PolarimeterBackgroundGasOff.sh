@@ -5,7 +5,7 @@
 #		./ElectronPolarizationScript <aout background> <aout Helium Excited> <dwell> <additional comments>
 #
 
-if [ "$#" -ne 4 ]; then
+if [ "$#" -ne 5 ]; then
 	echo "usage: ./PolarimeterBackgroundGasOff.sh"
 	echo "				<aout energy>" 
 	echo "				<dwell>" 

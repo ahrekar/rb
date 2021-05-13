@@ -5,7 +5,7 @@
 #		./ElectronPolarizationScript <aout background> <aout Helium Excited> <dwell> <additional comments>
 #
 
-if [ "$#" -ne 4 ]; then
+if [ "$#" -ne 5 ]; then
 	echo "usage: ./PolarimeterBackgroundBeamOff.sh"
 	echo "				<he potential> assumed negative, input positive value" 
 	echo "				<dwell>" 
@@ -17,7 +17,8 @@ else
     AOUT=$1
     DWELL=$2
 	AMMETERSCALE=$3
-    COMMENTS=$4
+    DETUNE=$4
+    COMMENTS=$5
 	LEAKCURRENT=0
 
 	source LoadWaveplatePositions.sh
