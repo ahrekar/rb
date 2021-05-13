@@ -184,9 +184,9 @@ void writeFileHeader(char* fileName, char* comments){
     /** Pressure Gauges **/
 
 	/*
-	getConvectron(GP_HE_CHAN,&returnFloat);
-	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
+	getConvectron(GP_TOP1,&returnFloat);
+	printf("CVGauge(Target Foreline) %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
 	*/
 
     /** Temperature Controllers **/
