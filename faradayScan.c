@@ -125,13 +125,13 @@ int main (int argc, char **argv)
 	printf("IonGauge %2.2E Torr \n",returnFloat);
 	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
 
-	getConvectron(GP_N2_CHAN,&returnFloat);
-	printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
+	getConvectron(GP_TOP2,&returnFloat);
+	printf("CVGauge(Source Foreline): %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(Source Foreline)(Torr):\t%2.2E\n", returnFloat);
 
-	getConvectron(GP_HE_CHAN,&returnFloat);
-	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
+	getConvectron(GP_TOP1,&returnFloat);
+	printf("CVGauge(Target Foreline): %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
 	getPVCN7500(CN_RESERVE,&returnFloat);
@@ -191,12 +191,13 @@ int main (int argc, char **argv)
 	printf("Homing motor...\n");
 	homeMotor(PROBE_MOTOR);
 
+    // WHEN THE PUMP LASER IS OFF, measure with ammeters.
     //int numPd=3;
     //int pd[] = {BOTTOM_KEITHLEY,TOP_KEITHLEY,BROWN_KEITHLEY};
 	//fprintf(fp,"STEP\tPUMP\tPUMPsd\tPROBE\tPROBEsd\tREF\tREFsd\n");// Write the header for the data to the file.
+    // WHEN THE PUMP LASER IS ON, measure with lock-in.
     int numPd=1;
     int pd[] = {BOTLOCKIN};
-	// Write the header for the data to the file.
 	fprintf(fp,"STEP\tPUMP\tPUMPsd\n");
 
     fclose(fp);
@@ -227,6 +228,8 @@ int main (int argc, char **argv)
 
 	setProbeDetuning(scanDet[0]);
 	delay(3000);
+    printf("\n");
+    fflush(stdout);
 
 	//printf("Processing Data...\n");
 	//analyzeData(fileName, numDet, revolutions, dataPointsPerRevolution, FOI);
@@ -293,7 +296,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             //for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
             //    involts[j]=0.0;	
             //    for (i=0;i<nSamples;i++){ // nSamples
-            //            getUSB1208AnalogIn(j,&measurement[i]);
+            //            getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
             //            involts[j]=involts[j]+measurement[i];
             //            delay(WAITTIME);
             //    } // nSamples

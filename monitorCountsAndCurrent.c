@@ -100,15 +100,18 @@ int main (int argc, char **argv)
 	fprintf(fp,"#USB1208->HP3617Aconversion:\t%2.6f\n",HPCAL);
 	fprintf(fp,"#DWELL:\t%d\n",dwell);
 	fprintf(fp,"#Comments:\t%s\n",comments);
+	// Record PRessure gauges
 	getIonGauge(&returnFloat);
 	printf("IonGauge %2.2E Torr \n",returnFloat);
 	fprintf(fp,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
-	getConvectron(GP_N2_CHAN,&returnFloat);
-	printf("CVGauge(N2) %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(N2)(Torr):\t%2.2E\n", returnFloat);
-	getConvectron(GP_HE_CHAN,&returnFloat);
-	printf("CVGauge(He) %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(He)(Torr):\t%2.2E\n", returnFloat);
+
+	getConvectron(GP_TOP2,&returnFloat);
+	printf("CVGauge(Source Foreline): %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(Source Foreline)(Torr):\t%2.2E\n", returnFloat);
+
+	getConvectron(GP_TOP1,&returnFloat);
+	printf("CVGauge(Target Foreline): %2.2E Torr\n", returnFloat);
+	fprintf(fp,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
 
     /** Temperature Controllers **/
 //getPVCN7500(CN_RESERVE,&returnFloat);
