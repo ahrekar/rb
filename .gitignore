@@ -67,6 +67,9 @@ setHeliumTarget
 test
 test.c
 test.sh
+asymmetry
+getCounts
+getNormalizedCounts
 RbPumpAbsorbScan
 faradayScanBPD
 getWavemeter
