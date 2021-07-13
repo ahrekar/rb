@@ -2,7 +2,7 @@
 #
 #
 
-if [ "$#" -ne 9 ]; then 
+if [ "$#" -ne 10 ]; then 
 	echo "You provided $# arguments"
 	echo "usage: 
     sudo ./PolarizationQuickScript.sh <1. filament bias> 
@@ -13,7 +13,8 @@ if [ "$#" -ne 9 ]; then
                                       <6. currentScale>
                                       <7. dwell time>
                                       <8. # Polarization Runs>
-                                      <9. comments>
+                                      <9. Pump Detuning>
+                                      <10. comments>
 
     Remember to set the AOUTS in the file!" 
 else
@@ -24,13 +25,14 @@ else
 	TWOA=$4
 	HEOFFSET=$5
 	CURRENTSCALE=$6
-	SCANRANGE=40
+	SCANRANGE=85
 	STEPSIZE=24
 	DWELL=$7
 	NUMRUN=$8
-	COMMENTS=$9
+	DETUNE=$9
+	COMMENTS=${10}
 	NUMMEAS=10
-	AOUTS="0"
+	AOUTS="41.8"
 
     PUMP=1
     PROBE=0
@@ -42,7 +44,7 @@ else
 	for i in $(seq 1 $NUMRUN); do 
 		echo "About to start next energy polarization run ($i/$NUMRUN). Pausing for 5 seconds to give the opportunity to cancel the run."
 		sleep 5
-		sudo $RBC/scripts/ElectronQuickPolarizationScript.sh "$AOUTS" $DWELL $NUMMEAS $CURRENTSCALE "Run $i/$NUMRUN, $COMMENTS"
+		sudo $RBC/scripts/ElectronQuickPolarizationScript.sh "$AOUTS" $DWELL $NUMMEAS $CURRENTSCALE $DETUNE "Run $i/$NUMRUN, $COMMENTS"
 
 		echo "Unblocking pump laser..."
 		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
@@ -67,7 +69,4 @@ else
 		sudo $RBC/setLaserFlag $PROBE $BLOCKED
 		# EXACT REPEAT DONE
 	done
-
-
-	echo "Completed set of repeat polarization runs, $COMMENTS" | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

@@ -32,6 +32,7 @@ Usage:
 #include <wiringPi.h>
 #include "interfacing/interfacing.h"
 #include "interfacing/Sorensen120.h"
+#include "interfacing/K617meter.h"
 #include "mathTools.h"
 #define BUFSIZE 1024
 
@@ -47,6 +48,7 @@ int main (int argc, char **argv)
 	int stepsize, scanrange;
 	int minstepsize,maxstepsize;
 	int dwell,magnitude;
+    int i;
 	time_t rawtime;
 	struct tm * timeinfo;
 	char buffer[BUFSIZE],filePath[BUFSIZE],fileName[BUFSIZE],comments[BUFSIZE];
@@ -109,6 +111,8 @@ int main (int argc, char **argv)
 	// set up USB interface
 	initializeBoard();
 	initializeUSB1208();
+	i = resetGPIBBridge(GPIBBRIDGE1);
+	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
 
 	// get file name.  use format "EX"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -243,6 +247,7 @@ void graphData(char* fileName){
 		// Then print to an image file.
 
 		// Set up the output.
+		//fprintf(gnuplot, "set terminal cairolatex png size 3.7in, 2.5in resolution 200\n");
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s_counts.png'\n", fileName);
 		fprintf(gnuplot, "%s",buffer);
@@ -370,7 +375,7 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
 	}
 	// Allocate some memory to store measurements for calculating
 	// error bars.
-	nSamples = 16;
+	nSamples = 2;
 	float* measurement = malloc(nSamples*sizeof(float));
 
     printf("aout  e_fil_Eng    e_trg_Eng   V_He    Counts   Current\n");
@@ -434,13 +439,21 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
             // delay to allow transients to settle
             delay(500);
 
+            // TODO Change this to collect a measurement 
+            // for every second of dwell time plus one. 
+            // TODO Change this to auto-scale set up a branch 
+            // to test it out, and when we're collecitng excitation
+            // functions without Rb some time, give it a try!
+            getReadingK617(&measurement[0], K617METER, GPIBBRIDGE1);
+
             getUSB1208Counter(dwell*10,&returnCounts);
             printf("%06ld  ",returnCounts);
 
+            getReadingK617(&measurement[1], K617METER, GPIBBRIDGE1);
+            
             current = 0.0;
             // grab several readings and average
             for (i=0;i<nSamples;i++){
-                getUSB1208AnalogIn(K617,&measurement[i]);
                 current+=measurement[i];
             }
 

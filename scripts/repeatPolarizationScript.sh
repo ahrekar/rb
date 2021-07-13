@@ -3,11 +3,11 @@
 RBC=/home/pi/RbControl
 
 if [ "$#" -ne 5 ]; then
-	echo "usage: ./repeatElectronPolarization.sh <HE target Voltage> "
-	echo "                                       <dwell time> "
-	echo "                                       <order of magnitude of current> "
-	echo "                                       <number of runs> "
-	echo "                                       <comments>"
+	echo "usage: ./repeaPolarizationScript.sh <HE target Voltage> "
+	echo "                                    <dwell time> "
+	echo "                                    <order of magnitude of current> "
+	echo "                                    <number of runs> "
+	echo "                                    <comments>"
 	echo "                                                  "
 else
 	HEVOLT=$1

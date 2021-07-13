@@ -23,7 +23,7 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are combiling
-SOURCES=excitationfn.c getCounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c getWavemeter.c monitorPhotodiodes.c monitorPhotodiodesOnKeyPress.c getPhotoDiodes.c turnOffPumpLaser.c deflectorTransmission.c
+SOURCES=excitationfn.c getCounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c quickFaradayScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c getWavemeter.c monitorPhotodiodes.c monitorPhotodiodesOnKeyPress.c getPhotoDiodes.c turnOffPumpLaser.c deflectorTransmission.c asymmetry.c
 # unused: RbAbsorbScanAutoFindDetuning.c stepTemperatureWaitForRotationAngle.c recordEverythingAndTwistMotor.c findDetuningForMaxPolarization.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
@@ -135,7 +135,7 @@ RbPumpAbsorbScan: RbPumpAbsorbScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 pumpLaserProfileScan: pumpLaserProfileScan.o mathTools.o fileTools.o $(COMMONOBJECTS) $(PUMPLASEROBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-excitationfn: excitationfn.o mathTools.o $(INTDIR)/Sorensen120.o $(COMMONOBJECTS) 
+excitationfn: excitationfn.o mathTools.o $(INTDIR)/Sorensen120.o $(INTDIR)/K617meter.o $(COMMONOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 monitorCountsAndCurrent: monitorCountsAndCurrent.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -144,6 +144,8 @@ monitorPhotodiodes: monitorPhotodiodes.o mathTools.o $(INTOBJECTS)
 monitorPhotodiodesOnKeyPress: monitorPhotodiodesOnKeyPress.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 deflectorTransmission: deflectorTransmission.o mathTools.o $(INTOBJECTS) 
+	$(LINK.c) $(OUTPUT_OPTION) $^ 
+asymmetry: asymmetry.o mathTools.o $(INTDIR)/kenBoard.o $(INTDIR)/K6485meter.o $(INTDIR)/K485meter.o $(INTDIR)/K617meter.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 recordEverythingAndTwistMotor: recordEverythingAndTwistMotor.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -171,7 +173,7 @@ polarization: polarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizati
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 #polarization: polarization.o mathTools.o fileTools.o polarizationAnalysisTools.o $(INTOBJECTS)
 	#$(LINK.c) $(OUTPUT_OPTION) $^ 
-quickPolarization: quickPolarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o
+quickPolarization: quickPolarization.o mathTools.o fileTools.o $(COMMONOBJECTS) polarizationAnalysisTools.o $(INTDIR)/Sorensen120.o
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 setOmega: setOmega.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 

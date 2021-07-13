@@ -216,29 +216,29 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
             // UNCOMMENT if using Lock-ins.
             // COMMENT OUT if using ammeters.
-            for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
-                involts[j]=0.0;	
-                for (i=0;i<nSamples;i++){ // nSamples
-                        getMCPAnalogIn(photoDetector[j],&measurement[i]);
-                        involts[j]=involts[j]+fabs(measurement[i]);
-                        delay(WAITTIME);
-                } // nSamples
-                involts[j]=involts[j]/(float)nSamples; 
-                stdDev[j]=stdDeviation(measurement,nSamples);
-            } // numPhotoDet1
-
-            // UNCOMMENT if using ammeters.
-            // COMMENT OUT if using Lock-ins.
             //for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
             //    involts[j]=0.0;	
             //    for (i=0;i<nSamples;i++){ // nSamples
-            //            getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+            //            getMCPAnalogIn(photoDetector[j],&measurement[i]);
             //            involts[j]=involts[j]+fabs(measurement[i]);
             //            delay(WAITTIME);
             //    } // nSamples
             //    involts[j]=involts[j]/(float)nSamples; 
             //    stdDev[j]=stdDeviation(measurement,nSamples);
             //} // numPhotoDet1
+
+            // UNCOMMENT if using ammeters.
+            // COMMENT OUT if using Lock-ins.
+            for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
+                involts[j]=0.0;	
+                for (i=0;i<nSamples;i++){ // nSamples
+                        getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+                        involts[j]=involts[j]+fabs(measurement[i]);
+                        delay(WAITTIME);
+                } // nSamples
+                involts[j]=involts[j]/(float)nSamples; 
+                stdDev[j]=stdDeviation(measurement,nSamples);
+            } // numPhotoDet1
 
             fprintf(fp,"%d\t",steps+(int)STEPSPERREV*k);
             for(j=0;j<numPhotoDetectors;j++){

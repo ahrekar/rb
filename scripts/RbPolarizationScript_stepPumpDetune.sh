@@ -5,9 +5,9 @@ if [ "$#" -ne 1 ]; then
 else
     RBC="/home/pi/RbControl"
 	COMMENTS=$1
-	PROBEFREQ=10
-	STARTFREQ=-3
-	ENDFREQ=6
+	PROBEFREQ=15
+	STARTFREQ=0
+	ENDFREQ=2.5
 	STEPFREQ=.5
 
     PUMP=1

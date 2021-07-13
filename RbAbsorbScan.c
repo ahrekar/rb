@@ -278,6 +278,7 @@ void graphData(char* fileName){
 		fprintf(gnuplot, "set x2tics nomirror\n");
 		//sprintf(buffer, "plot '%s' using 1:6:7 with errorbars, '%s' using ($1*%f+%f):6:7 axes x2y1\n",fileName,fileName,aoutConv,aoutInt);
         
+		//fprintf(gnuplot, "set terminal cairolatex size 3.7in, 2.5in resolution 200\n");
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
 

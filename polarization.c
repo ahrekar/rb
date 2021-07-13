@@ -133,11 +133,11 @@ int main (int argc, char **argv)
 
 	getConvectron(GP_TOP2,&returnFloat);
 	printf("CVGauge(Source Foreline): %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(Source Foreline)(Torr):\t%2.2E\n", returnFloat);
+	fprintf(rawData,"#CVGauge(Source Foreline)(Torr):\t%2.2E\n", returnFloat);
 
 	getConvectron(GP_TOP1,&returnFloat);
 	printf("CVGauge(Target Foreline): %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
+	fprintf(rawData,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
 
 
     returnFloat=-1.0;
@@ -186,6 +186,7 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
 	// Variables for stepper motor control.
 	int nsteps,steps,ninc,i;
     int j; // Don't use this but don't want to throw away the return value
+    int retryCounter;
     float sorensenValue, hpValue;
 
 	// Variables for data collections.
@@ -225,8 +226,14 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
         i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
 
         i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
-        if(i!=0){
+
+        retryCounter=0;
+        if(i!=0 && retryCounter < 5){
+            retryCounter++;
             printf("Error setting Sorensen Code: %d\n",i);
+            printf("Trying to set again after .5 s\n");
+            delay(500);
+            i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
         }
 
         // The supply can take some time to get to he desired voltage, pause for 2 seconds to allow for this process.
@@ -266,7 +273,7 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
             
             // This is the ad-hoc line for determining the Beta position, using the Ref photodiode channel.
 			//getUSB1208AnalogIn(BROWN_KEITHLEY,&measurement[i]);
-            //j = getReadingK6485(&measurement[i], K6485METERVERT, GPIBBRIDGE1);
+            //j = getReadingK6485(&measurement[i], K6485METERVERT, GPIBBRIDGE2);
             }while(measurement[i] == 0);
             current=(measurement[i]/(float)(dwell+1))+current;
 
@@ -280,7 +287,7 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
             
             // This is the ad-hoc line for determining the Beta position, using the Ref photodiode channel.
 			// getUSB1208AnalogIn(BROWN_KEITHLEY,&measurement[i]);
-            //j = getReadingK6485(&measurement[i], K6485METERVERT, GPIBBRIDGE1);
+            //j = getReadingK6485(&measurement[i], K6485METERVERT, GPIBBRIDGE2);
         }while(measurement[i] == 0);
         current=(measurement[i]/(float)(dwell+1))+current;
 
@@ -305,8 +312,13 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
         setUSB1208AnalogOut(HETARGET,0);
 
         i = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
-        if(i!=0){
+        retryCounter=0;
+        if(i!=0 && retryCounter < 5){
+            retryCounter++;
             printf("Error setting Sorensen Code: %d\n",i);
+            printf("Trying to set again after .5 s\n");
+            delay(500);
+            i = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
         }
 
         // The supplies can take some time to get to the desired voltage, 

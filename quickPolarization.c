@@ -22,6 +22,13 @@
 #include "interfacing/interfacing.h"
 #include "interfacing/RS485Devices.h"
 #include "interfacing/Sorensen120.h"
+
+#include "interfacing/K617meter.h"
+#include "interfacing/K6485meter.h"
+
+#define GPIBBRIDGE1 0XC9 // the gpib bridge can have many gpib devices attached to it, so will also need the GPIB address of each
+// this is the GPIB addresses of each respective instrument attached to this bridge
+#define SORENSEN120 0x0C
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 	#include "mathTools.h"
@@ -41,7 +48,7 @@
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
 
-int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, float leakageCurrent, int scale);
+int getPolarizationData(char* fileName, float VHe, int dwell, int nMeasurements, float leakageCurrent, int scale);
 void plotCommand(FILE* gnuplot, char* fileName, char* buffer);
 void plotData(char* fileName);
 
@@ -151,11 +158,11 @@ int main (int argc, char **argv)
 
 	getConvectron(GP_TOP2,&returnFloat);
 	printf("CVGauge(Source Foreline): %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(Source Foreline)(Torr):\t%2.2E\n", returnFloat);
+	fprintf(rawData,"#CVGauge(Source Foreline)(Torr):\t%2.2E\n", returnFloat);
 
 	getConvectron(GP_TOP1,&returnFloat);
 	printf("CVGauge(Target Foreline): %2.2E Torr\n", returnFloat);
-	fprintf(fp,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
+	fprintf(rawData,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
 
 
 	returnFloat=-1.0;
@@ -212,9 +219,10 @@ int getCountsAndCurrent(int dwell,long *sumCounts,float *avgCurrent){
 	return 0;
 }
 
-int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, float leakageCurrent, int scale){
+int getPolarizationData(char* fileName, float VHe, int dwell, int nMeasurements, float leakageCurrent, int scale){
 	// Variables for stepper motor control.
-	int j;
+	int j, i;
+	int retryCounter;
 
 	// Variables for data collections.
 	long sumCounts;
@@ -223,13 +231,50 @@ int getPolarizationData(char* fileName, int VHe, int dwell, int nMeasurements, f
 	float current=0;
 	float countRatePlus=0;
 	float countRateMinus=0;
+	float sorensenValue, hpValue;
 
-	// Write Aout for He traget here
-    setUSB1208AnalogOut(HETARGET,(__u16)VHe);
-    //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
-	//if(i!=0){
-	//	printf("Error setting Sorensen. Code: %d\n",i);
-	//}
+	if (VHe<0)
+    {
+        VHe=-1;
+        sorensenValue=0;
+    }
+	else if (VHe < 60)
+	{
+        sorensenValue=0;
+	}
+	else if (VHe < 180)
+	{
+		sorensenValue=VHe-60;
+	}
+	else 
+    {
+        VHe=180;
+        sorensenValue=120;
+    };
+    hpValue=VHe-sorensenValue;
+
+    // If VHe is negative, we don't change the voltage on the polarimeter.
+    if (VHe >= 0){
+        setUSB1208AnalogOut(HETARGET,(int)hpValue/HPCAL);
+
+        i=resetGPIBBridge(GPIBBRIDGE1);
+        delay(200);
+        i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
+
+        i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
+
+        retryCounter=0;
+        if(i!=0 && retryCounter < 5){
+            retryCounter++;
+            printf("Error setting Sorensen Code: %d\n",i);
+            printf("Trying to set again after .5 s\n");
+            delay(500);
+            i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
+        }
+
+        // The supply can take some time to get to he desired voltage, pause for 2 seconds to allow for this process.
+        delay(2000);
+    }
 	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
 

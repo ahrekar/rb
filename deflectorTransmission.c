@@ -11,6 +11,7 @@
 #include "mathTools.h"
 #include "interfacing/RS485Devices.h"
 #include "interfacing/K6485meter.h"
+#include "interfacing/K485meter.h"
 #include "interfacing/K617meter.h"
 
 #define NUMCHANNELS 4
@@ -43,6 +44,7 @@ int main (int argc, char **argv)
 	initializeBoard();
 	initializeUSB1208();
 	i = resetGPIBBridge(GPIBBRIDGE1);
+	i = resetGPIBBridge(GPIBBRIDGE2);
 	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
 
 	// get file name. Use format "deflectorTransmission"+$DATE+$TIME+".dat"
@@ -124,7 +126,7 @@ void writeFileHeader(char* fileName, char* comments){
 void collectAndRecordData(char* fileName){
 	FILE* fp;
 	char c = 'r';
-	int k=0,i;
+	int k=0,i,m;
     int timeCounter=0;
 	int nSamples = 16; // The number of data points to collect
 	float involts[NUMCHANNELS];
@@ -140,36 +142,43 @@ void collectAndRecordData(char* fileName){
 	// error bars.
 	float* measurement = malloc(nSamples*sizeof(float));
 
-	i=initializeK6485(K6485METERVERT,GPIBBRIDGE1);
+	i=initializeK6485(K6485METERVERT,GPIBBRIDGE2);
 	if(i != 0) printf("ERROR INITIALIZING K6485 VERT\n");
-	i=initializeK6485(K6485METERHORIZ,GPIBBRIDGE1);
+	i=initializeK6485(K6485METERHORIZ,GPIBBRIDGE2);
 	if(i != 0) printf("ERROR INITIALIZING K6485 HORIZ\n");
-	i=initializeK617(K617,GPIBBRIDGE1);
+	i=initializeK617(K617METER,GPIBBRIDGE1);
 	if(i != 0) printf("ERROR INITIALIZING K617\n");
+	i=initializeK485(K485METER,GPIBBRIDGE1);
+	if(i != 0) printf("ERROR INITIALIZING K485\n");
 
     while(c !='q'){
+		for(m=0;m<10;m++)
+		{
+			for(k=0;k<NUMCHANNELS;k++){
+				involts[k]=0.0;	
+			}
+			if(timeCounter%15==0 && m==0) printf("      Faraday Col     |    VERT         |     HORIZ       |       HePol      \n"); // Channels 0-3
 
-        for(k=0;k<NUMCHANNELS;k++){
-            involts[k]=0.0;	
-        }
-        if(timeCounter%15==0) printf("      Faraday Col     |    VERT         |     HORIZ       |       HePol      \n"); // Channels 0-3
+			i = getReadingK617(&involts[0], K617METER, GPIBBRIDGE1);
+			i = getReadingK6485(&involts[1], K6485METERVERT, GPIBBRIDGE2);
+			i = getReadingK6485(&involts[2], K6485METERHORIZ, GPIBBRIDGE2);
+			// Channel 3
+			i = getReadingK485(&involts[3], K485METER, GPIBBRIDGE1);
+			//getUSB1208AnalogIn(BROWN_KEITHLEY,&involts[3]);
 
-		i = getReadingK617(&involts[0], K617METER, GPIBBRIDGE1);
-		i = getReadingK6485(&involts[1], K6485METERVERT, GPIBBRIDGE1);
-		i = getReadingK6485(&involts[2], K6485METERHORIZ, GPIBBRIDGE1);
-		// Channel 3
-		getUSB1208AnalogIn(BROWN_KEITHLEY,&involts[3]);
+			printf("%02d  | ", timeCounter);
 
-		printf("%02d  | ", timeCounter);
-
-        // grab several readings and average
-        for(k=0;k<NUMCHANNELS;k++){
-            fprintf(fp,"%+0.5e\t%+0.5e\t", involts[k], 0.);
-            printf("%+0.5e   ", involts[k]);
-            if(k<NUMCHANNELS) printf(" | ");
-        }
-        fprintf(fp,"\n");
-        printf("Press Return for next datapoint or enter 'q' to quit: ");
+			// grab several readings and average
+			for(k=0;k<NUMCHANNELS;k++){
+				fprintf(fp,"%+0.5e\t%+0.5e\t", involts[k], 0.);
+				printf("%+0.5e   ", involts[k]);
+				if(k<NUMCHANNELS) printf(" | ");
+			}
+			fprintf(fp,"\n");
+			printf("\n");
+			fflush(stdout);
+		}
+		printf("Press Return for next datapoint or enter 'q' to quit: ");
 		c=getchar();
 		timeCounter++;
     }

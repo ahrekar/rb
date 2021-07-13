@@ -8,7 +8,10 @@ UNBLOCKED=0
 RBC=/home/pi/RbControl
 
 echo "setting the probe laser to a proper detuning"
-sudo $RBC/setProbeDetuning 10
+sudo $RBC/setProbeDetuning -15
+
+echo "setting the probe laser to a proper detuning"
+sudo $RBC/setPumpDetuning 1.5
 
 echo "setting the flip mirror to monitor pump beam"
 sudo $RBC/toggleFlipMirror
@@ -21,7 +24,7 @@ $RBC/setLaserFlag $PROBE $UNBLOCKED
 echo "unBlocking Pump Beam."
 $RBC/setLaserFlag $PUMP $UNBLOCKED
 
-for i in $(seq 169 1 172); do 
+for i in $(seq 159 1 165); do 
 	echo "Waiting for 5 seconds before starting next run..."
 	sleep 5
 	$RBC/setWavePlate $i

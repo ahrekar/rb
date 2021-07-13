@@ -4,8 +4,6 @@
  */
 #include "K617meter.h"
 
-
-
 int getReadingK617(float* amps,char gpibaddress, unsigned short RS485Address){
 	//unsigned char chardata[64];
 	char chardata[64];
@@ -106,6 +104,5 @@ int setRangeK617(char gpibaddress, unsigned short RS485Address, unsigned char ra
 	cmdData[i+1]=0;
 
 	int status = sendGPIBData(cmdData,gpibaddress, RS485Address);
-return status;
-
+	return status;
 }

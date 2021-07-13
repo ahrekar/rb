@@ -1,8 +1,18 @@
 #/bin/bash
 
-PIPOS=125
-SPLUSPOS=170
-SMINUSPOS=82
+# I found that I was clipping some of the pump beam with these values
+# It might have been because I wanted the pump and probe to 
+# have the same axis so that the optical isolator would work best,
+# but I checked and the new position of the LP for the pump beam
+# doesn't have any visible transmission on the sensitive IR card.
+#PIPOS=125
+#SPLUSPOS=170
+#SMINUSPOS=82
+
+# 2021-07-01: the new values for LP @ 144
+PIPOS=115
+SPLUSPOS=160
+SMINUSPOS=72
 
 PUMP=1
 PROBE=0

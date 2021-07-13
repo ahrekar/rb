@@ -81,6 +81,9 @@ int main (int argc, char **argv)
 	// Set up interfacing devices
 	initializeBoard();
 	initializeUSB1208();
+//	i = resetGPIBBridge(GPIBBRIDGE1);
+//	i = resetGPIBBridge(GPIBBRIDGE2);
+//	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
 
 	// Get file name.  Use format "FDayScan"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -192,13 +195,16 @@ int main (int argc, char **argv)
 	homeMotor(PROBE_MOTOR);
 
     // WHEN THE PUMP LASER IS OFF, measure with ammeters.
-    //int numPd=3;
-    //int pd[] = {BOTTOM_KEITHLEY,TOP_KEITHLEY,BROWN_KEITHLEY};
-	//fprintf(fp,"STEP\tPUMP\tPUMPsd\tPROBE\tPROBEsd\tREF\tREFsd\n");// Write the header for the data to the file.
+    int numPd=3;
+    int pd[] = {BOTTOM_KEITHLEY,TOP_KEITHLEY,BROWN_KEITHLEY};
+	fprintf(fp,"STEP\tPUMP\tPUMPsd\tPROBE\tPROBEsd\tREF\tREFsd\n");// Write the header for the data to the file.
+    // WHEN THE PUMP LASER IS OFF, measure with ammeters.
+    
     // WHEN THE PUMP LASER IS ON, measure with lock-in.
-    int numPd=1;
-    int pd[] = {BOTLOCKIN};
-	fprintf(fp,"STEP\tPUMP\tPUMPsd\n");
+    //int numPd=1;
+    //int pd[] = {BOTLOCKIN};
+	//fprintf(fp,"STEP\tPUMP\tPUMPsd\n");
+    // WHEN THE PUMP LASER IS ON, measure with lock-in.
 
     fclose(fp);
 
@@ -262,6 +268,13 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     int nSamples=16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
+    /*
+	i=initializeK6485(K6485METERVERT,GPIBBRIDGE2);
+	if(i != 0) printf("ERROR INITIALIZING K6485 VERT\n");
+	i=initializeK6485(K6485METERHORIZ,GPIBBRIDGE2);
+	if(i != 0) printf("ERROR INITIALIZING K6485 HORIZ\n");
+    */
+
     
     float* involts = calloc(numPhotoDetectors,sizeof(float));
     float* stdDev = calloc(numPhotoDetectors,sizeof(float));
@@ -280,29 +293,45 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             // ------
             // get samples and average
             // ------
-            // When measuring using the lock-in, use this piece of code.
-            for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
-                involts[j]=0.0;	
-                for (i=0;i<nSamples;i++){ // nSamples
-                        getMCPAnalogIn(photoDetector[j],&measurement[i]);
-                        involts[j]=involts[j]+measurement[i];
-                        delay(WAITTIME);
-                } // nSamples
-                involts[j]=involts[j]/(float)nSamples; 
-                stdDev[j]=stdDeviation(measurement,nSamples);
-            } // numPhotoDet1
-     
-			// When measuring using the ammeter, use this piece of code.
+            // ----- When measuring using the lock-in, use this piece of code.
             //for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
             //    involts[j]=0.0;	
             //    for (i=0;i<nSamples;i++){ // nSamples
-            //            getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+            //            getMCPAnalogIn(photoDetector[j],&measurement[i]);
             //            involts[j]=involts[j]+measurement[i];
             //            delay(WAITTIME);
             //    } // nSamples
             //    involts[j]=involts[j]/(float)nSamples; 
             //    stdDev[j]=stdDeviation(measurement,nSamples);
             //} // numPhotoDet1
+            // ----- When measuring using the lock-in, use this piece of code.
+     
+			// ----- When measuring using the ammeter, use this piece of code.
+            for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
+                involts[j]=0.0;	
+                for (i=0;i<nSamples;i++){ // nSamples
+                        getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+                        involts[j]=involts[j]+measurement[i];
+                        delay(WAITTIME);
+                } // nSamples
+                involts[j]=involts[j]/(float)nSamples; 
+                stdDev[j]=stdDeviation(measurement,nSamples);
+            } // numPhotoDet1
+            /* THE GPIB WAY ************/
+            //i = getReadingK6485(&involts[0], K6485METERVERT, GPIBBRIDGE2);
+            //i = getReadingK6485(&involts[1], K6485METERHORIZ, GPIBBRIDGE2);
+            //i = getReadingK485(&involts[2], K485METER, GPIBBRIDGE1);
+
+            //printf("%02d  | ", timeCounter);
+
+            //for(k=0;k<NUMCHANNELS;k++){
+            //    fprintf(fp,"%+0.5e\t%+0.5e\t", involts[k], 0.);
+            //    printf("%+0.5e   ", involts[k]);
+            //    if(k<NUMCHANNELS) printf(" | ");
+            //    delay(delayTime/NUMCHANNELS);
+            //}
+            /******* END GPIB Way */
+			// ----- When measuring using the ammeter, use this piece of code.
 
             fprintf(fp,"%d\t",steps+NUMSTEPS*k);
             for(j=0;j<numPhotoDetectors;j++){

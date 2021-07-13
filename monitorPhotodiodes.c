@@ -9,6 +9,10 @@
 
 #include "interfacing/interfacing.h"
 #include "mathTools.h"
+#include "interfacing/RS485Devices.h"
+#include "interfacing/K6485meter.h"
+#include "interfacing/K485meter.h"
+#include "interfacing/K617meter.h"
 
 #define NUMCHANNELS 4
 
@@ -21,6 +25,7 @@ int main (int argc, char **argv)
 	struct tm * timeinfo;
 	char fileName[BUFSIZE],comments[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
+    int i;
 
 	FILE *dataCollectionFlagFile, *fp;
 
@@ -38,6 +43,9 @@ int main (int argc, char **argv)
 
 	initializeBoard();
 	initializeUSB1208();
+	i = resetGPIBBridge(GPIBBRIDGE1);
+	i = resetGPIBBridge(GPIBBRIDGE2);
+	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
 
 	// get file name. Use format "MonitorPhotodiodes"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -59,14 +67,14 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 	
-	homeMotor(PROBE_MOTOR);
-
 	collectAndRecordData(fileName);
 
 	closeUSB1208();
 
 	fclose(dataCollectionFlagFile);
 	remove(dataCollectionFileName);
+
+	printf("\n%s\n",fileName);
 
 	return 0;
 }
@@ -118,7 +126,7 @@ void writeFileHeader(char* fileName, char* comments){
 void collectAndRecordData(char* fileName){
 	FILE* fp;
 	int k=0,i;
-    int timeCounter, evaluationTime=165;
+    int timeCounter, evaluationTime=30;
 	int nSamples = 16; // The number of data points to collect
     float temperature=0.0;
     float wavelength=0.0;
@@ -136,6 +144,15 @@ void collectAndRecordData(char* fileName){
 	// error bars.
 	float* measurement = malloc(nSamples*sizeof(float));
 
+	i=initializeK6485(K6485METERVERT,GPIBBRIDGE2);
+	if(i != 0) printf("ERROR INITIALIZING K6485 VERT\n");
+	i=initializeK6485(K6485METERHORIZ,GPIBBRIDGE2);
+	if(i != 0) printf("ERROR INITIALIZING K6485 HORIZ\n");
+	i=initializeK617(K617METER,GPIBBRIDGE1);
+	if(i != 0) printf("ERROR INITIALIZING K617\n");
+	i=initializeK485(K485METER,GPIBBRIDGE1);
+	if(i != 0) printf("ERROR INITIALIZING K485\n");
+
     //while(temperature!=-1.0){
     for (timeCounter=0;timeCounter < evaluationTime; timeCounter+=1){
         //scanf("%f,%f",&temperature,&wavelength);
@@ -145,8 +162,27 @@ void collectAndRecordData(char* fileName){
             involts[k]=0.0;	
         }
         //if(timeCounter%15==0) printf("       PUMP       |        PROBE      |        REFERENCE\n"); // Channels 1-3
-        if(timeCounter%15==0) printf("       Keithly    |       PUMP        |        PROBE      |        REFERENCE\n"); // Channels 0-3
+        if(timeCounter%15==0) printf("       Faraday C    |       VERT        |        HORIZ      |        REFERENCE\n"); // Channels 0-3
 
+        /* THE GPIB WAY ************/
+		i = getReadingK617(&involts[0], K617METER, GPIBBRIDGE1);
+		i = getReadingK6485(&involts[1], K6485METERVERT, GPIBBRIDGE2);
+		i = getReadingK6485(&involts[2], K6485METERHORIZ, GPIBBRIDGE2);
+		// Channel 3
+		i = getReadingK485(&involts[3], K485METER, GPIBBRIDGE1);
+		//getUSB1208AnalogIn(BROWN_KEITHLEY,&involts[3]);
+
+		printf("%02d  | ", timeCounter);
+
+        for(k=0;k<NUMCHANNELS;k++){
+            fprintf(fp,"%+0.5e\t%+0.5e\t", involts[k], 0.);
+            printf("%+0.5e   ", involts[k]);
+            if(k<NUMCHANNELS) printf(" | ");
+            delay(delayTime/NUMCHANNELS);
+        }
+        /******* END GPIB Way */
+
+        /* THE ANALOG WAY *********
         // grab several readings and average
         //for(k=1;k<NUMCHANNELS+1;k++){
         for(k=0;k<NUMCHANNELS;k++){
@@ -160,8 +196,11 @@ void collectAndRecordData(char* fileName){
             printf("  %0.4f %0.4f  ",involts[k],stdDeviation(measurement,nSamples));
             if(k<NUMCHANNELS) printf(" | ");
         }
+        ******** THE ANALOG WAY */
+
         fprintf(fp,"\n");
         printf("\n");
+        
     }
 
 	fprintf(fp,"\n");
