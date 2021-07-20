@@ -36,14 +36,14 @@
 #define UNDENIABLESHIFT 10 // Sometimes one stepper motor position can be the same as another, we know for 
 							// sure that we won't mistake two angles that are 10 steps from each other
 							// for each other though.
-#define VALLEY1 120
-#define PEAK1 	270
-#define VALLEY2 420
-#define PEAK2 	570
-#define VALLEY3 720
-#define PEAK3 	870
-#define VALLEY4 1020
-#define PEAK4 	1170
+#define VALLEY1 75
+#define PEAK1 	225
+#define VALLEY2 375
+#define PEAK2 	525
+#define VALLEY3 675
+#define PEAK3 	825
+#define VALLEY4 975
+#define PEAK4 	1125
 #define STEPSPERREV 1200
 #define DATAPOINTS (DATAPOINTSPERREV * REVOLUTIONS)
 #define PI 3.14159265358979
