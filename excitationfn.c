@@ -248,7 +248,7 @@ void graphData(char* fileName){
 
 		// Set up the output.
 		//fprintf(gnuplot, "set terminal cairolatex png size 3.7in, 2.5in resolution 200\n");
-		fprintf(gnuplot, "set terminal png\n");
+		fprintf(gnuplot, "set terminal png size 530, 360\n");
 		sprintf(buffer, "set output '%s_counts.png'\n", fileName);
 		fprintf(gnuplot, "%s",buffer);
 
