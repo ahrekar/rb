@@ -163,7 +163,7 @@ int homeMotor(unsigned short mtr){
 		printf("Already in home, reversing 100 steps...");
 		stepMotor(mtr,CCLK,100);
 		if(digitalRead(p_home)){
-			printf("Error: Home state not changing\n");
+			printf("Error: Moved out of home but state didn't change\n");
 			return -1;
 		}
 	}
