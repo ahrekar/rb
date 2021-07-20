@@ -29,13 +29,14 @@
 #include "mathTools.h" //includes stdDeviation
 #include "interfacing/interfacing.h"
 #include "interfacing/sacherLaser.h"
+#include "interfacing/K6485meter.h"
 #include "faradayScanAnalysisTools.h"
 #include "interfacing/waveMeter.h"
 #include "probeLaserControl.h"
 
 #define PI 3.14159265358979
 #define NUMSTEPS 350
-#define STEPSIZE 7
+#define STEPSIZE 14
 #define STEPSPERREV 350.0
 #define DATAPTSPERREV STEPSPERREV/STEPSIZE
 #define WAITTIME 2
@@ -49,7 +50,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 int main (int argc, char **argv)
 {
     float value, returnFloat, wavelength;
-    int revolutions;
+    int revolutions, i;
 
     /* Variables for generating a file name with date and time */
 	time_t rawtime;
@@ -81,9 +82,9 @@ int main (int argc, char **argv)
 	// Set up interfacing devices
 	initializeBoard();
 	initializeUSB1208();
-//	i = resetGPIBBridge(GPIBBRIDGE1);
-//	i = resetGPIBBridge(GPIBBRIDGE2);
-//	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
+	i = resetGPIBBridge(GPIBBRIDGE1);
+	i = resetGPIBBridge(GPIBBRIDGE2);
+	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
 
 	// Get file name.  Use format "FDayScan"+$DATE+$TIME+".dat"
 	time(&rawtime);
@@ -177,6 +178,11 @@ int main (int argc, char **argv)
     /*For the lower densities */
 	int numDet=6,j;
 	float scanDet[]={-29,-16,-10,11,16,30};
+
+    /*Temporary test 
+	int numDet=1,j;
+	float scanDet[]={-29};
+    */
    
     /* For the higher densities 
 	int numDet=4,j;
@@ -210,7 +216,7 @@ int main (int argc, char **argv)
 
 	fp=fopen(fileName,"a");
 
-	setProbeDetuning(scanDet[0]);
+	//setProbeDetuning(scanDet[0]);
 	delay(3000);
 
 
@@ -268,13 +274,16 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
     int nSamples=16;
 	float* measurement = malloc(nSamples*sizeof(float));
 
-    /*
-	i=initializeK6485(K6485METERVERT,GPIBBRIDGE2);
-	if(i != 0) printf("ERROR INITIALIZING K6485 VERT\n");
-	i=initializeK6485(K6485METERHORIZ,GPIBBRIDGE2);
-	if(i != 0) printf("ERROR INITIALIZING K6485 HORIZ\n");
-    */
+    /* In the event I decide I want to get readings from the
+     * ammeters via GPIB, these lines will be useful.
+	 * i=initializeK6485(K6485METERVERT,GPIBBRIDGE2);
+	 * if(i != 0) printf("ERROR INITIALIZING K6485 VERT\n");
+	 * i=initializeK6485(K6485METERHORIZ,GPIBBRIDGE2);
+	 * if(i != 0) printf("ERROR INITIALIZING K6485 HORIZ\n");
 
+     * setRangeK6485(K6485METERVERT, GPIBBRIDGE2, 9);
+     * setRangeK6485(K6485METERHORIZ, GPIBBRIDGE2, 9);
+    */
     
     float* involts = calloc(numPhotoDetectors,sizeof(float));
     float* stdDev = calloc(numPhotoDetectors,sizeof(float));
@@ -345,6 +354,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             stepMotor(motor,CLK,STEPSIZE);
         } // steps
     } // revolutions
+    //setRangeK6485(K6485METERVERT, GPIBBRIDGE2, 0);
+    //setRangeK6485(K6485METERHORIZ, GPIBBRIDGE2, 0);
     free(measurement);
     free(stdDev);
     free(involts);
