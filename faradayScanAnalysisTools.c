@@ -210,6 +210,7 @@ int plotRawData(char* fileName){
 
     int stepColumnNumber=1;
     int intensityColumnNumber=2;
+    int intensityColumnNumber2=4;
 	if (gnuplot != NULL){
 		fprintf(gnuplot, "set terminal dumb size 54,14\n");
 		fprintf(gnuplot, "set output\n");			
@@ -222,11 +223,15 @@ int plotRawData(char* fileName){
 		fprintf(gnuplot, "set ylabel 'Intensity'\n");			
 		sprintf(buffer, "plot '%s' using %d:%d\n",fileName,stepColumnNumber,intensityColumnNumber);
 		fprintf(gnuplot, buffer);
+		sprintf(buffer, "plot '%s' using %d:%d\n",fileName,stepColumnNumber,intensityColumnNumber2);
+		fprintf(gnuplot, buffer);
 		fprintf(gnuplot, "unset output\n"); 
 		fprintf(gnuplot, "set terminal png\n");
 		sprintf(buffer, "set output '%s.png'\n", fileNameBase);
 		fprintf(gnuplot, buffer);
-		sprintf(buffer, "plot '%s' using %d:%d\n",fileName,stepColumnNumber,intensityColumnNumber);
+		sprintf(buffer, "plot '%s' using %d:%d,\
+                              '%s' using %d:%d\n",fileName,stepColumnNumber,intensityColumnNumber,
+                                                  fileName,stepColumnNumber,intensityColumnNumber2);
 		fprintf(gnuplot, buffer);
 	}
 	return pclose(gnuplot);
