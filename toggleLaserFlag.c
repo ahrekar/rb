@@ -19,11 +19,13 @@ int main (int argc, char *argv[])
         device = atoi(argv[1]);
     }else{
 
-        printf("Usage ./setLaserFlag <device 0,1> <Orientation 0,1>\n");
-        printf("Device\t\t\tOrientation\n");
-        printf("======\t\t\t===========\n");
-        printf("Probe = 0\t\tUnblocked = 0\n");
-        printf("Pump = 1\t\tBlocked = 1\n");
+        printf("Usage ./toggleLaserFlag <device 0,1>\n");
+        printf("Switches the blocked state for the\n");
+        printf("unblocked and vice-versa.\n");
+        printf("Device\n");
+        printf("======\n");
+        printf("Probe = 0\n");
+        printf("Pump = 1\n");
         return 1;
     }
 	initializeBoard();
