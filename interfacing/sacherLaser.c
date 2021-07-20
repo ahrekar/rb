@@ -199,12 +199,12 @@ int setSacherCurrent(float current){
 	printf("current: %f\n",current);
 	if ((current >= 0) && (current<=170)){
 		sprintf(retData,"%f",current);
-		printf("current string: %s\n",retData);
+		//printf("current string: %s\n",retData);
 
 		strcpy(outData,":L:CURR ");
 		strcat(outData,retData);
 		strcat(outData,"mA");
-		printf("String to send: %s\n",outData);
+		//printf("String to send: %s\n",outData);
 		j=strlen(outData);
 		outData[j]=13;
 		outData[j+1]=0;
