@@ -185,7 +185,6 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
 	//char echoData[128];
 	// Variables for stepper motor control.
 	int nsteps,steps,ninc,i;
-    int j; // Don't use this but don't want to throw away the return value
     int retryCounter;
     float sorensenValue, hpValue;
 
@@ -301,31 +300,6 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
 		fprintf(rawData,"%d\t%ld\t%e\t%f\t%f\n",steps,sumCounts,current+leakageCurrent,currentErr,angle);
 	}
 	fclose(rawData);
-
-	// Reset Helium Target Offset back to zero
-    //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
-    //if(i!=0){
-    //    printf("Error setting Sorensen. Code: %d\n",i);
-    //}
-    // If VHe is negative, we don't change the voltage on the polarimeter.
-    if (VHe >= 0){
-        setUSB1208AnalogOut(HETARGET,0);
-
-        i = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
-        retryCounter=0;
-        if(i!=0 && retryCounter < 5){
-            retryCounter++;
-            printf("Error setting Sorensen Code: %d\n",i);
-            printf("Trying to set again after .5 s\n");
-            delay(500);
-            i = setSorensen120Volts(0,SORENSEN120,GPIBBRIDGE1);
-        }
-
-        // The supplies can take some time to get to the desired voltage, 
-        // especially when decreasing their output 
-        // pause for 4 seconds to allow for this process.
-        delay(4000);
-    }
 
 	return 0;
 }
