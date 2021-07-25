@@ -32,7 +32,7 @@
 #include "interfacing/waveMeter.h"
 
 #define PI 3.14159265358979
-#define STEPSIZE 7.0
+#define STEPSIZE 14.0
 #define STEPSPERREV 350.0
 #define WAITTIME 2
 
@@ -149,13 +149,13 @@ int main (int argc, char **argv)
     fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFrequency(&returnFloat));
 
     // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
-    int numPhotoDetectors = 2;
-    int photoDetectors[] = {BOTLOCKIN, TOPLOCKIN};
-    char* names[]={"HORIZ", "VERT"};
+    //int numPhotoDetectors = 2;
+    //int photoDetectors[] = {BOTLOCKIN, TOPLOCKIN};
+    //char* names[]={"HORIZ", "VERT"};
     // UNCOMMENT THE FOLLOWING LINES WHEN USING THE FLOATING PD
-    //int numPhotoDetectors = 3;
-    //int photoDetectors[] = {BOTTOM_KEITHLEY,TOP_KEITHLEY,BROWN_KEITHLEY};
-    //char* names[]={"HORIZ","VERT","REF"};
+    int numPhotoDetectors = 3;
+    int photoDetectors[] = {BOTTOM_KEITHLEY,TOP_KEITHLEY,BROWN_KEITHLEY};
+    char* names[]={"HORIZ","VERT","REF"};
 
     int motor = PROBE_MOTOR;
     //int motor = PUMP_MOTOR;
@@ -216,29 +216,29 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
 
             // UNCOMMENT if using Lock-ins.
             // COMMENT OUT if using ammeters.
-            //for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
-            //    involts[j]=0.0;	
-            //    for (i=0;i<nSamples;i++){ // nSamples
-            //            getMCPAnalogIn(photoDetector[j],&measurement[i]);
-            //            involts[j]=involts[j]+fabs(measurement[i]);
-            //            delay(WAITTIME);
-            //    } // nSamples
-            //    involts[j]=involts[j]/(float)nSamples; 
-            //    stdDev[j]=stdDeviation(measurement,nSamples);
-            //} // numPhotoDet1
-
-            // UNCOMMENT if using ammeters.
-            // COMMENT OUT if using Lock-ins.
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
                 for (i=0;i<nSamples;i++){ // nSamples
-                        getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+                        getMCPAnalogIn(photoDetector[j],&measurement[i]);
                         involts[j]=involts[j]+fabs(measurement[i]);
                         delay(WAITTIME);
                 } // nSamples
                 involts[j]=involts[j]/(float)nSamples; 
                 stdDev[j]=stdDeviation(measurement,nSamples);
             } // numPhotoDet1
+
+            // UNCOMMENT if using ammeters.
+            // COMMENT OUT if using Lock-ins.
+            //for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
+            //    involts[j]=0.0;	
+            //    for (i=0;i<nSamples;i++){ // nSamples
+            //            getUSB1208AnalogIn(photoDetector[j],&measurement[i]);
+            //            involts[j]=involts[j]+fabs(measurement[i]);
+            //            delay(WAITTIME);
+            //    } // nSamples
+            //    involts[j]=involts[j]/(float)nSamples; 
+            //    stdDev[j]=stdDeviation(measurement,nSamples);
+            //} // numPhotoDet1
 
             fprintf(fp,"%d\t",steps+(int)STEPSPERREV*k);
             for(j=0;j<numPhotoDetectors;j++){
