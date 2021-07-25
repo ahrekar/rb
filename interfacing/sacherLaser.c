@@ -124,6 +124,7 @@ float getSacherCurrent(void){
 	outData[j+1]=0;
 
 	writeRS485to232Bridge(outData,retData,HEAD);
+	//printf("Sacher return: %s\n",retData);
 	temp=atof(retData);
 
 	return temp;
