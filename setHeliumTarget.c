@@ -30,7 +30,7 @@
 int main (int argc, char *argv[])
 {
 	float value = 0,hpValue=0, sorensenValue=0;
-	int i;
+	int i, retryCounter;
 
 	if (argc==2) {
 		value=atof(argv[1]);
@@ -42,6 +42,7 @@ int main (int argc, char *argv[])
 	if (value<0)value=0;
 	else if (value < 60)
 	{
+		sorensenValue=0;
 		hpValue=value;
 	}
 	else if (value < 180)
@@ -61,8 +62,13 @@ int main (int argc, char *argv[])
 	i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
 
 	i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
-	if(i!=0){
+	retryCounter=0;
+	if(i!=0 && retryCounter < 5){
+		retryCounter++;
 		printf("Error setting Sorensen Code: %d\n",i);
+		printf("Trying to set again after .5 s\n");
+		delay(500);
+		i = setSorensen120Volts(sorensenValue,SORENSEN120,GPIBBRIDGE1);
 	}
 
 	closeUSB1208();
