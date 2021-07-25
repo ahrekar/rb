@@ -31,10 +31,10 @@ int main (int argc, char *argv[])
 	if (argc==2) {
 		value=atof(argv[1]);
 	}else{
-		printf("Usage '$ sudo ./setProbeLaser xxx' where xxx is an integer value between 0 and 1024\n");
+		printf("Usage '$ sudo ./setProbeLaser xxx' where xxx is a float value between 65.0 and 170.0 \n");
 
 		value=getSacherCurrent();	
-		printf("Laser is currently at %3.1f V\n",value);
+		printf("Laser is currently at %3.1f mA\n",value*1000);
 		
 		return 0;
 	}
@@ -47,12 +47,12 @@ int main (int argc, char *argv[])
 	initializeUSB1208();
 	initializeSacher();
 
-	printf("Going to set laser current to: %f\n",value);
+	printf("Going to set laser current to: %f mA\n",value*1000);
 
 	setSacherCurrent(value);
 
 	value=getSacherCurrent();	
-	printf("Laser is currently at %3.1f V\n",value);
+	printf("Laser is currently at %3.1f mA\n",value*1000);
 
 	closeUSB1208();
 	return 0;
