@@ -311,13 +311,6 @@ int getPolarizationData(char* fileName, float VHe, int dwell, int nMeasurements,
 	printf("Rate:\t%2.2e\t%2.2e\n",(float)countRatePlus /nMeasurements,countRateMinus/nMeasurements);
 	fclose(rawData);
 
-	// Reset Helium Target Offset back to zero
-    //i = setSorensen120Volts(VHe,SORENSEN120,GPIBBRIDGE1);
-    setUSB1208AnalogOut(HETARGET,0);
-	//if(i!=0){
-	//		printf("Error setting Sorensen. Code: %d\n",i);
-	//}
-
 	return 0;
 }
 
