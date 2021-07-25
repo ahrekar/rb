@@ -39,11 +39,11 @@ int setProbeDetuning(float desiredDetuning){
 		detuningChangeRequired=fabs(returnedDetuning-desiredDetuning);
 
 		if(detuningChangeRequired>12){
-			deltaDetuning=.8;
+			deltaDetuning=.6;
 		}else if(detuningChangeRequired>1.2){
-			deltaDetuning=.08;
+			deltaDetuning=.06;
 		}else if(detuningChangeRequired>.12){
-			deltaDetuning=.008;
+			deltaDetuning=.006;
 		}else{
 			deltaDetuning=.001;
 		}
@@ -57,13 +57,13 @@ int setProbeDetuning(float desiredDetuning){
 		}else if(desiredDetuning<returnedDetuning){//Increase the detuning.
 			//printf("**%2.1f GHz**",returnedDetuning);
 			//printf(":%2.3fV -> %2.3fV  ",adjustSetting,adjustSetting+deltaDetuning);
-			setSacherTemperature(adjustSetting+deltaDetuning>maxAdjust?maxAdjust:adjustSetting+deltaDetuning);
+			setSacherTemperature( (adjustSetting + deltaDetuning) > maxAdjust ? maxAdjust : (adjustSetting + deltaDetuning));
 			printf(".");
 		}
 		else{//Decrease the detuning
 			//printf("**%2.1f GHz**",returnedDetuning);
 			//printf(":%2.3fV -> %2.3fV",adjustSetting,adjustSetting-deltaDetuning);
-			setSacherTemperature(adjustSetting-deltaDetuning<minAdjust?minAdjust:adjustSetting-deltaDetuning);
+			setSacherTemperature( (adjustSetting - deltaDetuning) < minAdjust ? minAdjust : (adjustSetting - deltaDetuning));
 			printf(".");
 		}
 		fflush(stdout);
