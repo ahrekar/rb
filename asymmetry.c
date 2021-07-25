@@ -19,7 +19,8 @@
 #define NUMCHANNELS 4
 
 void collectAndRecordData(char* fileName, int cycles, int measurementsPerCycle);
-void writeFileHeader(char* fileName, char* comments);
+void recordSystemStats(char* fileName);
+void recordInputsAndComments(char* fileName, int cycles, int measurementsPerCycle, char* comments);
 
 int main (int argc, char **argv)
 {
@@ -30,7 +31,7 @@ int main (int argc, char **argv)
 	int i;
 	int cycles, measurementsPerCycle;
 
-	FILE *dataCollectionFlagFile, *fp;
+	FILE *dataCollectionFlagFile;
 
 	if (argc==4) {
 		cycles = atoi(argv[1]);
@@ -65,13 +66,9 @@ int main (int argc, char **argv)
 
 	printf("\n%s\n",fileName);
 
-	writeFileHeader(fileName, comments);
-	fp=fopen(fileName,"a");
+	recordSystemStats(fileName);
 
-	if (!fp) {
-		printf("unable to open file: %s\n",fileName);
-		exit(1);
-	}
+	recordInputsAndComments(fileName, cycles, measurementsPerCycle, comments);
 	
 	collectAndRecordData(fileName, cycles, measurementsPerCycle);
 
@@ -85,7 +82,7 @@ int main (int argc, char **argv)
 	return 0;
 }
 
-void writeFileHeader(char* fileName, char* comments){
+void recordSystemStats(char* fileName){
 	FILE* fp;
 	float returnFloat;
 	fp=fopen(fileName,"w");
@@ -95,7 +92,6 @@ void writeFileHeader(char* fileName, char* comments){
 	}
 
 	fprintf(fp,"#Filename:\t%s\n",fileName);
-	fprintf(fp,"#Comments:\t%s\n",comments);
 
     /** Record System Stats to File **/
     /** Pressure Gauges **/
@@ -123,9 +119,23 @@ void writeFileHeader(char* fileName, char* comments){
 	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
     /** End System Stats Recording **/
+	fclose(fp);
+}
 
-	fprintf(fp,"QWPPOS\tK617_1\tStdDev\tPUMP_1\tStdDev\tPROBE_1\tStdDev\tREF_1\tStdDev\n");
-	printf("QWPPOS\tK617_1\tStdDev\tPUMP_1\tStdDev\tPROBE_1\tStdDev\tREF_1\tStdDev\n");
+void recordInputsAndComments(char* fileName, int cycles, int measurementsPerCycle, char* comments){
+	FILE* fp;
+	fp=fopen(fileName,"a");
+	if (!fp) {
+		printf("unable to open file: %s\n",fileName);
+		exit(1);
+	}
+
+	fprintf(fp,"#Cycles:\t%d\n", cycles);
+	fprintf(fp,"#MeasurementsPerCycle:\t%d\n", measurementsPerCycle);
+	fprintf(fp,"#Comments:\t%s\n",comments);
+
+	fprintf(fp,"qwppos\tfd\tstddev\tct\tstddev\tcb\tstddev\the\tstddev\n");
+	printf("qwppos\tfd\tstddev\tct\tstddev\tcb\tstddev\the\tstddev\n");
 	fclose(fp);
 }
 
@@ -179,9 +189,12 @@ void collectAndRecordData(char* fileName, int cycles, int measurementsPerCycle){
 				fprintf(fp,"%d\t", motorPositions[p]);
 				printf("%d\t", motorPositions[p]);
 				for(k=0;k<NUMCHANNELS;k++){
-					fprintf(fp,"%+0.5e\t%+0.5e\t", involts[k], 0.);
+					fprintf(fp,"%+0.5e\t%+0.5e", involts[k], 0.);
 					printf("%+0.5e   ", involts[k]);
-					if(k<NUMCHANNELS) printf(" | ");
+					if(k<NUMCHANNELS-1){
+						printf(" | ");
+						fprintf(fp,"\t");
+					}
 				}
 				printf("\n");
 				fprintf(fp,"\n");
