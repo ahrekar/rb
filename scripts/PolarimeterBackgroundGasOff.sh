@@ -65,4 +65,6 @@ else
 			sudo $RBC/setPumpDetuning $DETUNE
 		done 
 	done
+
+	sudo $RBC/setHeliumTarget 0
 fi

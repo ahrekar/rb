@@ -63,4 +63,6 @@ else
 			sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 		done 
 	done
+
+	sudo $RBC/setHeliumTarget 0
 fi

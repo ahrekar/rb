@@ -40,10 +40,10 @@ else
 			echo "Unblocking pump beam..."
 			sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 
-			#echo "Setting pump to Pi..."
-			#sudo $RBC/setWavePlate $PIPOS
-			#sleep 10
-			#sudo $RBC/polarization "$a" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->pi"
+			echo "Setting pump to Pi..."
+			sudo $RBC/setWavePlate $PIPOS
+			sleep 10
+			sudo $RBC/polarization "$a" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->pi"
 
 			echo "Setting pump to S+..."
 			sudo $RBC/setWavePlate $SPLUSPOS
@@ -59,4 +59,6 @@ else
 			sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
 		done 
 	done
+
+	sudo $RBC/setHeliumTarget 0
 fi
