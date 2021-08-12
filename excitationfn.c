@@ -110,7 +110,9 @@ int main (int argc, char **argv)
 
 	// set up USB interface
 	initializeBoard();
-	initializeUSB1208();
+    initializeUSB1208();
+	i = initializeK617(K617METER,GPIBBRIDGE1);
+	if(i != 0) printf("ERROR INITIALIZING K617\n");
 	i = resetGPIBBridge(GPIBBRIDGE1);
 	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
 
