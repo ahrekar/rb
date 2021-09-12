@@ -12,7 +12,7 @@
 
 int main (int argc, char* argv[]){
 	int i;
-	float current;
+	float current, presentValue;
 	int line=0;
 	int laserSocket;
 	char systemCfgFileName[]="/home/pi/RbControl/system.cfg";
@@ -28,6 +28,9 @@ int main (int argc, char* argv[]){
 	}else {
 		return 1;
 	}
+
+	presentValue = getAmpCurrent(laserSocket);
+	printf("Present Value: %4.2f\n", presentValue);
 
 	setAmpCurrent(laserSocket,current);
 
