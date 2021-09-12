@@ -24,10 +24,10 @@ else
 
 	NUMRUN=5
 
-	for i in $( seq 1 $NUMRUN ); do 
+	for a in $AOUT; do 
 		echo "About to start next sequence of runs..."
 		sleep 5
-		for a in $AOUT; do 
+		for i in $( seq 1 $NUMRUN ); do 
 			echo "Checking in on detuning..."
 			sudo $RBC/setPumpDetuning $DETUNE
 
