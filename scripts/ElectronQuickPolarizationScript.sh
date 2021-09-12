@@ -6,13 +6,13 @@
 #
 
 if [ "$#" -ne 6 ]; then
-	echo "usage: ./ElectronQuickPolarizationScript.sh\\"
-	echo "				<aout energy>\\" 
-	echo "				<dwell>\\" 
-	echo "				<num. measurements>\\" 
-	echo "				<ammeter scale>\\" 
-	echo "				<pump detuning>\\" 
-	echo "				<additional comments>\\"
+	echo "usage: ./ElectronQuickPolarizationScript.sh"
+	echo "				<Helium Potential> (enter positive value)" 
+	echo "				<dwell>" 
+	echo "				<num. measurements>" 
+	echo "				<ammeter scale>" 
+	echo "				<pump detuning>" 
+	echo "				<additional comments>"
 else
     AOUT=$1
     DWELL=$2
@@ -47,10 +47,10 @@ else
 			echo "Unblocking pump beam..."
 			sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 
-			echo "Setting pump to Pi..."
-			sudo $RBC/setWavePlate $PIPOS
-			sleep 10
-			sudo $RBC/quickPolarization "$a" "$DWELL" "$NUM" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->pi, Run->$i, TotalRuns->$NUMRUN"
+			#echo "Setting pump to Pi..."
+			#sudo $RBC/setWavePlate $PIPOS
+			#sleep 10
+			#sudo $RBC/quickPolarization "$a" "$DWELL" "$NUM" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->pi, Run->$i, TotalRuns->$NUMRUN"
 
 			echo "Setting pump to S+..."
 			sudo $RBC/setWavePlate $SPLUSPOS
