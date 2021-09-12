@@ -35,6 +35,9 @@
 #define STEPSIZE 14.0
 #define STEPSPERREV 350.0
 #define WAITTIME 2
+#define LOCKIN 0
+#define AMMETER 1
+#define DETTYPE AMMETER
 
 #define BUFSIZE 1024
 
@@ -121,14 +124,14 @@ int main (int argc, char **argv)
 	printf("CVGauge(Target Foreline): %2.2E Torr\n", returnFloat);
 	fprintf(fp,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
 
-    //getPVCN7500(CN_RESERVE,&returnFloat);
+    getPVCN7500(CN_RESERVE,&returnFloat);
     fprintf(fp,"#T_res:\t%f\n",returnFloat);
-    //getSVCN7500(CN_RESERVE,&returnFloat);
+    getSVCN7500(CN_RESERVE,&returnFloat);
     fprintf(fp,"#T_res_set:\t%f\n",returnFloat);
 
-    //getPVCN7500(CN_TARGET,&returnFloat);
+    getPVCN7500(CN_TARGET,&returnFloat);
     fprintf(fp,"#T_trg:\t%f\n",returnFloat);
-    //getSVCN7500(CN_TARGET,&returnFloat);
+    getSVCN7500(CN_TARGET,&returnFloat);
     fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
     printf("Reading in configuration file...\n");
@@ -148,15 +151,18 @@ int main (int argc, char **argv)
     //fprintf(fp,"#PumpWavelength:\t%f\n",getPumpFrequency(&returnFloat));
     fprintf(fp,"#ProbeWavelength:\t%f\n",getProbeFrequency(&returnFloat));
 
-    // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING STANDARD DATA
-    //int numPhotoDetectors = 2;
-    //int photoDetectors[] = {BOTLOCKIN, TOPLOCKIN};
-    //char* names[]={"HORIZ", "VERT"};
-    // UNCOMMENT THE FOLLOWING LINES WHEN USING THE FLOATING PD
-    int numPhotoDetectors = 3;
-    int photoDetectors[] = {BOTTOM_KEITHLEY,TOP_KEITHLEY,BROWN_KEITHLEY};
-    char* names[]={"HORIZ","VERT","REF"};
-
+    // UNCOMMENT THE FOLLOWING LINES WHEN COLLECTING with lock-ins
+    int numPhotoDetectors = 2;
+    int photoDetectors[] = {BOTLOCKIN, TOPLOCKIN};
+    char* names[]={"HORIZ", "VERT"};
+    // UNCOMMENT THE ABOVE LINES WHEN COLLECTING STANDARD DATA
+    
+    // UNCOMMENT THE FOLLOWING LINES WHEN USING THE ammeters
+    //int numPhotoDetectors = 3;
+    //int photoDetectors[] = {BOTTOM_KEITHLEY,TOP_KEITHLEY,BROWN_KEITHLEY};
+    //char* names[]={"HORIZ","VERT","REF"};
+    // UNCOMMENT THE ABOVE LINES WHEN USING THE ammeters
+    
     int motor = PROBE_MOTOR;
     //int motor = PUMP_MOTOR;
 
@@ -214,7 +220,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             // UPDATE: With the Lock-in at a time scale of 100 ms, it takes 500 ms to settle. 
             // UPDATE: With time scale of 30 ms, takes 300 ms to settle.
 
-            // UNCOMMENT if using Lock-ins.
+            // UNCOMMENT if using lock-ins.
             // COMMENT OUT if using ammeters.
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
@@ -226,6 +232,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
                 involts[j]=involts[j]/(float)nSamples; 
                 stdDev[j]=stdDeviation(measurement,nSamples);
             } // numPhotoDet1
+
 
             // UNCOMMENT if using ammeters.
             // COMMENT OUT if using Lock-ins.
