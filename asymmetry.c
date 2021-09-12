@@ -184,7 +184,8 @@ void collectAndRecordData(char* fileName, int cycles, int measurementsPerCycle){
 				i = getReadingK617(&involts[0], K617METER, GPIBBRIDGE1);
 				i = getReadingK6485(&involts[1], K6485METERVERT, GPIBBRIDGE2);
 				i = getReadingK6485(&involts[2], K6485METERHORIZ, GPIBBRIDGE2);
-				i = getReadingK485(&involts[3], K485METER, GPIBBRIDGE1);
+				//i = getReadingK485(&involts[3], K485METER, GPIBBRIDGE1);
+				involts[3] = 0;
 
 				fprintf(fp,"%d\t", motorPositions[p]);
 				printf("%d\t", motorPositions[p]);
