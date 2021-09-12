@@ -106,6 +106,16 @@ int setParameter(int sock, char* parameter, char* setValue){
 	return laserResponse;
 }
 
+int getAmpCurrent(int sock){
+	float current;
+	char parameterString[]="laser1:amp:cc:current-set";
+	char parameterText[512];
+	readParameter(sock,parameterString,parameterText);
+	current=atof(parameterText);
+
+	return current;
+}
+
 int setAmpCurrent(int sock, float current){
 	char parameterString[]="laser1:amp:cc:current-set";
 	char parameterText[512];

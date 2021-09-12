@@ -6,6 +6,7 @@ float getScanOffset(int sock);
 int setMasterCurrent(int sock, float current);
 float getMasterCurrent(int sock);
 int setMasterTemperature(int sock, float temperature);
+int getAmpCurrent(int sock);
 int setAmpCurrent(int sock, float current);
 
 int turnOffLaser(int sock);
