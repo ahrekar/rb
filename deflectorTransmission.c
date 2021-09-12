@@ -127,6 +127,7 @@ void collectAndRecordData(char* fileName){
 	FILE* fp;
 	char c = 'r';
 	int k=0,i,m;
+	int numMeas=1;
     int timeCounter=0;
 	int nSamples = 16; // The number of data points to collect
 	float involts[NUMCHANNELS];
@@ -152,7 +153,7 @@ void collectAndRecordData(char* fileName){
 	if(i != 0) printf("ERROR INITIALIZING K485\n");
 
     while(c !='q'){
-		for(m=0;m<10;m++)
+		for(m=0;m<numMeas;m++)
 		{
 			for(k=0;k<NUMCHANNELS;k++){
 				involts[k]=0.0;	
