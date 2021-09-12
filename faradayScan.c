@@ -302,6 +302,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             // ------
             // get samples and average
             // ------
+            // COMMENT/UNCOMMENT
             // ----- When measuring using the lock-in, use this piece of code.
             for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
                 involts[j]=0.0;	
@@ -315,6 +316,7 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             } // numPhotoDet1
             // ----- When measuring using the lock-in, use this piece of code.
      
+            // COMMENT/UNCOMMENT
 			// ----- When measuring using the ammeter, use this piece of code.
             //for(j=0;j<numPhotoDetectors;j++){ // numPhotoDet1
             //    involts[j]=0.0;	
@@ -326,6 +328,8 @@ void collectDiscreteFourierData(FILE* fp, int* photoDetector, int numPhotoDetect
             //    involts[j]=involts[j]/(float)nSamples; 
             //    stdDev[j]=stdDeviation(measurement,nSamples);
             //} // numPhotoDet1
+			// ----- When measuring using the ammeter, use this piece of code.
+
             /* THE GPIB WAY ************/
             //i = getReadingK6485(&involts[0], K6485METERVERT, GPIBBRIDGE2);
             //i = getReadingK6485(&involts[1], K6485METERHORIZ, GPIBBRIDGE2);

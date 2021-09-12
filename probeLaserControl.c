@@ -39,11 +39,11 @@ int setProbeDetuning(float desiredDetuning){
 		detuningChangeRequired=fabs(returnedDetuning-desiredDetuning);
 
 		if(detuningChangeRequired>12){
-			deltaDetuning=.6;
+			deltaDetuning=.7;
 		}else if(detuningChangeRequired>1.2){
-			deltaDetuning=.06;
+			deltaDetuning=.07;
 		}else if(detuningChangeRequired>.12){
-			deltaDetuning=.006;
+			deltaDetuning=.007;
 		}else{
 			deltaDetuning=.001;
 		}
