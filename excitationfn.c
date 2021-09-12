@@ -40,14 +40,14 @@ void graphData(char* fileName);
 void collectAndRecordData(char* fileName, int steprange, int stepsize, float bias, float N2Offset, float oneD, float twoA, float startValue, int dwell);
 void writeFileHeader(char* fileName, char* comments, 
                     float bias, float oneD, float twoA, float N2Sweep, 
-                    int dwell, int magnitude);
+                    int dwell);
 
 int main (int argc, char **argv)
 {
     float bias, N2Offset, oneD, twoA, startValue;
 	int stepsize, scanrange;
 	int minstepsize,maxstepsize;
-	int dwell,magnitude;
+	int dwell;
     int i;
 	time_t rawtime;
 	struct tm * timeinfo;
@@ -57,7 +57,7 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
-    int expectedArguments=11;
+    int expectedArguments=10;
 	if (argc == expectedArguments){
 		bias = atof(argv[1]);
 		N2Offset = atof(argv[2]);
@@ -67,8 +67,7 @@ int main (int argc, char **argv)
 		scanrange =atoi(argv[6]);
 		stepsize = atoi(argv[7]);
 		dwell= atoi(argv[8]);
-		magnitude= atoi(argv[9]);
-		strcpy(comments,argv[10]);
+		strcpy(comments,argv[9]);
 	} else{
 		printf("Hey, you made an error in\n");
         printf("your input, please examine\n");
@@ -77,16 +76,15 @@ int main (int argc, char **argv)
         printf("You supplied %d arguments, %d were expected\n", argc-1,expectedArguments-1);
 		printf("\n");
 		printf("Usage:\n");
-		printf("  sudo ./excitationfn <filament bias> (remember neg.)\n");
-        printf("                      <N2 Offset>\n");
-        printf("                      <V 1D>\n");
-        printf("                      <V 2A>\n");
-        printf("                      <He Offset> (remember neg.!)\n");
-        printf("                      <scan range> ( 0-63 )\n");
-        printf("                      <step size> ( 1-24 )\n");
-        printf("                      <dwell time> ( 1-5 s ) \n");
-        printf("                      <Order of magnitude of current>\n");
-        printf("                      <comments>\n");
+		printf("  sudo ./excitationfn <filament bias (V)> ------ (remember neg., read from Filament P1 and P2 PS)\n");
+        printf("                      <N2 Offset (V)> ---------- (read from //Target// PS\n");
+        printf("                      <1D (V)> ----------------- (read from 1D PS)\n");
+        printf("                      <2A (V)> ----------------- (read from 2A PS)\n");
+        printf("                      <He Offset (V)> ---------- (set by computer) (remember neg.!, recommend -100)\n");
+        printf("                      <He scan range (V)> ------ (traverse in steps down this many volts from He Offset. 0-63, recommend 59 )\n");
+        printf("                      <step size (.05 V)> ------ ( 1-24, recommend 24 )\n");
+        printf("                      <dwell time (s)> --------- ( 1-5, recommend 1 ) \n");
+        printf("                      <comments> --------------- (Don't forget to enclose in quotes)\n");
 		printf("\n");
 		printf("Step sizes:\n");
 		printf("  1: %1.2fV    9: %1.2fV   17: %1.2fV\n",1*HPCAL,9*HPCAL,17*HPCAL );
@@ -105,6 +103,7 @@ int main (int argc, char **argv)
 	dataCollectionFlagFile=fopen(dataCollectionFileName,"w");
 	if (!dataCollectionFlagFile) {
 		printf("Unable to open file \n");
+        fflush(stdout);
 		exit(1);
 	}
 
@@ -133,6 +132,7 @@ int main (int argc, char **argv)
 	fp=fopen(buffer,"w");
 	if (!fp) {
 		printf("Unable to open file: %s\n",buffer);
+        fflush(stdout);
 		exit(1);
 	}
 
@@ -169,7 +169,7 @@ int main (int argc, char **argv)
 
 	fclose(fp);
 
-	writeFileHeader(buffer, comments, bias, N2Offset, oneD, twoA, dwell, magnitude);
+	writeFileHeader(buffer, comments, bias, N2Offset, oneD, twoA, dwell);
 
     collectAndRecordData(buffer, scanrange, stepsize, 
                         bias, N2Offset, oneD, twoA, startValue, dwell);
@@ -283,7 +283,7 @@ void graphData(char* fileName){
 
 void writeFileHeader(char* fileName, char* comments, 
                     float bias, float oneD, float twoA, float N2Sweep, 
-                    int dwell, int magnitude){
+                    int dwell){
     float returnFloat;
 	FILE* fp;
 	fp=fopen(fileName,"a");
@@ -329,7 +329,7 @@ void writeFileHeader(char* fileName, char* comments,
 	fprintf(fp,"#T_trg_set:\t%f\n",returnFloat);
 
     /** End System Stats Recording **/
-	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",magnitude);
+	fprintf(fp,"#MagnitudeOfCurrent(*10^-X):\t%d\n",0);
 
 	// Print the header for the information in the datafile
 	fprintf(fp,"Aout\tV_fil\tV_N2\tV_1D\tV_2A\tV_he\te_fil_Eng\te_trg_Eng\tCountRate\tCountRateStDev\tI_f\tI_fStDev\tIonGauge\tIGStdDev\n");
@@ -399,7 +399,7 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
 
         // The supply expects a positive value for the voltage,
         // and we are providing a negative value as input.
-        printf("Setting Sorensen to %d\nt", sorensenSet);
+        printf("Setting Sorensen to %d\n", sorensenSet);
         err = setSorensen120Volts(-sorensenSet,SORENSEN120,GPIBBRIDGE1);
         if(err!=0)
         {
