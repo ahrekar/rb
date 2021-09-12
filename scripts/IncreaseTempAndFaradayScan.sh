@@ -46,8 +46,8 @@ else
 		echo "Blocking pump beam..."
 		sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  prelude"
-		#echo '$RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  prelude"'
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, temp=$temp,  prelude"
+		#echo '$RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, temp=$temp,  prelude"'
 
 		NUMRUNS=3
 		for i in $(seq 1 $NUMRUNS); do 
@@ -61,7 +61,7 @@ else
 			#echo '$RBC/scripts/ElectronPolarizationScript.sh 800 3 $CURRENTSCALE "Run $i, AOUT=800, $COMMENTS"'
 
 			sudo $RBC/scripts/RbQuickPolarizationScript.sh "$COMMENTS, temp=$temp, Run=$i, quick check on polarization"
-			sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp, Run=$i"
+			sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, temp=$temp, Run=$i"
 		# EXACT REPEAT DONE
 		done
 
@@ -70,7 +70,7 @@ else
 		echo "Blocking pump beam..."
 		sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  postscript"
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, temp=$temp,  postscript"
 
 		echo "About to change temperature. Giving 5 seconds to give the oppotunity to cancel the run."
 		sleep 5
@@ -95,8 +95,8 @@ else
 	echo "Blocking pump beam..."
 	sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
-	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  prelude"
-	#echo '$RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  prelude"'
+	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, temp=$temp,  prelude"
+	#echo '$RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, temp=$temp,  prelude"'
 
 	NUMRUNS=5
 	for i in $(seq 1 $NUMRUNS); do 
@@ -110,7 +110,7 @@ else
 		#echo '$RBC/scripts/ElectronPolarizationScript.sh 800 3 $CURRENTSCALE "Run $i, AOUT=800, $COMMENTS"'
 
 		sudo $RBC/scripts/RbQuickPolarizationScript.sh "$COMMENTS, temp=$temp, Run=$i, quick check on polarization"
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp, Run=$i"
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, temp=$temp, Run=$i"
 	# EXACT REPEAT DONE
 	done
 
@@ -119,7 +119,7 @@ else
 	echo "Blocking pump beam..."
 	sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
-	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, temp=$temp,  postscript"
+	sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$N2SWEEP" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, temp=$temp,  postscript"
 
 	sudo $RBC/setOmega $FINALTEMPCCELL $FINALTEMPRES
 	#echo '$RBC/setOmega $FINALTEMPCCELL $FINALTEMPRES'

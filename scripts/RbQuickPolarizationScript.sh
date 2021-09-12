@@ -22,7 +22,7 @@ else
 		COMMENTS=$2
 	else
 		COMMENTS=$1
-		PROBEDETUNE=-15
+		PROBEDETUNE=-30
 	fi
 
 	source LoadWaveplatePositions.sh
@@ -39,7 +39,7 @@ else
 	$RBC/setLaserFlag $PUMP $BLOCKED
 
 	echo "Faraday Scan: no pump..."
-	$RBC/faradayRotation "$COMMENTS, no pump"
+	$RBC/faradayRotation "$COMMENTS, pump->no"
 
 	# Unblock pump beam for sure
 	echo "Unblocking pump beam."
@@ -49,11 +49,11 @@ else
 	echo "Setting QWP for S+ light..."
 	$RBC/setWavePlate $SPLUSPOS
 	echo "Faraday Scan: S+ pump..."
-    $RBC/faradayRotation "$COMMENTS, s+ pump"
+    $RBC/faradayRotation "$COMMENTS, pump->s+"
 
-# set QWP for s- light
-#	echo "Setting QWP for S- light..."
-#	$RBC/setWavePlate $SMINUSPOS
-#	echo "Faraday Scan: S- pump..."
-#    $RBC/faradayRotation "$COMMENTS, s- pump"
+ 	# set QWP for s- light
+	echo "Setting QWP for S- light..."
+	$RBC/setWavePlate $SMINUSPOS
+	echo "Faraday Scan: S- pump..."
+    $RBC/faradayRotation "$COMMENTS, pump->s-"
 fi

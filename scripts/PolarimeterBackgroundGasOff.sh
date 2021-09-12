@@ -7,11 +7,11 @@
 
 if [ "$#" -ne 5 ]; then
 	echo "usage: ./PolarimeterBackgroundGasOff.sh"
-	echo "				<aout energy>" 
-	echo "				<dwell>" 
-	echo "				<ammeter scale>" 
-	echo "				<detune (1.5 GHz is max)>" 
-	echo "				<additional comments>"
+	echo "				<he potential (V)> ------assumed negative, input positive value, can input multiple values in quotes." 
+	echo "				<dwell (s)> -------------length of time to measure counts at each position of the QWP in the polarimeter." 
+	echo "				<ammeter scale #> -------the magnitude of the scale the ammeter is set to (if 154 nA, scale=7)" 
+	echo "				<detune (GHz)> ----------The detuning to set the pump laser to. 1.5 gives max Rb polarization" 
+	echo "				<additional comments>----Make sure to enclose in quotes"
 else
     AOUT=$1
     DWELL=$2

@@ -21,7 +21,7 @@ else
 	echo "Blocking pump beam..."
 	$RBC/setLaserFlag $PUMP $BLOCKED
 	echo "No pump..."
-	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTMAG "$COMMENTS, pump=none"
+	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, pump=none"
 
 	echo "Unblocking pump beam..."
 	$RBC/setLaserFlag $PUMP $UNBLOCKED
@@ -29,17 +29,17 @@ else
 	echo "Setting pump to Pi..."
 	$RBC/setWavePlate $PIPOS
 	echo "Pi Polarized light..."
-	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTMAG "$COMMENTS, pump=pi"
+	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, pump=pi"
 
 	echo "Setting pump to S+..."
 	$RBC/setWavePlate $SPLUSPOS
 	echo "S+ light..."
-	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTMAG "$COMMENTS, pump=S+"
+	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, pump=S+"
 
 	echo "Setting pump to S-..."
 	$RBC/setWavePlate $SMINUSPOS
 	echo "S- light..."
-	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTMAG "$COMMENTS, pump=S-"
+	$RBC/excitationfn $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, pump=S-"
 
 	echo "Unblocking probe beam..."
 	$RBC/setLaserFlag $PROBE $UNBLOCKED

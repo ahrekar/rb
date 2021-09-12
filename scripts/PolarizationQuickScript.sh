@@ -25,14 +25,14 @@ else
 	TWOA=$4
 	HEOFFSET=$5
 	CURRENTSCALE=$6
-	SCANRANGE=85
+	SCANRANGE=59
 	STEPSIZE=24
 	DWELL=$7
 	NUMRUN=$8
 	DETUNE=$9
 	COMMENTS=${10}
 	NUMMEAS=10
-	AOUTS="41.8"
+	AOUTS="120.9"
 
     PUMP=1
     PROBE=0
@@ -56,13 +56,13 @@ else
 		echo "blocking pump laser..."
 		sudo $RBC/setLaserFlag $PUMP $BLOCKED
 		sleep 10
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript, laser Off"
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, postscript, laser Off"
 
 		sudo $RBC/setWavePlate "$SPLUSPOS"
 		echo "Unblocking pump laser..."
 		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 		sleep 10
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript, laser On"
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, postscript, laser On"
 
 		echo "Blocking lasers..."
 		sudo $RBC/setLaserFlag $PUMP $BLOCKED

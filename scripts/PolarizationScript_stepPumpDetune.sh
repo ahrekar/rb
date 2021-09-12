@@ -4,12 +4,12 @@ if [ "$#" -ne 1 ]; then
 	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
-	FILBIAS="-150" # Should be negative
-	N2OFFSET="100"
-	ONED="1.0"
-	TWOA="0.8"
-	HEOFFSET=0	# Should be negative
-	CURRENTSCALE=6
+	FILBIAS="-240" # Should be negative
+	N2OFFSET="90"
+	ONED="1.5"
+	TWOA="0.0"
+	HEOFFSET=-100	# Should be negative
+	CURRENTSCALE=7
 	SCANRANGE=59
 	STEPSIZE=24
 	DWELL=1

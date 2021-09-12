@@ -1,37 +1,37 @@
 #!/bin/bash
 #
 #
-
-if [ "$#" -ne 10 ]; then 
+EXPECTEDARG=11
+if [ "$#" -ne "$EXPECTEDARG" ]; then 
+	echo "    Expected $EXPECTEDARG arguments"
 	echo "You provided $# arguments"
-	echo "usage:
-    sudo ./PolarizationScript.sh <1. filament bias> 
-                                 <2. n2 offset>
-                                 <3. Volt 1D> 
-                                 <4. Volt 2A> 
-                                 <5. he offset> 
-                                 <6. currentScale>
-                                 <7. dwell time>
-                                 <8. # Polarization Runs>
-								 <9. Pump Detuning (1.5 is max)>
-                                 <10. comments>
-
-	Remember to set the AOUTS in the file!" 
+	echo "usage:"
+	echo "  sudo ./PolarizationScript.sh <1. filament bias> (Remember negative!)"
+    echo "                               <2. n2 offset>"
+    echo "                               <3. Volt 1D> "
+    echo "                               <4. Volt 2A> "
+	echo "							     <5. He V for Polarization> (Positive Value!)"
+	echo "							     <6. He offset for EXFN> (Remember negative!)"
+    echo "                               <7. currentScale>"
+    echo "                               <8. dwell time>"
+    echo "                               <9. # Polarization Runs>"
+	echo "							     <10. Pump Detuning (1.5 is max)>"
+    echo "                               <11. comments>"
 else
     RBC="/home/pi/RbControl"
 	FILBIAS=$1
 	N2OFFSET=$2
 	ONED=$3
 	TWOA=$4
-	HEOFFSET=$5
-	CURRENTSCALE=$6
-	SCANRANGE=50
+	AOUTS=$5
+	HEOFFSET=$6
+	CURRENTSCALE=$7
+	SCANRANGE=59
 	STEPSIZE=24
-	DWELL=$7
-	NUMRUN=$8
-	DET=$9
-	COMMENTS=${10}
-	AOUTS="120.9"
+	DWELL=$8
+	NUMRUN=$9
+	DET=${10}
+	COMMENTS=${11}
 
     PUMP=1
     PROBE=0
@@ -56,13 +56,13 @@ else
 		echo "blocking pump laser..."
 		sudo $RBC/setLaserFlag $PUMP $BLOCKED
 		sleep 10
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript, laser Off"
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, postscript, laser Off"
 
 		sudo $RBC/setWavePlate "$SPLUSPOS"
 		echo "Unblocking pump laser..."
 		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 		sleep 10
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL $CURRENTSCALE "$COMMENTS, postscript, laser On"
+		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, postscript, laser On"
 
 		echo "Blocking lasers..."
 		sudo $RBC/setLaserFlag $PUMP $BLOCKED

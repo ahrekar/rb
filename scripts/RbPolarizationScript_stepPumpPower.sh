@@ -15,7 +15,6 @@ else
 
 	for power in 3500 2500 1500 1250; do 
 		echo "About to change current to $power, giving 1 minutes opportunity to cancel" 
-		echo "About to change current to $power, giving 1 minute to cancel." | mutt -s "RbPi Report" karl@huskers.unl.edu
 		sleep 60
 
 		sudo $RBC/setTACurrent $power
@@ -23,10 +22,9 @@ else
   	 	sleep 30
 
 		for run in $(seq $NUMRUN); do 
-			sudo ./RbPolarizationScript.sh "Current: $power, Run: $run/$NUMRUN, $COMMENTS"
+			sudo ./RbPolarizationScript.sh "current->$power, run->$run, totalRuns->$NUMRUN, $COMMENTS"
 		#RUN LOOP DONE
 		done 
 	# power LOOP DONE
 	done 
-	echo "Finished with pump power scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi
