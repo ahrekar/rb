@@ -101,6 +101,7 @@ int main (int argc, char **argv)
     fp=fopen(fileName,"w");
     if (!fp) {
         printf("Unable to open file: %s\n",fileName);
+        fflush(stdout);
         exit(1);
     }
 
