@@ -153,17 +153,13 @@ int main (int argc, char **argv)
 		stepsize=maxstepsize;
 	}
 
-    if (abs(startValue) > 120){
-        printf("Error! Start value enetered was too large. Starting at -120 V instead\n");
-        startValue=-120;
-    }
-
 
     if (abs(startValue) + abs(scanrange) > 180)
     {
+        printf("-----------\n");
         printf("Error! Trying to reach too high of voltages.\n");
-        startValue=-120;
-        scanrange=60;
+        printf("-----------\n");
+        scanrange=180+startValue;
     }
     // End Input Error Checking
 
