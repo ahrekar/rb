@@ -121,7 +121,7 @@ int main (int argc, char **argv)
 
 	// RUDAMENTARIY ERROR CHECKING
 	if (VHe<0) VHe=0;
-	if (VHe>120) VHe=120;
+	if (VHe>180) VHe=180;
 
 	// Create Directory for the day
 	strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); 
