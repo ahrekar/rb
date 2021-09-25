@@ -59,7 +59,7 @@ int main (int argc, char **argv)
 	float leakageCurrent;
     int ammeterScale,nMeasurements;
 	
-	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; 
+	char rawDataFileName[80],comments[1024]; 
 	char buffer[1024];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
@@ -84,7 +84,6 @@ int main (int argc, char **argv)
 		ammeterScale=atof(argv[4]);
 		leakageCurrent=atof(argv[5]);
 		strcpy(comments,argv[6]);
-		strcpy(backgroundFileName,"NONE");
 	} else {
 		printf("There is one option for using this program: \n\n");
 		printf("usage '~$ sudo ./quickPolarization <VHe> (0-1023)\n");
@@ -124,22 +123,14 @@ int main (int argc, char **argv)
 	if (VHe>180) VHe=180;
 
 	// Create Directory for the day
-	strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); 
-	if (stat(analysisFileName, &st) == -1){
-		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
-		sprintf(buffer,"%s/img",analysisFileName); 
-		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
-		extension = strstr(buffer,"/img");
-		strcpy(extension,"/anl");
-		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	strftime(rawDataFileName,80,"/home/pi/RbData/%F",timeinfo); 
+	if (stat(rawDataFileName, &st) == -1){
+		mkdir(rawDataFileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
-	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
+	// Create file name.  Use format "QPOL"+$DATE+$TIME+".dat"
 	strftime(rawDataFileName,80,"/home/pi/RbData/%F/QPOL%F_%H%M%S.dat",timeinfo); 
-	strcpy(analysisFileName,rawDataFileName);
-	extension = strstr(analysisFileName,".dat");
-	strcpy(extension,"analysis.dat");
 
-	printf("\n%s\n",analysisFileName);
+	printf("\n%s\n", rawDataFileName);
 	FILE* rawData;
 	// Write the header for the raw data file.
 	rawData=fopen(rawDataFileName,"w");
