@@ -57,7 +57,6 @@ int main (int argc, char **argv)
 	struct tm * timeinfo;
 
 	char filePath[BUFSIZE],fileName[BUFSIZE], comments[BUFSIZE],buffer[BUFSIZE];
-	char dailyFileName[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
 	FILE *fp,*dataCollectionFlagFile,*configFile;
@@ -86,26 +85,27 @@ int main (int argc, char **argv)
 	i = resetGPIBBridge(GPIBBRIDGE2);
 	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
 
-	// Get file name.  Use format "FDayScan"+$DATE+$TIME+".dat"
+	// --- Create the directory for files.  Use format "FDayScan"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
 	strftime(filePath,BUFSIZE,"/home/pi/RbData/%F",timeinfo);
-	if (stat(fileName, &st) == -1){
-		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	if (stat(filePath, &st) == -1){
+		i = mkdir(filePath,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
+    if (i != 0) printf("Error making directory\n");
+    // --- End create directory
 
+	// --- Create the filename to record data.  Use format "FDayScan"+$DATE+$TIME+".dat"
 	strftime(fileName,BUFSIZE,"FDayScan%F_%H%M%S",timeinfo);
 
 	sprintf(buffer,"%s.dat",fileName);
 	printf("\n%s\n",buffer);
 	sprintf(fileName,"%s/%s",filePath,buffer);
+	// --- End create filename. 
 
-	strftime(dailyFileName,BUFSIZE,"/home/pi/RbData/%F/FDayScan%F.dat",timeinfo); //INCLUDE
-
+    printf("%s\n",fileName);
 	printf("%s\n",comments);
-
-
 
 	fp=fopen(fileName,"w");
 	if (!fp) {
