@@ -100,7 +100,10 @@ int main (int argc, char **argv)
 	strftime(fileName,BUFSIZE,"FDayScan%F_%H%M%S",timeinfo);
 
 	sprintf(buffer,"%s.dat",fileName);
-	printf("\n%s\n",buffer);
+	printf("\n");
+	printf("-------------------------------\n");
+	printf("|%s|\n",buffer);
+	printf("-------------------------------\n");
 	sprintf(fileName,"%s/%s",filePath,buffer);
 	// --- End create filename. 
 
