@@ -106,18 +106,6 @@ int main (int argc, char **argv)
 	initializeBoard();
 	initializeUSB1208();
 	
-	// Set up GPIB devices.
-	//i=resetGPIBBridge(GPIBBRIDGE1);
-	//if(i!=0){
-	//	printf("Error resetting GPIB Bridge. Code: %d\n",i);
-	//}
-	//delay(200);
-	//i=initSorensen120(SORENSEN120,GPIBBRIDGE1);
-	//if(i!=0){
-	//	printf("Error Initializing Sorensen. Code: %d\n",i);
-	//}
-
-
 	// RUDAMENTARIY ERROR CHECKING
 	if (VHe<0) VHe=0;
 	if (VHe>180) VHe=180;
@@ -130,7 +118,10 @@ int main (int argc, char **argv)
 	// Create file name.  Use format "QPOL"+$DATE+$TIME+".dat"
 	strftime(rawDataFileName,80,"/home/pi/RbData/%F/QPOL%F_%H%M%S.dat",timeinfo); 
 
-	printf("\n%s\n", rawDataFileName);
+	printf("\n");
+	printf("-------------------------\n");
+	printf("|%s|\n", rawDataFileName);
+	printf("-------------------------\n");
 	FILE* rawData;
 	// Write the header for the raw data file.
 	rawData=fopen(rawDataFileName,"w");
