@@ -32,12 +32,10 @@ initializeBoard();
 getPVCN7500(CN_RESERVE,&returnRes);
 getPVCN7500(CN_TARGET,&returnTarg);
 getSVCN7500(CN_TARGET,&returnTargSet);
-if (returnRes == 0  || returnRes > 120){ 
-	delay(5000); // This pause is used in the case that the program is being run from crontab
-				 // and there is another program that caused an error in the reading of the 
-				 // variable.
+if (returnRes == 0  || returnRes > 170){ 
 	getPVCN7500(CN_RESERVE,&returnRes);
 	getPVCN7500(CN_TARGET,&returnTarg);
+    getSVCN7500(CN_TARGET,&returnTargSet);
 }
 
 if (returnRes>95){
