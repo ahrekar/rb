@@ -14,13 +14,12 @@
 
 
 int main (int argc, char* argv[]){
-
     // Variables for recording the time. 
 	time_t rawtime;
 	struct tm * timeinfo;
 
 	float returnRes, returnTarg, returnTargSet;
-	float modTemperature=10;
+	float setTemperature=0;
 	float stopPoint, ccSP;
 
 	char stringBuff[BUFSIZE];
@@ -31,7 +30,6 @@ int main (int argc, char* argv[]){
 	printf("%s\n===\n",stringBuff);
 
 	initializeBoard();
-
 
 	getPVCN7500(CN_RESERVE,&returnRes);
 	getPVCN7500(CN_TARGET,&returnTarg);
@@ -45,16 +43,14 @@ int main (int argc, char* argv[]){
 	ccSP=200.0;
 
 	stopPoint=159.0;
-	if (returnRes < (stopPoint - modTemperature)){
-		modTemperature=5;
-		printf("temperature %3.1f < %3.1f, setting to %3.1f and %3.1f\n",returnRes, stopPoint , ccSP, returnRes + modTemperature);
-	} else if((returnRes < (stopPoint - modTemperature)) && (returnRes < stopPoint)){
-		modTemperature = stopPoint - returnRes;
-	}else {
-		modTemperature = stopPoint - returnRes;
+	if (returnRes + 5 < stopPoint ){
+		setTemperature = returnRes + 5;
+		printf("temperature %3.1f < %3.1f, setting to %3.1f and %3.1f\n",returnRes, stopPoint , ccSP, setTemperature);
+	} else{
+		setTemperature = stopPoint;
 	}
 
-	setSVCN7500(CN_RESERVE, returnRes + modTemperature);
+	setSVCN7500(CN_RESERVE, setTemperature);
 	setSVCN7500(CN_TARGET, ccSP);
 
 	printf("Target Temp:%f\n",returnRes);
