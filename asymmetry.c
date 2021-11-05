@@ -166,7 +166,7 @@ void collectAndRecordData(char* fileName, int cycles, int measurementsPerCycle){
 	if(i != 0) printf("ERROR INITIALIZING K485\n");
 
 	int numMotorPositions=2;
-	int motorPositions[]={160,72};
+	int motorPositions[]={164,72};
 	
 
 	for(cyc=0; cyc < cycles; cyc++)
