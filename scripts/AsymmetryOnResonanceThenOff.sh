@@ -1,10 +1,11 @@
 RBC=/home/pi/RbControl
 
-DETECTOR=cb
-SAMPLE=L
+DETECTOR=CT
+SAMPLE=D
 BIAS=-9
-RUN=2
+RUN=4
 
+sudo $RBC/setLaserFlag 1 0
 sudo $RBC/setPumpDetuning 1.5
 sleep 60
 
@@ -14,4 +15,5 @@ sudo $RBC/asymmetry 10 10 "detector->$DETECTOR, detuning->1.5, bias->$BIAS, run-
 #sudo $RBC/asymmetry 10 10 "detector->$DETECTOR, detuning->12, bias->$BIAS, run->$RUN, sample->$SAMPLE"
 echo "The two files are:"
 ls /home/pi/RbData/$(date +%Y-%m-%d)/ | tail -n 2
+sudo $RBC/setLaserFlag 1 1
 sudo $RBC/setPumpDetuning 1.5
