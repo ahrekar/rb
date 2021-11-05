@@ -60,6 +60,7 @@ int main (int argc, char **argv)
     int ammeterScale,nMeasurements;
 	
 	char rawDataFileName[80],comments[1024]; 
+	char fileDirectory[80];
 	char buffer[1024];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 
@@ -69,7 +70,6 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	float returnFloat;
-	char* extension;
 	
 	// Setup time variables
 	time(&rawtime); 
@@ -111,17 +111,21 @@ int main (int argc, char **argv)
 	if (VHe>180) VHe=180;
 
 	// Create Directory for the day
-	strftime(rawDataFileName,80,"/home/pi/RbData/%F",timeinfo); 
-	if (stat(rawDataFileName, &st) == -1){
-		mkdir(rawDataFileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	strftime(fileDirectory,80,"/home/pi/RbData/%F",timeinfo); 
+	if (stat(fileDirectory, &st) == -1){
+		mkdir(fileDirectory,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
-	// Create file name.  Use format "QPOL"+$DATE+$TIME+".dat"
-	strftime(rawDataFileName,80,"/home/pi/RbData/%F/QPOL%F_%H%M%S.dat",timeinfo); 
 
-	printf("\n");
-	printf("-------------------------\n");
-	printf("|%s|\n", rawDataFileName);
-	printf("-------------------------\n");
+	// Create file name.  Use format "QPOL"+$DATE+$TIME+".dat"
+	strftime(buffer,80,"QPOL%F_%H%M%S.dat",timeinfo); 
+
+	printf("---------------------------\n");
+	printf("|%s|\n", buffer);
+	printf("---------------------------\n");
+
+	sprintf(rawDataFileName,"%s/%s",fileDirectory,buffer); 
+
+
 	FILE* rawData;
 	// Write the header for the raw data file.
 	rawData=fopen(rawDataFileName,"w");
@@ -132,7 +136,7 @@ int main (int argc, char **argv)
 
 	fprintf(rawData,"#File\t%s\n",rawDataFileName);
 	fprintf(rawData,"#Comments\t%s\n",comments);
-	printf("Comments:\t%s\n",comments);
+	printf("Comments:\t%s\n\n",comments);
 
 	getIonGauge(&returnFloat);
 	printf("IonGauge %2.2E Torr \n",returnFloat);
@@ -269,6 +273,7 @@ int getPolarizationData(char* fileName, float VHe, int dwell, int nMeasurements,
 	// End File setup
 
 	fprintf(rawData,"MEASUREMENT\tCOUNT+45\tCURRENT+45\tCOUNT-45\tCURRENT-45\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
+	printf("\n");
 	printf("MEASUREMENT\tCOUNT+45\tCURRENT+45\tCOUNT-45\tCURRENT-45\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
 
 	for (j=0;j<nMeasurements;j++){
@@ -277,7 +282,7 @@ int getPolarizationData(char* fileName, float VHe, int dwell, int nMeasurements,
 		getCountsAndCurrent(dwell,&sumCounts,&current);
 		allCountsPlus=allCountsPlus+sumCounts;
 		countRatePlus=countRatePlus+(float)sumCounts /(current*pow(10,9-scale));
-		printf("%d\t%ld\t%1.2e\t",j,sumCounts,current+leakageCurrent);
+		printf("%d\t\t%ld\t%1.2e\t",j,sumCounts,current+leakageCurrent);
 		fprintf(rawData,"%d\t%ld\t%1.3e\t",j,sumCounts,current+leakageCurrent);
 
 		homeMotor(POL_MOTOR); 

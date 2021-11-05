@@ -21,9 +21,12 @@ int main (int argc, char *argv[]){
 	unsigned short motor;
 
 	if (argc==2){
-		motor = (unsigned short) atoi(argv[1]); // which steper motor
+		motor = (unsigned short) atoi(argv[1]); // which stepper motor
 	} else {
-		printf("Usage:  ~$sudo ./homemotor2 <motor(0,1,2)> \n");
+		printf("Usage:  ~$sudo ./homemotor <motor(0,1,2)>\n");
+		printf("                           0=polarimeter  \n");
+		printf("                           1=probeAnalysis\n");
+		printf("                           2=pumpQWP\n");
 		motor = 3;// not part of the switch statment, so nuthing happens
 	}
 

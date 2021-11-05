@@ -48,7 +48,8 @@ int main (int argc, char **argv)
 	float leakageCurrent;
     int ammeterScale;
 	
-	char analysisFileName[80],backgroundFileName[80],rawDataFileName[80],comments[1024]; 
+	char rawDataFileName[80],comments[1024]; 
+	char fileDirectory[80];
     char configFileName[]="/home/pi/RbControl/system.cfg";
 	char buffer[1024];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
@@ -59,7 +60,6 @@ int main (int argc, char **argv)
 	time_t rawtime;
 	struct tm * timeinfo;
 	float returnFloat;
-	char* extension;
 	
 	// Setup time variables
 	time(&rawtime); 
@@ -73,7 +73,6 @@ int main (int argc, char **argv)
 		ammeterScale=atof(argv[3]);
 		leakageCurrent=atof(argv[4]);
 		strcpy(comments,argv[5]);
-		strcpy(backgroundFileName,"NONE");
 	} else {
 		printf("There is one option for using this program: \n\n");
 		printf("usage '~$ sudo ./polarization <voltage for He target> \\  (0-63, -1 to leave unchanged)\n");
@@ -96,23 +95,20 @@ int main (int argc, char **argv)
 	initializeUSB1208();
 
 	// Create Directory for the day
-	strftime(analysisFileName,80,"/home/pi/RbData/%F",timeinfo); 
-	if (stat(analysisFileName, &st) == -1){
-		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
-		sprintf(buffer,"%s/img",analysisFileName); 
-		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
-		extension = strstr(buffer,"/img");
-		strcpy(extension,"/anl");
-		mkdir(analysisFileName,S_IRWXU | S_IRWXG | S_IRWXO );
+	strftime(fileDirectory,80,"/home/pi/RbData/%F",timeinfo); 
+	if (stat(fileDirectory, &st) == -1){
+		mkdir(fileDirectory, S_IRWXU | S_IRWXG | S_IRWXO );
 	}
 
 	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
-	strftime(rawDataFileName,80,"/home/pi/RbData/%F/POL%F_%H%M%S.dat",timeinfo); 
-	strcpy(analysisFileName,rawDataFileName);
-	extension = strstr(analysisFileName,".dat");
-	strcpy(extension,"analysis.dat");
+	strftime(buffer,80,"POL%F_%H%M%S.dat",timeinfo); 
 
-	printf("\n%s\n",analysisFileName);
+	printf("---------------------------\n");
+	printf("|%s|\n", buffer);
+	printf("---------------------------\n");
+
+	sprintf(rawDataFileName,"%s/%s",fileDirectory,buffer); 
+
 	FILE* rawData;
 	// Write the header for the raw data file.
 	rawData=fopen(rawDataFileName,"w");
@@ -124,19 +120,18 @@ int main (int argc, char **argv)
     // BEGIN record file header information
 	fprintf(rawData,"#File\t%s\n",rawDataFileName);
 	fprintf(rawData,"#Comments\t%s\n",comments);
-	printf("File:\t%s\n",rawDataFileName);
-	printf("Comments:\t%s\n",comments);
+	printf("Comments:\t%s\n\n",comments);
 
 	getIonGauge(&returnFloat);
-	printf("IonGauge %2.2E Torr \n",returnFloat);
+	//printf("IonGauge %2.2E Torr \n",returnFloat);
 	fprintf(rawData,"#IonGauge(Torr):\t%2.2E\n",returnFloat);
 
 	getConvectron(GP_TOP2,&returnFloat);
-	printf("CVGauge(Source Foreline): %2.2E Torr\n", returnFloat);
+	//printf("CVGauge(Source Foreline): %2.2E Torr\n", returnFloat);
 	fprintf(rawData,"#CVGauge(Source Foreline)(Torr):\t%2.2E\n", returnFloat);
 
 	getConvectron(GP_TOP1,&returnFloat);
-	printf("CVGauge(Target Foreline): %2.2E Torr\n", returnFloat);
+	//printf("CVGauge(Target Foreline): %2.2E Torr\n", returnFloat);
 	fprintf(rawData,"#CVGauge(Target Foreline)(Torr):\t%2.2E\n", returnFloat);
 
 
@@ -240,7 +235,6 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
     }
 	// NOTE THAT THIS SETS THE FINAL ELECTRON ENERGY. THIS ALSO DEPENDS ON BIAS AND TARGET OFFSET.  AN EXCIATION FN WILL TELL THE
 	// USER WHAT OUT TO USE, OR JUST MANUALLY SET THE TARGET OFFSET FOR THE DESIRED ENERGY
-    
 
 	// Begin File setup
 	FILE* rawData=fopen(fileName,"a");
@@ -249,14 +243,14 @@ int getPolarizationData(char* fileName, float VHe, int dwell, float leakageCurre
 		exit(1);
 	}
 	// End File setup
-
+    
 	homeMotor(POL_MOTOR); 
 
 	nsteps=STEPSPERREV*REVOLUTIONS;
 	ninc=STEPSPERREV/DATAPOINTSPERREV; // The number of steps to take between readings.
 
 	fprintf(rawData,"STEP\tCOUNT\tCURRENT\tCURRENTsd\tANGLE\n");// This line withough a comment is vital for being able to quickly process data. DON'T REMOVE
-	printf("Steps\tCounts\tCurrent\n");
+	printf("\nSteps\tCounts\tCurrent\n");
 
 	for (steps=0;steps<nsteps;steps+=ninc){
 		stepMotor(POL_MOTOR,CCLK,ninc); 

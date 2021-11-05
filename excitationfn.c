@@ -126,7 +126,9 @@ int main (int argc, char **argv)
     strftime(fileName,80,"EX%F_%H%M%S",timeinfo);
 
 	sprintf(buffer,"%s.dat",fileName);
-	printf("\n%s\n",buffer);
+	printf("-------------------------\n");
+	printf("|%s|\n",buffer);
+	printf("-------------------------\n");
 	sprintf(buffer,"%s/%s.dat",filePath,fileName);
 
 	fp=fopen(buffer,"w");
@@ -349,7 +351,7 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
     err=initSorensen120(SORENSEN120,GPIBBRIDGE1);
 
     hpEndRange=scanrange%60;
-    hpCycles=scanrange/60+1;
+    hpCycles=scanrange/61 + 1;
     
 	stepRange = 1023;
 	endStepRange = 1+(int)(hpEndRange/(HPCAL));
@@ -375,7 +377,8 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
 	// error bars.
 	nSamples = 2;
 	float* measurement = malloc(nSamples*sizeof(float));
-
+    
+    printf("\n");
     printf("aout  e_fil_Eng    e_trg_Eng   V_He    Counts   Current\n");
     // Now that I'm going to use the Sorensen supply in combination
     // with the HP supply, we'll need two for loops. One for setting
@@ -384,7 +387,7 @@ void collectAndRecordData(char* fileName, int scanrange, int stepsize, float bia
     for (k=0;k<hpCycles;k++){
         // START SET SORENSEN 
         setUSB1208AnalogOut(HETARGET,0);
-        sorensenSet=startValue-k*60;
+        sorensenSet = startValue-k*60;
         if(abs(sorensenSet) > 120){
             endStepRangeStart=abs(sorensenSet)-120;
             sorensenSet=-120;
