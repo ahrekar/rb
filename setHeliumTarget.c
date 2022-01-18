@@ -45,9 +45,14 @@ int main (int argc, char *argv[])
 		sorensenValue=0;
 		hpValue=value;
 	}
+	else if (value < 120)
+	{
+		sorensenValue=60;
+		hpValue=value-sorensenValue;
+	}
 	else if (value < 180)
 	{
-		sorensenValue=value-60;
+		sorensenValue=120;
 		hpValue=value-sorensenValue;
 	}
 	else value=180;
