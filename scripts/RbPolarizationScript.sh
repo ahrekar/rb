@@ -6,11 +6,12 @@
 #
 #		./RbPolarizationScript <aout start> <aout end> <step size> <RbScan start> <RbScan end> <additional comments>
 
-if [ "$#" -ne 1 ]; then
-	echo "usage: ./RbPolarizationScript.sh <additional comments>"
+if [ "$#" -ne 2 ]; then
+	echo "usage: ./RbPolarizationScript.sh <pump detuning> <additional comments>"
 else
 	RBC=/home/pi/RbControl
-    COMMENTS=$1
+    DETUNE=$1
+    COMMENTS=$2
 
 	source $RBC/scripts/LoadWaveplatePositions.sh
 
@@ -24,6 +25,9 @@ else
 	# Unblock pump beam for sure
 	echo "Unblocking pump beam..."
 	$RBC/setLaserFlag $PUMP $UNBLOCKED
+
+	echo "Checking in on detuning..."
+	sudo $RBC/setPumpDetuning $DETUNE
 
 	# set QWP for S+ light
 	echo "Setting QWP for S+ light..."
