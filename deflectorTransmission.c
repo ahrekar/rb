@@ -127,7 +127,7 @@ void collectAndRecordData(char* fileName){
 	FILE* fp;
 	char c = 'r';
 	int k=0,i,m;
-	int numMeas=1;
+	int numMeas=20;
     int timeCounter=0;
 	int nSamples = 16; // The number of data points to collect
 	float involts[NUMCHANNELS];
