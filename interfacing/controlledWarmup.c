@@ -42,7 +42,7 @@ int main (int argc, char* argv[]){
 
 	ccSP=200.0;
 
-	stopPoint=159.0;
+	stopPoint=200.0;
 	if (returnRes + 5 < stopPoint ){
 		setTemperature = returnRes + 5;
 		printf("temperature %3.1f < %3.1f, setting to %3.1f and %3.1f\n",returnRes, stopPoint , ccSP, setTemperature);

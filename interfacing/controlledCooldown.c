@@ -39,13 +39,13 @@ if (returnRes == 0  || returnRes > 170){
 }
 
 if (returnRes>95){
-	modTemperature=30;
+	modTemperature=40;
     printf("temperature %f > %f, setting to %f and 0\n",returnRes,95,returnRes+modTemperature);
 }else if (returnRes > 70){
-	modTemperature=20;
+	modTemperature=30;
     printf("temperature %f > %f, setting to %f and 0\n",returnRes,70,returnRes+modTemperature);
 }else if (returnRes > 50){
-	modTemperature=10;
+	modTemperature=20;
     printf("temperature %f > %f, setting to %f and 0\n",returnRes,50,returnRes+modTemperature);
 }else if (returnRes > 40){
 	modTemperature=5;

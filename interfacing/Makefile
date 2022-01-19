@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -O3 -g -Wall -I. -lm
 PIFLAGS = -lwiringPi -lmccusb -L. -L/usr/local/lib -lhidapi-libusb -lusb-1.0
 
-SOURCES = mainTemplate.c testK6485.c testK485.c testSR830.c
+SOURCES = mainTemplate.c testK6485.c testK485.c testSR830.c controlledWarmup.c controlledCooldown.c
 
 OBJECTS = $(SOURCES:.c=.o)
 BINARIES = ${subst .c,,${SOURCES}}
@@ -10,6 +10,12 @@ BINARIES = ${subst .c,,${SOURCES}}
 all: ${BINARIES}
 
 mainTemplate : mainTemplate.o kenBoard.o K485meter.o K6485meter.o USB1208.o omegaCN7500.o grandvillePhillips.o RS485Devices.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $^ -o $@
+
+controlledWarmup : controlledWarmup.o kenBoard.o omegaCN7500.o RS485Devices.o
+	$(CC) $(CFLAGS) $(PIFLAGS) $^ -o $@
+
+controlledCooldown : controlledCooldown.o kenBoard.o omegaCN7500.o RS485Devices.o
 	$(CC) $(CFLAGS) $(PIFLAGS) $^ -o $@
 
 testK6485 : testK6485.o kenBoard.o USB1208.o RS485Devices.o K6485meter.o
