@@ -22,7 +22,7 @@ else
 
 	source LoadWaveplatePositions.sh
 
-	NUMRUN=5
+	NUMRUN=3
 
 	sudo $RBC/setPumpDetuning $DETUNE
 

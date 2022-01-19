@@ -1,31 +1,41 @@
 #!/bin/bash
 
-if [ "$#" -ne 1 ]; then 
-	echo "usage: sudo ./PolarizationQuickScript_repeat.sh <additional comments>" 
+if [ "$#" -ne 2 ]; then 
+	echo "usage: sudo ./PolarizationScript_repeat.sh <runs> <additional comments>" 
 else
     RBC="/home/pi/RbControl"
-	FILBIAS="-37" # Should be negative
-	N2OFFSET="2"
-	ONED="1"
-	TWOA="3.0"
-	HEOFFSET=0	# Should be negative
-	CURRENTSCALE=7
-	SCANRANGE=40
+	FILBIAS="-240"
+	N2OFFSET="100"
+	ONED="1.5"
+	TWOA="0"
+	POLARIZATIONHEOFFSET=110
+	HEOFFSET=-100
+	CURRENTSCALE=6
+	SCANRANGE=45
 	STEPSIZE=24
 	DWELL=1
 	NUMRUN=1
-	COMMENTS=$1
+	DETUNE=1.5
+	RUNS=$1
+	COMMENTS=$2
+
+	AOUTS="110.7"
 
     PUMP=1
     PROBE=0
 
+	QUICKPOLDWELL=3
+
     BLOCKED=1
     UNBLOCKED=0
 
-	sudo $RBC/setPumpDetuning 3
-	for run in $(seq 1 100); do 
-		sudo $RBC/scripts/PolarizationQuickScript.sh $FILBIAS $N2OFFSET $ONED $TWOA $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN "runNumber->$run $COMMENTS"
-	# detune LOOP DONE
+	for run in $(seq $RUNS); do 
+		echo "Measuring polarization."
+		sudo $RBC/scripts/PolarizationQuickScript.sh $FILBIAS $N2OFFSET $ONED $TWOA $HEOFFSET $CURRENTSCALE $QUICKPOLDWELL $AOUTS $NUMRUN $DETUNE  "detune->$DETUNE, Run->$run, totalRuns->$RUNS, $COMMENTS"
+
+		#echo "Waiting 5 min to step temperature and make next measurement"
+		#sleep 300
+		echo "Waiting 6 minutes to do next run"
+		sleep 360
 	done 
-	echo "Finished with pump scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

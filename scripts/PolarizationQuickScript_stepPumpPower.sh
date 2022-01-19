@@ -45,5 +45,4 @@ else
 		done 
 	#power LOOP DONE
 	done
-	echo "Finished with pump scan run." | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

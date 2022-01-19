@@ -1,9 +1,5 @@
 #!/bin/bash
 #
-# Usage:
-#
-#		./ElectronPolarizationScript <aout background> <aout Helium Excited> <dwell> <additional comments>
-#
 
 if [ "$#" -ne 5 ]; then
 	echo "usage: ./PolarimeterBackgroundBeamOff.sh"
@@ -29,7 +25,7 @@ else
 	sudo $RBC/setPumpDetuning $DETUNE
 
 	for i in $( seq 1 $NUMRUN ); do 
-		echo "About to start next sequence of runs..."
+		echo "About to start set $i of $NUMRUN..."
 		sleep 5
 		for a in $AOUT; do 
 			echo "Blocking probe beam..."
@@ -39,7 +35,9 @@ else
 			sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
 			echo "No pump..."
-			sleep 30
+			PAUSE=30
+			echo "$PAUSE second pause to allow settling."
+			sleep $PAUSE
 			sudo $RBC/polarization "$a" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->none, Run $i/$NUMRUN"
 
 			echo "Unblocking pump beam..."

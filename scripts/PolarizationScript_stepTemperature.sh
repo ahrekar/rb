@@ -4,37 +4,48 @@ if [ "$#" -ne 1 ]; then
 	echo "usage: sudo ./PolarizationScript.sh <additional comments>" 
 else
     RBC="/home/pi/RbControl"
-	FILBIAS="-130.0"
-	N2OFFSET="71.6"
-	N2SWEEP="3.0"
-	HEOFFSET=-19.9
-	CURRENTSCALE=6
-	SCANRANGE=30
+	FILBIAS="-240"
+	N2OFFSET="100"
+	ONED="1.5"
+	TWOA="0"
+	POLARIZATIONHEOFFSET=110
+	HEOFFSET=-100
+	CURRENTSCALE=7
+	SCANRANGE=45
 	STEPSIZE=24
 	DWELL=1
-	NUMRUN=3
+	NUMRUN=1
 	DETUNE=1.5
-	NUMEQUILRUN=5
 	COMMENTS=$1
-	CCELLTEMP=140
-	STARTTEMP=90
-	ENDTEMP=115
-	STEPTEMP=3
+	CCELLTEMP=200
+	STARTTEMP=159
+	ENDTEMP=178
+	STEPTEMP=1
 
     PUMP=1
     PROBE=0
+
+	QUICKPOLDWELL=3
 
     BLOCKED=1
     UNBLOCKED=0
 
 	for temp in $(seq $STARTTEMP $STEPTEMP $ENDTEMP); do 
-		echo "About to change temperature to $temp, giving 5 minutes opportunity to cancel" 
-		sleep 300
-		sudo $RBC/setOmega $CCELLTEMP $temp
+		echo "Measuring polarization."
+		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $ONED $TWOA $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN $detune "detune->$detune, $COMMENTS"
 
-		sudo $RBC/scripts/repeatRbQuickPolarization.sh $NUMEQUILRUN "Equil runs for temp=$temp (from $STARTTEMP to $ENDTEMP in steps of $STEPTEMP), $COMMENTS"
-		sudo $RBC/scripts/PolarizationScript.sh $FILBIAS $N2OFFSET $N2SWEEP $HEOFFSET $CURRENTSCALE $DWELL $NUMRUN $DETUNE "temp=$temp,  $COMMENTS"
-	# TEMP LOOP DONE
+		echo "About to change temperature to $temp, giving 10 s opportunity to cancel" 
+		sleep 10
+		sudo $RBC/setOmega $CCELLTEMP $temp
+		echo  '$RBC/setOmega $CCELLTEMP $temp'
+
+		echo "Waiting 5 min to step temperature and make next measurement"
+		sleep 300
+		#QUICKPOLRUNS=3
+		#for i in $(seq $QUICKPOLRUNS); do
+		#	sudo $RBC/scripts/PolarizationQuickScript.sh $FILBIAS $N2OFFSET $ONED $TWOA $POLARIZATIONHEOFFSET $CURRENTSCALE $QUICKPOLDWELL $POLARIZATIONHEOFFSET 1 1.5 "quickPolarizations between, full pols, run $i/$QUICKPOLRUNS"
+		#	echo "Waiting 6 min to make another quick pol measurement."
+		#	sleep 360
+		#done
 	done 
-	echo "Done with temp step run from $STARTTEMP to $ENDTEMP" | mutt -s "RbPi Report" karl@huskers.unl.edu
 fi

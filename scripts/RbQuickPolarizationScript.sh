@@ -45,7 +45,7 @@ else
 	echo "Unblocking pump beam."
 	$RBC/setLaserFlag $PUMP $UNBLOCKED
 
-	# set QWP for s+ light
+	## set QWP for s+ light
 	echo "Setting QWP for S+ light..."
 	$RBC/setWavePlate $SPLUSPOS
 	echo "Faraday Scan: S+ pump..."

@@ -27,10 +27,10 @@ else
 
 	NUMRUN=1
 
-	for i in $( seq 1 $NUMRUN ); do 
+	for a in $AOUT; do 
 		echo "About to start next sequence of runs..."
 		sleep 5
-		for a in $AOUT; do 
+		for i in $( seq 1 $NUMRUN ); do 
 			echo "Checking in on detuning..."
 			sudo $RBC/setPumpDetuning $DETUNE
 			
@@ -47,10 +47,10 @@ else
 			echo "Unblocking pump beam..."
 			sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
 
-			#echo "Setting pump to Pi..."
-			#sudo $RBC/setWavePlate $PIPOS
-			#sleep 10
-			#sudo $RBC/quickPolarization "$a" "$DWELL" "$NUM" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->pi, Run->$i, TotalRuns->$NUMRUN"
+			echo "Setting pump to Pi..."
+			sudo $RBC/setWavePlate $PIPOS
+			sleep 10
+			sudo $RBC/quickPolarization "$a" "$DWELL" "$NUM" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->pi, Run->$i, TotalRuns->$NUMRUN"
 
 			echo "Setting pump to S+..."
 			sudo $RBC/setWavePlate $SPLUSPOS

@@ -2,7 +2,7 @@
 #
 #
 
-if [ "$#" -ne 10 ]; then 
+if [ "$#" -ne 11 ]; then 
 	echo "You provided $# arguments"
 	echo "usage: 
     sudo ./PolarizationQuickScript.sh <1. filament bias> 
@@ -12,9 +12,10 @@ if [ "$#" -ne 10 ]; then
                                       <5. he offset>
                                       <6. currentScale>
                                       <7. dwell time>
-                                      <8. # Polarization Runs>
-                                      <9. Pump Detuning>
-                                      <10. comments>
+                                      <8. aouts>
+                                      <9. # Polarization Runs>
+                                      <10. Pump Detuning>
+                                      <11. comments>
 
     Remember to set the AOUTS in the file!" 
 else
@@ -24,15 +25,16 @@ else
 	ONED=$3
 	TWOA=$4
 	HEOFFSET=$5
-	CURRENTSCALE=$6
-	SCANRANGE=59
-	STEPSIZE=24
+	AMMETERSCALE=$6
 	DWELL=$7
-	NUMRUN=$8
-	DETUNE=$9
-	COMMENTS=${10}
-	NUMMEAS=10
-	AOUTS="120.9"
+	AOUTS=$8
+	NUMRUN=$9
+	DETUNE=${10}
+	COMMENTS=${11}
+
+	NUM=3
+
+	PROBEDETUNE=-10
 
     PUMP=1
     PROBE=0
@@ -41,32 +43,57 @@ else
     UNBLOCKED=0
 	source $RBC/scripts/LoadWaveplatePositions.sh
 
-	for i in $(seq 1 $NUMRUN); do 
-		echo "About to start next energy polarization run ($i/$NUMRUN). Pausing for 5 seconds to give the opportunity to cancel the run."
-		sleep 5
-		sudo $RBC/scripts/ElectronQuickPolarizationScript.sh "$AOUTS" $DWELL $NUMMEAS $CURRENTSCALE $DETUNE "Run $i/$NUMRUN, $COMMENTS"
+	for heVolt in $AOUTS; do 
+		sudo $RBC/setHeliumTarget $heVolt
+		for i in $(seq 1 $NUMRUN); do 
+			echo "Setting Pump detuning..."
+			sudo $RBC/setPumpDetuning $DETUNE
 
-		echo "Unblocking pump laser..."
-		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-		sudo $RBC/scripts/RbQuickPolarizationScript.sh "$COMMENTS" 
-		echo "RAN RB POLARIZATION SCRIPT"
+			echo "setting probe detuning"
+			sudo $RBC/setProbeDetuning $PROBEDETUNE
 
-		echo "Blocking probe laser..."
-		sudo $RBC/setLaserFlag $PROBE $BLOCKED
-		echo "blocking pump laser..."
-		sudo $RBC/setLaserFlag $PUMP $BLOCKED
-		sleep 10
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, postscript, laser Off"
+			echo "Blocking probe beam..."
+			sudo $RBC/setLaserFlag $PROBE $BLOCKED
 
-		sudo $RBC/setWavePlate "$SPLUSPOS"
-		echo "Unblocking pump laser..."
-		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-		sleep 10
-		sudo $RBC/excitationfn $FILBIAS "$N2OFFSET" "$ONED" "$TWOA" $HEOFFSET $SCANRANGE $STEPSIZE $DWELL "$COMMENTS, postscript, laser On"
+			echo "Blocking pump beam..."
+			sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
-		echo "Blocking lasers..."
-		sudo $RBC/setLaserFlag $PUMP $BLOCKED
-		sudo $RBC/setLaserFlag $PROBE $BLOCKED
-		# EXACT REPEAT DONE
+			echo "Electron Polarization No pump..."
+			echo "Pausing for 30 s to allow time to settle..."
+			sleep 30
+			sudo $RBC/quickPolarization "$heVolt" "$DWELL" "$NUM" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$heVolt, pump->none, Run->$i, TotalRuns->$NUMRUN"
+
+			echo "Faraday Scan: no pump..."
+			sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
+			$RBC/faradayRotation "$COMMENTS, pump->no"
+			sudo $RBC/setLaserFlag $PROBE $BLOCKED
+
+			echo "Unblocking pump beam..."
+			sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
+
+			echo "Setting pump to S+..."
+			sudo $RBC/setWavePlate $SPLUSPOS
+			sleep 10
+			echo "Electron Polarization S+ pump..."
+			sudo $RBC/quickPolarization "$heVolt" "$DWELL" "$NUM" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$heVolt, pump->s+, Run->$i, TotalRuns->$NUMRUN"
+
+			echo "Faraday Scan: no pump..."
+			sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
+			$RBC/faradayRotation "$COMMENTS, pump->s+"
+			sudo $RBC/setLaserFlag $PROBE $BLOCKED
+
+			echo "Setting pump to S-..."
+			sudo $RBC/setWavePlate $SMINUSPOS
+			sleep 10
+			echo "Electron Polarization S- pump..."
+			sudo $RBC/quickPolarization "$heVolt" "$DWELL" "$NUM" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$heVolt, pump->s-, Run->$i, TotalRuns->$NUMRUN"
+			echo "Faraday Scan: S- pump..."
+			sudo $RBC/setLaserFlag $PROBE $UNBLOCKED
+			$RBC/faradayRotation "$COMMENTS, pump->s-"
+			sudo $RBC/setLaserFlag $PROBE $BLOCKED
+
+			echo "Blocking pump beam..."
+			sudo $RBC/setLaserFlag $PUMP $BLOCKED
+		done
 	done
 fi

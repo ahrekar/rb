@@ -28,6 +28,7 @@ else
 		echo "About to start next sequence of runs..."
 		sleep 5
 		for i in $( seq 1 $NUMRUN ); do 
+			echo "Running $a of ($AOUT)"
 			echo "Checking in on detuning..."
 			sudo $RBC/setPumpDetuning $DETUNE
 
@@ -38,7 +39,9 @@ else
 			sudo $RBC/setLaserFlag $PUMP $BLOCKED
 
 			echo "No pump..."
-			sleep 30
+			PAUSE=30
+			echo "$PAUSE second pause to allow settling."
+			sleep $PAUSE
 			sudo $RBC/polarization "$a" "$DWELL" "$AMMETERSCALE" "$LEAKCURRENT" "$COMMENTS, AOUT->$a, pump->none, Run $i/$NUMRUN"
 
 			echo "Unblocking pump beam..."
