@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-EXPECTEDARG=11
+EXPECTEDARG=12
 if [ "$#" -ne "$EXPECTEDARG" ]; then 
 	echo "    Expected $EXPECTEDARG arguments"
 	echo "You provided $# arguments"
@@ -10,13 +10,14 @@ if [ "$#" -ne "$EXPECTEDARG" ]; then
     echo "                               <2. n2 offset>"
     echo "                               <3. Volt 1D> "
     echo "                               <4. Volt 2A> "
-	echo "							     <5. He V for Polarization> (Positive Value!)"
-	echo "							     <6. He offset for EXFN> (Remember negative!)"
-    echo "                               <7. currentScale>"
-    echo "                               <8. dwell time>"
-    echo "                               <9. # Polarization Runs>"
-	echo "							     <10. Pump Detuning (1.5 is max)>"
-    echo "                               <11. comments>"
+	echo "                               <5. He V for Polarization> (Positive Value!)"
+	echo "                               <6. He offset for EXFN> (Remember negative!)"
+	echo "                               <7. He scan range for EXFN> (goes down this many volts from offset!)"
+    echo "                               <8. currentScale>"
+    echo "                               <9. dwell time>"
+    echo "                               <10. # Polarization Runs>"
+	echo "                               <11. Pump Detuning (1.5 is max)>"
+    echo "                               <12. comments>"
 else
     RBC="/home/pi/RbControl"
 	FILBIAS=$1
@@ -25,13 +26,13 @@ else
 	TWOA=$4
 	AOUTS=$5
 	HEOFFSET=$6
-	CURRENTSCALE=$7
-	SCANRANGE=59
+	SCANRANGE=$7
+	CURRENTSCALE=$8
 	STEPSIZE=24
-	DWELL=$8
-	NUMRUN=$9
-	DET=${10}
-	COMMENTS=${11}
+	DWELL=$9
+	NUMRUN=${10}
+	DET=${11}
+	COMMENTS=${12}
 
     PUMP=1
     PROBE=0
@@ -48,7 +49,7 @@ else
 
 		echo "Unblocking pump laser..."
 		sudo $RBC/setLaserFlag $PUMP $UNBLOCKED
-		sudo $RBC/scripts/RbPolarizationScript.sh "$COMMENTS, postscript" 
+		sudo $RBC/scripts/RbPolarizationScript.sh $DET "$COMMENTS, postscript" 
 		echo "RAN RB POLARIZATION SCRIPT"
 
 		echo "Blocking probe laser..."
