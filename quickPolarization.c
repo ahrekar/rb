@@ -228,9 +228,13 @@ int getPolarizationData(char* fileName, float VHe, int dwell, int nMeasurements,
 	{
         sorensenValue=0;
 	}
+	else if (VHe < 120)
+	{
+        sorensenValue=60;
+	}
 	else if (VHe < 180)
 	{
-		sorensenValue=VHe-60;
+		sorensenValue=120;
 	}
 	else 
     {
