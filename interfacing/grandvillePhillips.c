@@ -44,7 +44,7 @@ int getConvectron(unsigned int chan, float* returnvalue){
 	}
 	
     status = readRS485AnalogRecorder(0xD0,kchan,1024.0,&CVGauge,&Stdev);
-    printf("CVGauge: %f\n",CVGauge);
+    //printf("CVGauge: %f\n",CVGauge);
 	if (status==0){
             if(chan==GP_CHAMB_CHAN){
                 //CVGauge = pow(10,(0.00963*CVGauge - 4.05));

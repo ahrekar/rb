@@ -83,14 +83,18 @@ int main (int argc, char* argv[]){
 
 		printf("_____TEMPERATURE______\n");
 		i=getPVCN7500(CN_TARGET,&myTemp);
-		printf("Trg. T= %.1f\n",myTemp);
+		printf("Trg. T= %.1f",myTemp);
 		fprintf(fp,"%.2f\t",myTemp);
+		i=getSVCN7500(CN_TARGET,&myTemp);
+		printf(" -> %.1f\n",myTemp);
 
 
 		i=getPVCN7500(CN_RESERVE,&myTemp);
         if(i==0)
-        printf("Res. T= %.1f\n",myTemp);
+        printf("Res. T= %.1f",myTemp);
 		fprintf(fp,"%.2f\t",myTemp);
+		i=getSVCN7500(CN_RESERVE,&myTemp);
+        printf(" -> %.1f\n",myTemp);
 
 		printf("\n\n_____PRESSURE_____\n");
 		getConvectron(GP_TOP2,&myTemp);
