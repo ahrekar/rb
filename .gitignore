@@ -1,4 +1,6 @@
 deflectorTransmission
+monitorCountsAndCurrentDigital
+monitorPhotodiodesOnKeyPress
 analogout
 excitationfn
 getadc
@@ -123,6 +125,7 @@ interfacing/testKenBoard
 interfacing/topticaLaser
 interfacing/winBridge
 interfacing/testK617
+interfacing/testSR830
 
 RbTest/tempAndPress.tsv
 
