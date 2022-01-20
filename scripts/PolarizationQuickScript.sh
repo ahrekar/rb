@@ -4,20 +4,20 @@
 
 if [ "$#" -ne 11 ]; then 
 	echo "You provided $# arguments"
-	echo "usage: 
-    sudo ./PolarizationQuickScript.sh <1. filament bias> 
-                                      <2. n2 offset>
-                                      <3. Volt 1D> 
-                                      <4. Volt 2A> 
-                                      <5. he offset>
-                                      <6. currentScale>
-                                      <7. dwell time>
-                                      <8. aouts>
-                                      <9. # Polarization Runs>
-                                      <10. Pump Detuning>
-                                      <11. comments>
-
-    Remember to set the AOUTS in the file!" 
+	echo "usage: "
+    echo "sudo ./PolarizationQuickScript.sh <1. filament bias> "
+    echo "                                  <2. n2 offset>"
+    echo "                                  <3. Volt 1D> "
+    echo "                                  <4. Volt 2A> "
+	echo "								    <5. he offset (for not-used excitation function)>"
+    echo "                                  <6. currentScale>"
+	echo "								    <7. dwell time (s)>"
+    echo "                                  <8. aouts>"
+    echo "                                  <9. # Polarization Runs>"
+    echo "                                  <10. Pump Detuning>"
+    echo "                                  <11. comments>"
+    echo " " 
+    echo "Remember to set the AOUTS in the file!" 
 else
     RBC="/home/pi/RbControl"
 	FILBIAS=$1
