@@ -26,7 +26,7 @@ int main (int argc, char **argv)
 {
 	time_t rawtime;
 	struct tm * timeinfo;
-	char fileName[BUFSIZE],comments[BUFSIZE];
+	char fileName[BUFSIZE],comments[BUFSIZE], buffer[BUFSIZE];
 	char dataCollectionFileName[] = "/home/pi/.takingData"; 
 	int i;
 	int cycles, measurementsPerCycle;
@@ -54,7 +54,7 @@ int main (int argc, char **argv)
 	i = resetGPIBBridge(GPIBBRIDGE2);
 	if(i != 0) printf("ERROR RESETTING GPIB BRIDGE\n");
 
-	// get file name. Use format "deflectorTransmission"+$DATE+$TIME+".dat"
+	// get file name. Use format "asymmetry"+$DATE+$TIME+".dat"
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	struct stat st = {0};
@@ -62,9 +62,16 @@ int main (int argc, char **argv)
 	if (stat(fileName, &st) == -1){ // Create the directory for the Day's data 
 		mkdir(fileName,S_IRWXU | S_IRWXG | S_IRWXO );
 	}
-	strftime(fileName,BUFSIZE,"/home/pi/RbData/%F/asymmetry%F_%H%M%S.dat",timeinfo);
 
-	printf("\n%s\n",fileName);
+	// Create file name.  Use format "EX"+$DATE+$TIME+".dat"
+	strftime(buffer,80,"asymmetry%F_%H%M%S.dat",timeinfo); 
+
+	//printf("| asymmetry2022-01-20_235959.dat |\n");
+	printf("----------------------------------\n");
+	printf("| %s |\n", buffer);
+	printf("----------------------------------\n");
+
+	sprintf(fileName,"%s/%s",fileName,buffer); 
 
 	recordSystemStats(fileName);
 
@@ -162,11 +169,11 @@ void collectAndRecordData(char* fileName, int cycles, int measurementsPerCycle){
 	if(i != 0) printf("ERROR INITIALIZING K6485 HORIZ\n");
 	i=initializeK617(K617METER,GPIBBRIDGE1);
 	if(i != 0) printf("ERROR INITIALIZING K617\n");
-	i=initializeK485(K485METER,GPIBBRIDGE1);
-	if(i != 0) printf("ERROR INITIALIZING K485\n");
+	//i=initializeK485(K485METER,GPIBBRIDGE1);
+	//if(i != 0) printf("ERROR INITIALIZING K485\n");
 
 	int numMotorPositions=2;
-	int motorPositions[]={164,72};
+	int motorPositions[]={15,103};
 	
 
 	for(cyc=0; cyc < cycles; cyc++)
@@ -174,7 +181,7 @@ void collectAndRecordData(char* fileName, int cycles, int measurementsPerCycle){
 		for(p=0; p < numMotorPositions; p++)
 		{
 			setMotor(PUMP_MOTOR, motorPositions[p]);
-			delay(2000);
+			delay(1000);
 			for(m=0; m < measurementsPerCycle; m++)
 			{
 				for(k=0;k<NUMCHANNELS;k++){
