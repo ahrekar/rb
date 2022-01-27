@@ -97,7 +97,7 @@ int setPumpDetuning(int laserSock, float desiredDetuning){
 				deltaPiezo=fabs(maxPiezo-piezoSetting);
 			}
 			piezoSetting=getScanOffset(laserSock);
-			//printf("The piezo is currently at %2.1f GHz\n",returnedDetuning);
+			//printf("The frequency is currently at %2.1f GHz\n",returnedDetuning);
 			//printf("The piezo is currently at %3.1fV, increasing to %3.1fV\n",piezoSetting,piezoSetting+deltaPiezo);
 			setScanOffset(laserSock,piezoSetting+deltaPiezo);
 			printf(".");
@@ -110,7 +110,7 @@ int setPumpDetuning(int laserSock, float desiredDetuning){
 			}
 			piezoSetting=getScanOffset(laserSock);
 			//printf("Obtained Piezo Setting\n");
-			//printf("The laser is currently at %2.1f GHz\n",returnedDetuning);
+			//printf("The frequency is currently at %2.1f GHz\n",returnedDetuning);
 			//printf("The piezo is currently at %3.1fV, reducing to %3.1fV\n",piezoSetting,piezoSetting-deltaPiezo);
 			setScanOffset(laserSock,piezoSetting-deltaPiezo);
 			printf(".");
@@ -118,5 +118,6 @@ int setPumpDetuning(int laserSock, float desiredDetuning){
 		//printf("Made it to the end of the loop\n");
 		fflush(stdout);
 	}
+	printf("\n");
 	return 0;
 }
