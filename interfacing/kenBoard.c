@@ -278,7 +278,7 @@ int setMotor(unsigned short motor, int newLocation){
         printf("Error finding Home\n");
 		return returnValue;
     }
-	returnValue=stepMotor(motor,CCLK,newLocation);
+	returnValue=stepMotor(motor,CLK,newLocation);
 	if(returnValue!=0){
         printf("Error stepping to new location\n");
 		return returnValue;
