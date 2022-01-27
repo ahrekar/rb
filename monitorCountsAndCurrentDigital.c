@@ -162,8 +162,8 @@ void collectAndRecordData(char* fileName, int cycles, int measurementsPerCycle){
 	if(i != 0) printf("ERROR INITIALIZING K6485 HORIZ\n");
 	i=initializeK617(K617METER,GPIBBRIDGE1);
 	if(i != 0) printf("ERROR INITIALIZING K617\n");
-	i=initializeK485(K485METER,GPIBBRIDGE1);
-	if(i != 0) printf("ERROR INITIALIZING K485\n");
+	//i=initializeK485(K485METER,GPIBBRIDGE1);
+	//if(i != 0) printf("ERROR INITIALIZING K485\n");
 
 	int numMotorPositions=2;
 	int motorPositions[]={160,72};
@@ -184,7 +184,7 @@ void collectAndRecordData(char* fileName, int cycles, int measurementsPerCycle){
 				i = getReadingK617(&involts[0], K617METER, GPIBBRIDGE1);
 				i = getReadingK6485(&involts[1], K6485METERVERT, GPIBBRIDGE2);
 				i = getReadingK6485(&involts[2], K6485METERHORIZ, GPIBBRIDGE2);
-				i = getReadingK485(&involts[3], K485METER, GPIBBRIDGE1);
+				//i = getReadingK485(&involts[3], K485METER, GPIBBRIDGE1);
 
 				fprintf(fp,"%d\t", motorPositions[p]);
 				printf("%d\t", motorPositions[p]);
