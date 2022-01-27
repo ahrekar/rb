@@ -22,7 +22,7 @@ VPATH = obj
 # CC will be used to specify the compiler we will be using
 CC=gcc
 
-# SOURCES are the names of the executable files that we are combiling
+# SOURCES are the names of the executable files that we are compiling
 SOURCES=excitationfn.c getCounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c getWavemeter.c monitorPhotodiodes.c monitorPhotodiodesOnKeyPress.c getPhotoDiodes.c turnOffPumpLaser.c deflectorTransmission.c asymmetry.c monitorCountsAndCurrentDigital.c recordEverythingAndTwistMotor.c 
 # unused: RbAbsorbScanAutoFindDetuning.c stepTemperatureWaitForRotationAngle.c findDetuningForMaxPolarization.c
 
