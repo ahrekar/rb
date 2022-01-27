@@ -58,12 +58,12 @@ int initializeSacher(void){
 	if (j!=0){
 		printf(retData);
 	}
-//	strcpy(outData,":SYST:ACK 0");
-//	j=strlen(outData);
-//	outData[j]=13;
-//	outData[j+1]=0;
+	strcpy(outData,":SYST:ACK 0");
+	j=strlen(outData);
+	outData[j]=13;
+	outData[j+1]=0;
 
-//	writeRS485to232Bridge(outData,retData,HEAD);
+	writeRS485to232Bridge(outData,retData,HEAD);
 	// expect j = 0 for no errors.  If there is an error, 
 	return j;
 }
@@ -85,7 +85,7 @@ float getSacherTemperature(void){
 	outData[j]=13;
 	outData[j+1]=0;
 
-	writeRS485to232Bridge(outData,retData,HEAD);
+	writeRS485to232Bridge(outData, retData, HEAD);
 	temp=atof(retData);
 
 	return temp;
@@ -184,7 +184,7 @@ int setSacherTemperature(float temperature){
 
 		//if (j!=0) printf(retData);
 	}else{
-		printf("Error: temperature outside of usable range\n");
+		printf("Error: temperature (%f) outside of usable range\n",temperature);
 	}
 
 	return j;
