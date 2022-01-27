@@ -271,7 +271,6 @@ unsigned int readRS485AnalogRecorderSimple(unsigned short RS485Chan, unsigned sh
 }
 
 int writeRS485to232Bridge(unsigned char* cmd, unsigned char* returnData, unsigned  short Address){
-
 /*
 
 Writes an ascii command to a 485-232 bridge device. this automatically appends a CR to data,
@@ -293,7 +292,7 @@ portions and passes on to RS232.
 	for (j=0;j<length;j++){
 			outData[j+4]=cmd[j];
 	}
-	outData[length+4]=13; //append a CR
+	outData[length+4]=13; //append a CR (13 is the ASCII code for a CR)
 	// calculate the CRC
 	temp=modRTU_CRC(outData,length+5);
 	// append the CRC in the correct order
@@ -314,7 +313,7 @@ portions and passes on to RS232.
 			returnData[i]=0;
 			} else {
 				status = 1;
-				printf("writeRS232Bridge process returned an unexpected number of bytes\n");
+				printf("writeRS485to232Bridge process returned an unexpected number of bytes\n");
 				printHexData(rtnData,k);
 				printf("%s\n",rtnData);
 				returnData[0]=0;
@@ -322,7 +321,7 @@ portions and passes on to RS232.
 		} else {
 		status=rtnData[2]<<8|rtnData[3];
 		returnData[0]=0;
-		printf("writeRS232Bridge process returned error code %04x \n",temp);
+		printf("writeRS485to232Bridge process returned error code %04x \n",temp);
 		}
 	} else {
 	status=1;
@@ -330,7 +329,8 @@ portions and passes on to RS232.
 	printf("No Response from RS232 bridge at address %02X=%d \n",outData[0],outData[0]);
 	}
 		//printf("%s\n",returnData);
-return status;
+	fflush(stdout);
+	return status;
 }
 
 
@@ -478,8 +478,8 @@ int sendGPIBData(unsigned char *cmd, char gpibaddress, unsigned short Address){
 	return status;
 }
 
-//int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address){
-int listenGPIBData(char *returnData, char terminator, char gpibaddress, unsigned short Address){
+int listenGPIBData(unsigned char *returnData, char terminator, char gpibaddress, unsigned short Address){ // Ken's original call
+//int listenGPIBData(char *returnData, char terminator, char gpibaddress, unsigned short Address){ // My modified so I avoid warning messages.
 
 	int i,length, status;
 	unsigned char outData[64];
@@ -508,6 +508,8 @@ int listenGPIBData(char *returnData, char terminator, char gpibaddress, unsigned
 	write_rs485BYTE(outData,bytes_to_write,rtnData,&k);
 		//printf("rtn:\t");printHexData(rtnData,k);
 
+	// A status of 0 indicates no errors. Set the status to something 
+	// other than 0 if some sort of process error occurs. 
 	status=0;
 	if(k>0){
 		if (!(rtnData[1] & 0x80)){
@@ -518,15 +520,19 @@ int listenGPIBData(char *returnData, char terminator, char gpibaddress, unsigned
 				returnData[i]=0;
 			} else {
 				status = 1;
-				printf("writeRS232Bridge process returned an unexpected number of bytes\n");
+				fflush(stdout);
+				printf("listenGPIBData process returned an unexpected number of bytes\n");
+				fflush(stdout);
+				printf("HexData: \n");
 				printHexData(rtnData,k);
+				printf("\nReturn String: \n");
 				printf("%s\n",rtnData);
 				returnData[0]=0;
 			}
 		} else {
-			status= rtnData[2]<<8 | rtnData[3];
+			status = rtnData[2]<<8 | rtnData[3];
 			returnData[0]=0;
-			//printf("ListenGPIBBridge process returned error code %04x \n",temp);
+			printf("ListenGPIBBridge process returned error code %04x \n",temp);
 			printHexData(rtnData,k);
 
 		}
@@ -536,7 +542,5 @@ int listenGPIBData(char *returnData, char terminator, char gpibaddress, unsigned
 		printf("No Response from bridge at address %02X=%d \n",outData[0],outData[0]);
 	}
 		//printf("%s\n",returnData);
-return status;
-
-
+	return status;
 }
