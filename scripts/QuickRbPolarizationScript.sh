@@ -38,7 +38,7 @@ else
 	echo "Blocking Pump Beam."
 	$RBC/setLaserFlag $PUMP $BLOCKED
 
-	echo "Faraday Scan: no pump..."
+	echo "Faraday Rotation: no pump..."
 	$RBC/faradayRotation "$COMMENTS, pump->no"
 
 	# Unblock pump beam for sure

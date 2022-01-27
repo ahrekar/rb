@@ -10,9 +10,14 @@
 #SMINUSPOS=82
 
 # 2021-07-01: the new values for LP @ 144
-PIPOS=115
-SPLUSPOS=164
-SMINUSPOS=72
+#PIPOS=115
+#SPLUSPOS=164
+#SMINUSPOS=72
+
+# 2022-01-25: Something happened. I don't understand. These appear to be the new values.
+PIPOS=58
+SPLUSPOS=15
+SMINUSPOS=103
 
 PUMP=1
 PROBE=0
