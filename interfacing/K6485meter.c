@@ -8,9 +8,11 @@
 int getReadingK6485(float* amps, char gpibaddress, unsigned short RS485Address){
 	//unsigned char chardata[64];
 	char chardata[64];
+	char cmdData[64];
 	//char chardata[64];
 	float tempA=0.0;
 	int counter = 5;
+	int i;
 
 	int status = listenGPIBData(chardata, 0x0A, gpibaddress, RS485Address);
 
@@ -24,7 +26,16 @@ int getReadingK6485(float* amps, char gpibaddress, unsigned short RS485Address){
 		}
 	else{
 		while(status !=0 && counter > 0){
-			delay(100);
+
+			// Seeing if sending a *reset* command.
+			// will fix the problem of the ammeter 
+			// not communicating properly. 
+			strcpy(cmdData,"G1R0X");
+			i=strlen(cmdData);
+			cmdData[i]=0x0D;
+			cmdData[i+1]=0;
+			status = sendGPIBData(cmdData, gpibaddress, RS485Address);
+
 			status = listenGPIBData(chardata, 0x0A, gpibaddress, RS485Address);
 			tempA = atof(chardata);
 			counter = counter - 1;
@@ -50,7 +61,7 @@ int getStatusK6485(unsigned char* returndata, char gpibaddress, unsigned short R
 	cmdData[i]=0x0D;
 	cmdData[i+1]=0;
 
-	int status = sendGPIBData(cmdData,gpibaddress, RS485Address);
+	int status = sendGPIBData(cmdData, gpibaddress, RS485Address);
 
 	delay(100);
 
@@ -75,6 +86,7 @@ int initializeK6485(char gpibaddress, unsigned short RS485Address){
 	/*
 	 * G1 - Report reading without prefix.
 	 * R0 - auto ranges
+	 * X - execute the command
 	 */
 	i=strlen(cmdData);
 	cmdData[i]=0x0D;
