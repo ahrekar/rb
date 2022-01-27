@@ -135,8 +135,10 @@ int main (int argc, char **argv)
 
 	int steps;
 	int stepsPerRev=350;
-	int stepSize=1;
+	int stepSize=7;
 	int motor=PUMP_MOTOR;
+
+	homeMotor(motor);
 
 	totalCounts=0;
 	for (steps=0;steps < stepsPerRev;steps+=stepSize){ // steps
@@ -185,7 +187,7 @@ int main (int argc, char **argv)
 			else
 				fprintf(fp,"%f\t%f\n",involts[k],stdDev[k]);
 		}
-		stepMotor(motor,CCLK,stepSize);
+		stepMotor(motor,CLK,stepSize);
 	}
 	closeUSB1208();
 
