@@ -42,6 +42,7 @@ int main (int argc, char **argv)
 	int i,k;
 	long totalCounts;
 	int nSamples;
+	int num_rev;
 	int dwell,magnitude;
 	time_t rawtime;
 	struct tm * timeinfo;
@@ -54,13 +55,14 @@ int main (int argc, char **argv)
 
 	// Make sure the correct number of arguments were supplied. If not,
 	// prompt the user with the proper form for input. 
-	if (argc == 4){
+	if (argc == 5){
 		dwell= atoi(argv[1]);
 		magnitude= atoi(argv[2]);
-		strcpy(comments,argv[3]);
+		num_rev= atoi(argv[3]);
+		strcpy(comments,argv[4]);
 	} else{
 		printf("    Usage:                                                                                     \n");
-		printf("           sudo ./recordEverythingAndTwistMotor <time per measurement> <orderOfMagnitudeOfCurrent> <comments>\n");
+		printf("           sudo ./recordRetroReflection <time per measurement> <orderOfMagnitudeOfCurrent> <number of revolutions> <comments>\n");
 		printf("                                                                                               \n");
 		return 1;
 	}
@@ -119,7 +121,7 @@ int main (int argc, char **argv)
     char* names[]={"REF","HORIZ","VERT"};
 
 	// Print the header for the information in the datafile
-	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev\n");
+	fprintf(fp,"Measurement\tCount\tCountStDev\tCurrent\tCurrentStDev\tIonGauge\tIGStdDev");
     for(i=0;i<numPhotoDetectors;i++){
         fprintf(fp,"\t%s\t%ssd",names[i],names[i]);
     }
@@ -135,13 +137,13 @@ int main (int argc, char **argv)
 
 	int steps;
 	int stepsPerRev=350;
-	int stepSize=7;
+	int stepSize=5;
 	int motor=PUMP_MOTOR;
 
 	homeMotor(motor);
 
 	totalCounts=0;
-	for (steps=0;steps < stepsPerRev;steps+=stepSize){ // steps
+	for (steps=0;steps < stepsPerRev*num_rev;steps+=stepSize){ // steps
 		fprintf(fp,"%d\t",steps);
 		getUSB1208Counter(dwell*10,&returnCounts);
 		printf("Counts %ld\t",returnCounts);

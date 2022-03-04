@@ -23,7 +23,7 @@ VPATH = obj
 CC=gcc
 
 # SOURCES are the names of the executable files that we are compiling
-SOURCES=excitationfn.c getCounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c razorBladeLaserProfiling.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c getWavemeter.c monitorPhotodiodes.c monitorPhotodiodesOnKeyPress.c getPhotoDiodes.c turnOffPumpLaser.c deflectorTransmission.c asymmetry.c monitorCountsAndCurrentDigital.c recordEverythingAndTwistMotor.c 
+SOURCES=excitationfn.c getCounts.c polarization.c quickPolarization.c stepmotor.c homemotor.c setProbeLaser.c setPumpLaser.c RbPumpAbsorbScan.c RbAbsorbScan.c findBPDBalance.c getAngleBPD.c monitorAngleBPD.c faradayScanBPD.c faradayScan.c faradayScanAnalysis.c homeWavePlate.c setWavePlate.c setOmega.c getOmega.c polarizationAnalysis.c setHeliumTarget.c toggleFlipMirror.c toggleLaserFlag.c setLaserFlag.c faradayRotation.c monitorCountsAndCurrent.c setTACurrent.c setProbeDetuning.c setPumpDetuning.c getWavemeter.c monitorPhotodiodes.c monitorPhotodiodesOnKeyPress.c getPhotoDiodes.c turnOffPumpLaser.c deflectorTransmission.c asymmetry.c monitorCountsAndCurrentDigital.c recordRetroReflection.c 
 # unused: RbAbsorbScanAutoFindDetuning.c stepTemperatureWaitForRotationAngle.c findDetuningForMaxPolarization.c
 
 # INTERFACING are all of the programs that we use to communicate with the experimental apparatus.
@@ -149,7 +149,7 @@ asymmetry: asymmetry.o mathTools.o $(INTDIR)/kenBoard.o $(INTDIR)/K6485meter.o $
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 monitorCountsAndCurrentDigital: monitorCountsAndCurrentDigital.o mathTools.o $(INTDIR)/kenBoard.o $(INTDIR)/K6485meter.o $(INTDIR)/K485meter.o $(INTDIR)/K617meter.o $(COMMONOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
-recordEverythingAndTwistMotor: recordEverythingAndTwistMotor.o mathTools.o $(INTOBJECTS) 
+recordRetroReflection: recordRetroReflection.o mathTools.o $(INTOBJECTS) 
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 faradayScan: faradayScan.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
@@ -163,8 +163,6 @@ findBPDBalance: findBPDBalance.o mathTools.o faradayScanAnalysisTools.o fileTool
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 #findDetuningForMaxPolarization: findDetuningForMaxPolarization.o mathTools.o faradayScanAnalysisTools.o fileTools.o probeLaserControl.o $(INTOBJECTS)
 #	$(LINK.c) $(OUTPUT_OPTION) $^ 
-razorBladeLaserProfiling: razorBladeLaserProfiling.o mathTools.o fileTools.o $(INTOBJECTS)
-	$(LINK.c) $(OUTPUT_OPTION) $^ 
 faradayRotation: faradayRotation.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)
 	$(LINK.c) $(OUTPUT_OPTION) $^ 
 #stepTemperatureWaitForRotationAngle: stepTemperatureWaitForRotationAngle.o mathTools.o faradayScanAnalysisTools.o fileTools.o $(INTOBJECTS)

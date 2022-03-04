@@ -41,13 +41,13 @@ if (returnRes == 0  || returnRes > 170){
 if (returnRes>95){
 	modTemperature=40;
     printf("temperature %f > %f, setting to %f and 0\n",returnRes,95,returnRes+modTemperature);
-}else if (returnRes > 70){
+}else if (returnRes > 75){
 	modTemperature=30;
     printf("temperature %f > %f, setting to %f and 0\n",returnRes,70,returnRes+modTemperature);
-}else if (returnRes > 50){
+}else if (returnRes > 60){
 	modTemperature=10;
     printf("temperature %f > %f, setting to %f and 0\n",returnRes,50,returnRes+modTemperature);
-}else if (returnRes > 40){
+}else if (returnRes > 50){
 	modTemperature=5;
     printf("temperature %f > %f, setting to %f and 0\n",returnRes,40,returnRes+modTemperature);
 }else{
@@ -55,7 +55,7 @@ if (returnRes>95){
     printf("temperature %f < %f, setting to %f and 0\n",returnRes,40,returnRes+modTemperature);
 }
 
-if (returnRes < 38 && returnTarg < 80){
+if (returnRes < 40 && returnTarg < 80){
 	setSVCN7500(CN_RESERVE, 0.0);
 	setSVCN7500(CN_TARGET, 0.0);
 } else {

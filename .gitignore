@@ -99,6 +99,7 @@ setPumpLaser
 turnOffPumpLaser
 .minMax
 
+recordRetroReflection
 interfacing/mainTemplate
 interfacing/getAnalogIn
 interfacing/waveMeter
